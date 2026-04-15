@@ -1,0 +1,66 @@
+name: React Deploy to EC2
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          
+      - name: Create .env.production file
+        run: |
+          echo "${{ secrets.ENV_PRODUCTION }}" > ./.env.production
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build React app
+        run: npm run build
+
+      - name: Make zip file
+        run: cd dist && zip -r ../deploy.zip .
+
+      - name: SCP to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST_F }}
+          username: ${{ secrets.EC2_USER_F }}
+          key: ${{ secrets.EC2_SECRETKEY_F }}
+          source: "deploy.zip" 
+          target: /home/ubuntu/clue 
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: SSH into EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST_F }}
+          username: ${{ secrets.EC2_USER_F }}
+          key: ${{ secrets.EC2_SECRETKEY_F }}
+          script_stop: true
+          script: |
+            cd /home/ubuntu/clue
+            
+            sudo rm -rf /var/www/clue/*
+            
+            sudo unzip -o deploy.zip -d /var/www/clue
+            
+            sudo systemctl restart nginx
+            
+            rm deploy.zip

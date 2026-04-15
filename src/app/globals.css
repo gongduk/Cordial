@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+@theme {
+  /* Teal/Mint 팔레트 */
+  --color-teal-50: #f0fdfa;
+  --color-teal-100: #ccfbf1;
+  --color-teal-200: #99f6e4;
+  --color-teal-300: #5eead4;
+  --color-teal-400: #2dd4bf;
+  --color-teal-500: #14b8a6;
+  --color-teal-600: #0d9488;
+  --color-teal-700: #0f766e;
+  --color-teal-800: #115e59;
+  --color-teal-900: #134e4a;
+  --color-teal-950: #042f2e;
+
+  --color-mint-50: #f0fdf9;
+  --color-mint-100: #ccfbee;
+  --color-mint-200: #99f6dc;
+  --color-mint-300: #5eeac5;
+  --color-mint-400: #2dd4a8;
+  --color-mint-500: #14b88d;
+  --color-mint-600: #0d9472;
+  --color-mint-700: #0f765c;
+  --color-mint-800: #115e4a;
+  --color-mint-900: #134e3d;
+}
+
+body {
+  background-color: theme(--color-slate-950, #020617);
+  color: theme(--color-slate-100, #f1f5f9);
+}

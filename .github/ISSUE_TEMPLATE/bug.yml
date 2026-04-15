@@ -1,0 +1,44 @@
+name: Bug Report
+description: 버그 발생 시 이 템플릿을 사용해 제보해주세요.
+title: "[BUG] "
+labels: ["bug"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        🐞 버그 설명
+        어떤 문제가 발생했는지 구체적으로 설명해주세요. 기대했던 동작과 실제 동작이 어떻게 다른지도 알려주시면 좋아요!
+  
+  - type: textarea
+    id: bug_description
+    attributes:
+      label: 버그 설명
+      description: 발생한 문제를 설명해주세요.
+      placeholder: 
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps_to_reproduce
+    attributes:
+      label: 재현 방법
+      description: 문제를 어떻게 재현할 수 있는지 단계별로 알려주세요.
+      placeholder: |
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: 환경 정보 (선택)
+      description: OS, 브라우저/앱 버전 등 문제 발생 환경을 적어주세요.
+      placeholder: 
+
+  - type: input
+    id: assignee
+    attributes:
+      label: 담당자
+      description: 이슈를 처리할 담당자의 GitHub 아이디를 입력해주세요.
+      placeholder: 

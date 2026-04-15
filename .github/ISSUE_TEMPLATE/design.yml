@@ -1,0 +1,44 @@
+name: Design
+description: 디자인 관련 의견이나 수정사항을 제보할 때 사용하세요.
+title: "[DESIGN] "
+labels: ["design"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        🎨 어떤 화면인가요?
+        문제가 발생하거나 개선이 필요한 화면에 대한 설명이나 링크를 작성해주세요.
+  
+  - type: textarea
+    id: screen_description
+    attributes:
+      label: 화면 설명
+      description: 어떤 화면인지 설명하거나 관련 링크를 적어주세요.
+      placeholder: 
+    validations:
+      required: true
+
+  - type: textarea
+    id: idea_or_issue
+    attributes:
+      label: 개선 아이디어 / 문제점
+      description: 디자인 관련 문제나 개선하고 싶은 점을 구체적으로 적어주세요.
+      placeholder: 
+    validations:
+      required: true
+
+  - type: textarea
+    id: reference
+    attributes:
+      label: 참고자료
+      description: 관련 이미지나 참고할 수 있는 링크가 있다면 첨부해주세요.
+      placeholder: 
+
+  - type: input
+    id: assignee
+    attributes:
+      label: 담당자
+      description: 이슈를 처리할 담당자의 GitHub 아이디를 입력해주세요.
+      placeholder: 

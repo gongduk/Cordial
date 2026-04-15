@@ -1,0 +1,35 @@
+name: Question
+description: 궁금한 점이나 논의하고 싶은 내용을 공유해주세요.
+title: "[QUESTION] "
+labels: ["suggest"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ❓ 질문/토의 내용
+        궁금한 점이나 함께 논의하고 싶은 내용을 자세히 적어주세요.
+
+  - type: textarea
+    id: question_content
+    attributes:
+      label: 질문/토의 내용
+      description: 구체적인 질문이나 토론 주제를 작성해주세요.
+      placeholder: 
+    validations:
+      required: true
+
+  - type: textarea
+    id: current_context
+    attributes:
+      label: 현재 상황
+      description: 어떤 상황이나 흐름 속에서 이 질문이 나왔는지 설명해주세요.
+      placeholder: 
+
+  - type: input
+    id: assignee
+    attributes:
+      label: 담당자
+      description: 이 이슈를 다룰 담당자가 있다면 GitHub 아이디를 입력해주세요.
+      placeholder: 

@@ -1,0 +1,35 @@
+name: Feature
+description: 새로운 기능을 제안하거나 요청할 때 사용하세요.
+title: "[FEATURE] "
+labels: []
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        📌 기능 설명
+        어떤 기능인지, 왜 필요한지 간단히 설명해주세요.
+
+  - type: textarea
+    id: feature_description
+    attributes:
+      label: 기능 설명
+      description: 추가하고 싶은 기능에 대해 설명해주세요.
+      placeholder: 
+    validations:
+      required: true
+
+  - type: input
+    id: due_date
+    attributes:
+      label: 마감일
+      description: 기능 구현 완료를 목표로 하는 날짜를 입력해주세요.
+      placeholder: yyyy-mm-dd
+
+  - type: input
+    id: assignee
+    attributes:
+      label: 담당자
+      description: 이 기능을 담당할 GitHub 사용자명을 입력해주세요.
+      placeholder: 
