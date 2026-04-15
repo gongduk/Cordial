@@ -1,0 +1,74 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id       String  @id @default(cuid())
+  email    String  @unique
+  password String
+  role     Role    @default(OWNER)
+  stores   Store[]
+}
+
+model Store {
+  id        String     @id @default(cuid())
+  name      String
+  ownerId   String
+  createdAt DateTime   @default(now())
+  owner     User       @relation(fields: [ownerId], references: [id])
+  cocktails Cocktail[]
+  orders    Order[]
+}
+
+model Cocktail {
+  id          String      @id @default(cuid())
+  storeId     String
+  name        String
+  description String?
+  price       Int
+  imageUrl    String?
+  isAvailable Boolean     @default(true)
+  // 칵테일 속성 벡터 (AI 매칭용) 0~1
+  sweetness   Float       @default(0)
+  sourness    Float       @default(0)
+  bitterness  Float       @default(0)
+  strength    Float       @default(0)
+  freshness   Float       @default(0)
+  store       Store       @relation(fields: [storeId], references: [id])
+  orders      OrderItem[]
+}
+
+model Order {
+  id        String      @id @default(cuid())
+  storeId   String
+  tableNum  Int?
+  status    OrderStatus @default(PENDING)
+  createdAt DateTime    @default(now())
+  store     Store       @relation(fields: [storeId], references: [id])
+  items     OrderItem[]
+}
+
+model OrderItem {
+  id         String   @id @default(cuid())
+  orderId    String
+  cocktailId String
+  quantity   Int      @default(1)
+  order      Order    @relation(fields: [orderId], references: [id])
+  cocktail   Cocktail @relation(fields: [cocktailId], references: [id])
+}
+
+enum OrderStatus {
+  PENDING
+  ACCEPTED
+  DONE
+  CANCELLED
+}
+
+enum Role {
+  OWNER
+  ADMIN
+}
