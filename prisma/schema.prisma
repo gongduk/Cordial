@@ -53,10 +53,12 @@ model User {
   bitterPref       Float            @default(0.5)
   strongPref       Float            @default(0.5)
   freshPref        Float            @default(0.5)
+  pantry           String[]         @default([])
   accounts         Account[]
   sessions         Session[]
   emotionLogs      EmotionLog[]
   recommendations  Recommendation[]
+  customCocktails  Cocktail[]       @relation("UserCustomCocktails")
   createdAt        DateTime         @default(now())
 }
 
@@ -89,6 +91,9 @@ model Cocktail {
   abv             Float                @default(0)
   popularity      Float                @default(0.5)
   imageUrl        String?
+  isCustom        Boolean              @default(false)
+  createdBy       String?
+  creator         User?                @relation("UserCustomCocktails", fields: [createdBy], references: [id], onDelete: SetNull)
   ingredients     CocktailIngredient[]
   recommendations Recommendation[]
 }

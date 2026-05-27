@@ -7,7 +7,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
 
-// ─── IBA Dataset (86 cocktails) ───────────────────────────────────────────────
+// ─── IBA Dataset (79 cocktails, 2020 list) ────────────────────────────────────
 const IBA_DATA = [
   { name: "ALEXANDER", ingredients: [{ name: "cognac", quantity: 3.0 }, { name: "creme de cacao", quantity: 3.0 }, { name: "cream", quantity: 3.0 }], type: "After Dinner Cocktail" },
   { name: "AMERICANO", ingredients: [{ name: "campari", quantity: 3.0 }, { name: "red vermouth", quantity: 3.0 }, { name: "soda water", quantity: 0.74 }], type: "Before Dinner Cocktail" },
@@ -86,6 +86,9 @@ const IBA_DATA = [
   { name: "VAMPIRO", ingredients: [{ name: "tequila", quantity: 5.0 }, { name: "tomato juice", quantity: 7.0 }, { name: "orange juice", quantity: 3.0 }, { name: "lime juice", quantity: 1.0 }, { name: "honey", quantity: 0.5 }], type: "All Day Cocktail" },
   { name: "VESPER", ingredients: [{ name: "gin", quantity: 6.0 }, { name: "vodka", quantity: 1.5 }, { name: "lillet blonde", quantity: 0.75 }], type: "Before Dinner Cocktail" },
   { name: "YELLOW BIRD", ingredients: [{ name: "white rum", quantity: 3.0 }, { name: "galliano", quantity: 1.5 }, { name: "triple sec", quantity: 1.5 }, { name: "lime juice", quantity: 1.5 }], type: "All Day Cocktail" },
+  // IBA 2020 additions
+  { name: "ZOMBIE", ingredients: [{ name: "white rum", quantity: 4.0 }, { name: "gold rum", quantity: 3.0 }, { name: "dark rum", quantity: 1.5 }, { name: "apricot brandy", quantity: 1.5 }, { name: "pineapple juice", quantity: 6.0 }, { name: "lime juice", quantity: 1.5 }, { name: "grenadine", quantity: 0.75 }, { name: "angostura bitters", quantity: 0.12 }], type: "Longdrink" },
+  { name: "CORPSE REVIVER", ingredients: [{ name: "gin", quantity: 3.0 }, { name: "cointreau", quantity: 3.0 }, { name: "lillet blonde", quantity: 3.0 }, { name: "lemon juice", quantity: 3.0 }, { name: "absinth", quantity: 0.12 }], type: "All Day Cocktail" },
 ];
 
 // ─── Ingredient profiles ───────────────────────────────────────────────────────
@@ -220,6 +223,7 @@ const KO_NAME: Record<string, string> = {
   "RUSSIAN SPRING PUNCH": "러시안 스프링 펀치", "SPRITZ VENEZIANO": "스프리츠 베네치아노",
   "TOMMYS MARGARITA": "토미스 마르가리타", "VAMPIRO": "밤피로", "VESPER": "베스퍼",
   "YELLOW BIRD": "옐로우 버드",
+  "ZOMBIE": "좀비", "CORPSE REVIVER": "콥스 리바이버 #2",
 };
 
 const GLASS_MAP: Record<string, string> = {
@@ -249,6 +253,7 @@ const GLASS_MAP: Record<string, string> = {
   "LEMON DROP MARTINI": "martini", "PISCO SOUR": "coupe", "RUSSIAN SPRING PUNCH": "flute",
   "SPRITZ VENEZIANO": "rocks", "TOMMYS MARGARITA": "coupe", "VAMPIRO": "highball",
   "VESPER": "martini", "YELLOW BIRD": "coupe",
+  "ZOMBIE": "highball", "CORPSE REVIVER": "coupe",
 };
 
 const METHOD_MAP: Record<string, string> = {
@@ -291,6 +296,7 @@ const POPULARITY_MAP: Record<string, number> = {
   "MARY PICKFORD": 0.58, "BARRACUDA": 0.60, "RAMOS FIZZ": 0.60,
   "MONKEY GLAND": 0.58, "RUSSIAN SPRING PUNCH": 0.58, "GOLDEN DREAM": 0.55,
   "PORTO FLIP": 0.55, "TUXEDO": 0.55, "CASINO": 0.55,
+  "ZOMBIE": 0.72, "CORPSE REVIVER": 0.68,
   "ANGEL FACE": 0.55, "PARADISE": 0.55, "ROSE": 0.50,
   "VAMPIRO": 0.55, "DERBY": 0.52, "STINGER": 0.60,
 };
