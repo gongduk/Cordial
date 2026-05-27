@@ -6,7 +6,8 @@ import { CordialLogo } from "./CordialLogo";
 
 const ITEMS = [
   { label: "홈", href: "/" },
-  { label: "감정 추천", href: "/emotion" },
+  { label: "칵테일 추천", href: "/emotion" },
+  { label: "전체 칵테일", href: "/cocktails" },
   { label: "내 술장", href: "/pantry" },
   { label: "모의 제조", href: "/mix" },
   { label: "바", href: "/bars" },
@@ -54,9 +55,11 @@ export function WebNav({ active }: { active?: string }) {
         </div>
         {status === "loading" ? null : session ? (
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <span style={{ fontSize: 12, color: muted, fontFamily: sans, letterSpacing: -0.1 }}>
-              {session.user.name ?? session.user.email}
-            </span>
+            <Link href="/mypage" style={{ textDecoration: "none" }}>
+              <span style={{ fontSize: 12, color: muted, fontFamily: sans, letterSpacing: -0.1 }}>
+                {session.user?.name ?? session.user?.email}
+              </span>
+            </Link>
             <button
               onClick={() => signOut({ callbackUrl: "/" })}
               style={{

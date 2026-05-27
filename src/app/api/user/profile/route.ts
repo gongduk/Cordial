@@ -3,12 +3,17 @@ import { getToken } from "next-auth/jwt";
 import { prisma } from "@/shared/lib/prisma";
 import type { DrinkingCapacity } from "@/shared/types";
 
+function getUserId(token: Awaited<ReturnType<typeof getToken>>): string | undefined {
+  return (token?.id ?? token?.sub) as string | undefined;
+}
+
 export async function GET(req: NextRequest) {
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-  if (!token?.id) return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+  const userId = getUserId(token);
+  if (!userId) return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
 
   const user = await prisma.user.findUnique({
-    where: { id: token.id as string },
+    where: { id: userId },
     select: {
       id: true,
       name: true,
@@ -28,7 +33,8 @@ export async function GET(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-  if (!token?.id) return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+  const userId = getUserId(token);
+  if (!userId) return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
 
   try {
     const body = await req.json() as {
@@ -42,7 +48,7 @@ export async function PATCH(req: NextRequest) {
     };
 
     const updated = await prisma.user.update({
-      where: { id: token.id as string },
+      where: { id: userId },
       data: body,
       select: {
         id: true,
