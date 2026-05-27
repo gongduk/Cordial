@@ -1,56 +1,64 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import type { EmotionVector } from "@/shared/types";
 
-const client = new Anthropic();
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
-const SYSTEM_PROMPT = `당신은 사용자의 텍스트에서 현재 감정 상태를 분석하는 전문가입니다.
-입력된 텍스트를 분석하여 다음 5가지 감정 차원의 강도를 0과 1 사이의 소수로 표현하세요.
+const SYSTEM_PROMPT = `사용자의 텍스트를 분석하여 현재 감정 상태를 5가지 차원으로 수치화하세요.
 반드시 JSON만 반환하고 다른 텍스트는 포함하지 마세요.
 
 {
-  "happy": 0.0~1.0,
-  "calm": 0.0~1.0,
-  "excited": 0.0~1.0,
-  "tired": 0.0~1.0,
-  "stressed": 0.0~1.0
+  "joy": 0.0~1.0,
+  "sadness": 0.0~1.0,
+  "stress": 0.0~1.0,
+  "fatigue": 0.0~1.0,
+  "excitement": 0.0~1.0
 }`;
 
-const FALLBACK_EMOTION: EmotionVector = {
-  happy: 0.5,
-  calm: 0.5,
-  excited: 0.3,
-  tired: 0.2,
-  stressed: 0.2,
+const FALLBACK: EmotionVector = {
+  joy: 0.4,
+  sadness: 0.2,
+  stress: 0.2,
+  fatigue: 0.2,
+  excitement: 0.3,
 };
 
+function isValidEmotion(parsed: unknown): parsed is EmotionVector {
+  return (
+    typeof parsed === "object" &&
+    parsed !== null &&
+    "joy" in parsed &&
+    "sadness" in parsed &&
+    "stress" in parsed &&
+    "fatigue" in parsed &&
+    "excitement" in parsed
+  );
+}
+
 export async function analyzeEmotion(text: string): Promise<EmotionVector> {
-  const message = await client.messages.create({
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 256,
-    system: SYSTEM_PROMPT,
-    messages: [{ role: "user", content: text }],
-  });
-
-  const rawContent = message.content[0];
-  if (rawContent.type !== "text") return FALLBACK_EMOTION;
-
   try {
-    const parsed = JSON.parse(rawContent.text) as unknown;
-
-    if (
-      typeof parsed === "object" &&
-      parsed !== null &&
-      "happy" in parsed &&
-      "calm" in parsed &&
-      "excited" in parsed &&
-      "tired" in parsed &&
-      "stressed" in parsed
-    ) {
-      return parsed as EmotionVector;
-    }
-
-    return FALLBACK_EMOTION;
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.0-flash",
+      systemInstruction: SYSTEM_PROMPT,
+      generationConfig: { responseMimeType: "application/json" },
+    });
+    const result = await model.generateContent(text);
+    const parsed = JSON.parse(result.response.text()) as unknown;
+    return isValidEmotion(parsed) ? parsed : FALLBACK;
   } catch {
-    return FALLBACK_EMOTION;
+    return FALLBACK;
   }
+}
+
+export function getDominantEmotion(emotion: EmotionVector): string {
+  const labels: Record<keyof EmotionVector, string> = {
+    joy: "기쁜",
+    sadness: "슬픈",
+    stress: "지친",
+    fatigue: "피곤한",
+    excitement: "설레는",
+  };
+  const dominant = (Object.keys(emotion) as (keyof EmotionVector)[]).reduce(
+    (a, b) => (emotion[a] >= emotion[b] ? a : b)
+  );
+  return labels[dominant];
 }
