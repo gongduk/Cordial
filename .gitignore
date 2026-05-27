@@ -8,4 +8,8 @@ node_modules
 claude.md
 Features.md
 .env
-.env.*.playwright-mcp/
+.env.*
+backend/.env
+backend/.env.*
+!backend/.env.example
+.playwright-mcp/
