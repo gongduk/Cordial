@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__figma-pat__generate_figma_design"
+    ]
+  }
+}

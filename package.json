@@ -11,6 +11,10 @@
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "db:generate": "prisma generate",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:fetch-images": "tsx prisma/fetch-images.ts",
+    "db:fix-images": "tsx prisma/fix-images.ts",
+    "db:check-missing": "tsx prisma/check-missing.ts",
     "type-check": "tsc --noEmit"
   },
   "repository": {
@@ -20,15 +24,17 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
   "bugs": {
     "url": "https://github.com/kongduk/Cordial/issues"
   },
   "homepage": "https://github.com/kongduk/Cordial#readme",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.89.0",
+    "@google/generative-ai": "^0.24.1",
+    "@next-auth/prisma-adapter": "^1.0.7",
     "@prisma/adapter-pg": "^7.7.0",
     "@prisma/client": "^7.7.0",
+    "@supabase/supabase-js": "^2.49.4",
     "@tailwindcss/postcss": "^4.2.2",
     "bcryptjs": "^3.0.3",
     "next": "^14.2.35",
@@ -36,8 +42,6 @@
     "pg": "^8.20.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "socket.io": "^4.8.3",
-    "socket.io-client": "^4.8.3",
     "zustand": "^5.0.12"
   },
   "devDependencies": {
@@ -52,6 +56,7 @@
     "prettier-plugin-tailwindcss": "^0.7.2",
     "prisma": "^7.7.0",
     "tailwindcss": "^4.2.2",
+    "tsx": "^4.19.2",
     "typescript": "^6.0.2"
   }
 }

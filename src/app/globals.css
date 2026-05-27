@@ -1,32 +1,34 @@
 @import "tailwindcss";
 
 @theme {
-  /* Teal/Mint 팔레트 */
-  --color-teal-50: #f0fdfa;
-  --color-teal-100: #ccfbf1;
-  --color-teal-200: #99f6e4;
-  --color-teal-300: #5eead4;
-  --color-teal-400: #2dd4bf;
-  --color-teal-500: #14b8a6;
-  --color-teal-600: #0d9488;
-  --color-teal-700: #0f766e;
-  --color-teal-800: #115e59;
-  --color-teal-900: #134e4a;
-  --color-teal-950: #042f2e;
+  /* Cordial design tokens */
+  --color-accent: #B88752;
+  --color-accent-deep: #8E6638;
+  --color-accent-soft: #D4A574;
+  --color-dark-bg: #15110D;
+  --color-dark-surface: #1C1814;
+  --color-dark-surface2: #241F1A;
+  --color-light-bg: #FCFBF9;
+  --color-light-surface: #FFFFFF;
+  --color-light-surface2: #F4F0EA;
+  --color-dark-text: #F5EFE6;
+  --color-light-text: #1A1612;
 
-  --color-mint-50: #f0fdf9;
-  --color-mint-100: #ccfbee;
-  --color-mint-200: #99f6dc;
-  --color-mint-300: #5eeac5;
-  --color-mint-400: #2dd4a8;
-  --color-mint-500: #14b88d;
-  --color-mint-600: #0d9472;
-  --color-mint-700: #0f765c;
-  --color-mint-800: #115e4a;
-  --color-mint-900: #134e3d;
+  /* Font Families */
+  --font-display: 'Staatliches', sans-serif;
+  --font-ui: 'Jaro', sans-serif;
+  --font-sans: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 }
 
 body {
-  background-color: theme(--color-slate-950, #020617);
-  color: theme(--color-slate-100, #f1f5f9);
+  font-family: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Responsive layout utilities */
+.cordial-web { display: block; }
+.cordial-mob { display: none; }
+@media (max-width: 767px) {
+  .cordial-web { display: none; }
+  .cordial-mob { display: block; }
 }

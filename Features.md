@@ -1,116 +1,103 @@
 # Cordial 기능명세서
 
-## 유저(고객) 플로우
+## 유저 플로우
 
-### F-U-01 QR 진입
-- 고객이 테이블 QR 스캔 → `/qr/[storeId]` 접근
-- `storeId` 유효성 검증 (존재하지 않는 가게면 에러 페이지)
-- `storeId`를 sessionStorage에 저장 후 감정 입력 페이지로 이동
+### F-01 감정 추천 (`/emotion` → `/recommend`)
+- 4단계 카드 선택 질문으로 감정 입력
+- 제출 → `POST /api/ai/analyze-emotion` → EmotionVector 반환
+- EmotionVector를 sessionStorage에 저장 후 `/recommend`로 이동
+- `/recommend`: `POST /api/ai/recommend` 호출 → 칵테일 Top 3 카드
+- 로그인 유저: 5-factor 점수 (감정 + 취향 + 주량 + 과거선호 + 인기도)
+- 비로그인: 2-factor 점수 (감정 + 인기도)
+- 카드 클릭 → `sessionStorage.setItem("selectedCocktail", ...)` → `/cocktail/[id]`
 
-### F-U-02 감정 입력
-- 텍스트 자유 입력 (한국어 구어체)
-- 입력 예시 힌트 제공 ("오늘 너무 피곤해", "기분이 좋아서 뭔가 상큼한 거 마시고 싶어")
-- 최소 5자 이상 입력 시 제출 가능
-- 제출 → `/api/ai/analyze-emotion` 호출 → 로딩 상태 표시
+### F-02 칵테일 상세 (`/cocktail/[id]`)
+- sessionStorage에서 cocktail 데이터 로드 (페이지 새로고침 시 back으로 복귀)
+- Flavor Profile 바 차트 (SOUR / SWEET / BITTER / STRONG / FRESH)
+- 기본 제조 방법 5단계 표시
+- 글라스 실루엣 자동 선택 (cocktail 이름 기반)
+- 웹(라이트 테마) + 모바일(다크 테마) 듀얼 레이아웃
 
-### F-U-03 칵테일 추천 결과
-- 추천 칵테일 최대 3개 카드 표시
-- 각 카드: 칵테일명, 가격, AI 생성 맞춤 설명, 주문 버튼
-- "다시 입력하기" 버튼 (감정 입력 페이지로 복귀)
+### F-03 내 술장 (`/pantry`)
+- 보유 재료 태그 입력/삭제
+- `POST /api/ai/pantry-recommend` → 세 섹션 반환:
+  - **exact**: 모든 재료 보유 (즉시 제조 가능)
+  - **almost**: 1개 재료만 부족
+  - **creative**: Claude가 창작한 레시피
 
-### F-U-04 주문
-- 추천 결과에서 수량 선택 후 주문
-- 주문 완료 시 확인 화면 표시 (예상 준비 시간 안내)
-- 중복 주문 방지 (주문 완료 후 재주문 버튼 비활성화, 5분 타이머)
+### F-04 모의 제조 (`/mix`)
+- 재료 추가: 이름 + 용량(ml) + 도수(%)
+- 제조 방식 선택: Shaking / Stirring / Build / Blending / Neat
+- ABV 알고리즘으로 예상 도수 즉시 계산
+- `POST /api/ai/mix-analyze` → Claude가 맛/향 분석 + 바텐더 한마디
 
----
+### F-05 바 매칭 (`/bars`)
+- `GET /api/bars` → Bar 목록 (area/mood 쿼리 파라미터)
+- 기분 태그 필터 칩 (actual moodTags에서 동적 생성)
+- 지역 드롭다운 필터
+- 바 정보: 이름, 주소, 시그니처 칵테일, 분위기 태그
 
-## 점주 플로우
-
-### F-O-01 로그인
-- 이메일 + 비밀번호 로그인
-- NextAuth.js credentials provider 사용
-- 로그인 성공 시 대시보드로 리다이렉트
-
-### F-O-02 대시보드 (주문 현황)
-- 실시간 주문 목록 (Socket.io or Supabase Realtime)
-- 주문 상태: 대기중 → 수락 → 완료 / 취소
-- 상태 변경 버튼 (수락, 완료, 취소)
-- 새 주문 수신 시 알림 (브라우저 알림 or 사운드)
-
-### F-O-03 메뉴 관리
-- 칵테일 목록 조회 (가게별)
-- 칵테일 추가: 이름, 가격, 설명, 이미지, 속성 벡터 입력
-- 칵테일 수정 / 삭제
-- 품절 처리 (isAvailable 토글)
-
-### F-O-04 칵테일 속성 벡터 설정
-- 점주가 직접 슬라이더로 입력 (sweetness, sourness, bitterness, strength, freshness)
-- AI 자동 추론 옵션: 칵테일 이름/설명 입력 시 Claude API가 벡터 자동 생성
+### F-06 로그인 (`/login`)
+- Google OAuth 버튼
+- GitHub OAuth 버튼
+- 이메일/비밀번호 (로그인 / 회원가입 모드 토글)
+- 비로그인으로 계속하기 → `/emotion`으로 이동
+- 로그인 성공 → 이전 페이지 또는 `/emotion`으로 리다이렉트
 
 ---
 
 ## AI 기능 상세
 
-### AI-01 감정 분석
+### AI-01 감정 분석 (`src/server/ai/analyzeEmotion.ts`)
 
-**System Prompt**:
-```
-당신은 사용자의 텍스트에서 현재 감정 상태를 분석하는 전문가입니다.
-입력된 텍스트를 분석하여 다음 5가지 감정 차원의 강도를 0과 1 사이의 소수로 표현하세요.
-반드시 JSON만 반환하고 다른 텍스트는 포함하지 마세요.
+**입력**: 감정 선택 텍스트  
+**출력**: `{ joy, sadness, stress, fatigue, excitement }` (각 0~1)
 
-{
-  "happy": 0.0~1.0,
-  "calm": 0.0~1.0,
-  "excited": 0.0~1.0,
-  "tired": 0.0~1.0,
-  "stressed": 0.0~1.0
-}
-```
+`getDominantEmotion()` → 헤드라인용 형용사 (기쁜/슬픈/지친/피곤한/설레는)
 
-### AI-02 칵테일 추천 설명 생성
+### AI-02 칵테일 추천 (`src/server/ai/recommendCocktails.ts`)
 
-**System Prompt**:
-```
-당신은 바텐더입니다. 고객의 감정 상태와 추천된 칵테일 정보를 바탕으로
-고객에게 맞춤형 추천 설명을 2~3문장으로 작성하세요.
-따뜻하고 친근한 어조로, 왜 이 칵테일이 지금 고객에게 어울리는지 설명하세요.
-한국어로 작성하세요.
-```
+1. `emotionToVector()`: EmotionVector → 칵테일 맛 벡터 변환
+2. 코사인 유사도로 IBA DB 칵테일 전체와 비교
+3. 유저 프로필 기반 가중치 점수 계산
+4. 상위 3개에 대해 Claude가 맞춤 설명 생성 (`Promise.allSettled`)
 
-### AI-03 칵테일 속성 자동 추론
+### AI-03 재료 매칭 (`src/server/ai/pantryRecommend.ts`)
 
-**System Prompt**:
-```
-칵테일 이름과 설명을 보고 맛 프로파일을 분석하세요.
-반드시 JSON만 반환하세요.
+- IBA DB 전체 칵테일 재료와 case-insensitive 퍼지 매칭
+- exact(완전 보유) / almost(1개 부족) / creative(Claude 창작) 분류
 
-{
-  "sweetness": 0.0~1.0,
-  "sourness": 0.0~1.0,
-  "bitterness": 0.0~1.0,
-  "strength": 0.0~1.0,
-  "freshness": 0.0~1.0
-}
+### AI-04 모의 제조 분석 (`src/server/ai/mixAnalyze.ts`)
+
+- `calculateAbv()`: 순수 알고리즘 (Claude 불필요)
+- `mixAnalyze()`: Claude에 재료+방식 전달 → 맛/향/설명 JSON 반환
+
+---
+
+## 추천 알고리즘 상세
+
+```typescript
+// emotionToVector: EmotionVector → 칵테일 맛 벡터
+sweetness = joy*0.5 + excitement*0.3 - sadness*0.1
+sourness  = excitement*0.4 + stress*0.2 + joy*0.2
+bitterness = stress*0.4 + fatigue*0.3 + sadness*0.2
+strength   = stress*0.4 + excitement*0.3 + fatigue*0.2
+freshness  = joy*0.4 - fatigue*0.2 - stress*0.1 + 0.3
+
+// 코사인 유사도
+similarity = dot(target, cocktail) / (|target| × |cocktail|)
+
+// 비로그인 점수
+score = (0.4×similarity + 0.1×popularity) / 0.5
+
+// 로그인 점수
+score = 0.4×similarity + 0.2×tastePref + 0.15×volumeFit + 0.15×pastPref + 0.1×popularity
 ```
 
 ---
 
-## 추천 알고리즘
+## 데이터 파이프라인 (FastAPI)
 
-감정 벡터 → 칵테일 속성 벡터 변환 규칙:
+`POST /bars/pipeline`: 지역명 입력 → Naver 지역/블로그/이미지 API 수집 → Claude 분석 (moodTags, signature) → Supabase Bar 테이블 저장
 
-```typescript
-function emotionToCocktailVector(emotion: EmotionVector): CocktailVector {
-  return {
-    sweetness: emotion.happy * 0.6 + emotion.excited * 0.3 + emotion.stressed * 0.1,
-    sourness:  emotion.excited * 0.5 + emotion.happy * 0.3 + emotion.tired * 0.2,
-    bitterness: emotion.stressed * 0.4 + emotion.tired * 0.4 + emotion.calm * 0.2,
-    strength:  emotion.excited * 0.5 + emotion.stressed * 0.3 + emotion.happy * 0.2,
-    freshness: emotion.calm * 0.5 + emotion.happy * 0.3 + emotion.tired * 0.2,
-  }
-}
-```
-
-코사인 유사도로 DB 칵테일과 비교 → 상위 3개 반환
+실행: `cd backend && uvicorn main:app --reload`
