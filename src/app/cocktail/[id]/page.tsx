@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { GlassSilhouette } from "@/shared/ui/GlassSilhouette";
 import { WebNav } from "@/shared/ui/WebNav";
 import type { GlassType } from "@/shared/ui/GlassSilhouette";
@@ -39,7 +39,7 @@ interface IngredientItem {
   amount: string | null;
 }
 
-type MixMethod = "shaking" | "stirring" | "build" | "blending" | "neat";
+type MixMethod = "shaking" | "stirring" | "build" | "blending" | "neat" | "floating";
 
 function formatAmount(amount: string | null): string {
   if (!amount) return "적당량";
@@ -128,54 +128,139 @@ function pickGlass(name: string): GlassType {
   return "rocks";
 }
 
+interface ApiCocktailDetail {
+  id: string;
+  name: string;
+  nameEn?: string | null;
+  description?: string | null;
+  category?: string | null;
+  glassType?: string | null;
+  abv: number;
+  imageUrl?: string | null;
+  sweetness: number;
+  sourness: number;
+  bitterness: number;
+  strength: number;
+  freshness: number;
+  popularity: number;
+  isCustom?: boolean;
+  method?: string | null;
+  ingredients?: { ingredient: { name: string; nameEn: string | null }; amount: string | null }[];
+}
+
 export default function CocktailDetailPage() {
   const router = useRouter();
+  const params = useParams();
+  const urlId = params?.id as string | undefined;
   const [cocktail, setCocktail] = useState<RecommendedCocktail | null>(null);
   const [ingredients, setIngredients] = useState<IngredientItem[]>([]);
   const [method, setMethod] = useState<string | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [isCustom, setIsCustom] = useState(false);
 
   useEffect(() => {
     const sel = typeof window !== "undefined" ? sessionStorage.getItem("selectedCocktail") : null;
-    if (!sel) { router.back(); return; }
-    const c = JSON.parse(sel) as RecommendedCocktail;
-    setCocktail(c);
+    const targetId = urlId;
 
-    // Fetch full detail with ingredients
-    if (c.id && c.id !== "creative") {
-      fetch(`/api/cocktails/${c.id}`)
-        .then(r => r.json())
-        .then((data: { ingredients?: { ingredient: { name: string; nameEn: string | null }; amount: string | null }[]; method?: string; imageUrl?: string | null }) => {
-          if (data.ingredients) {
-            setIngredients(data.ingredients.map(ci => ({
-              name: ci.ingredient.name,
-              nameEn: ci.ingredient.nameEn,
-              amount: ci.amount,
-            })));
-          }
-          if (data.method) setMethod(data.method);
-          if (data.imageUrl) setImageUrl(data.imageUrl);
-        })
-        .catch(() => {});
+    async function loadDetail(id: string) {
+      try {
+        const res = await fetch(`/api/cocktails/${id}`);
+        if (!res.ok) {
+          console.error("[loadDetail] HTTP error:", res.status, await res.text());
+          return null;
+        }
+        const data = await res.json() as ApiCocktailDetail;
+        if (data.ingredients) {
+          setIngredients(data.ingredients.map(ci => ({
+            name: ci.ingredient.name,
+            nameEn: ci.ingredient.nameEn,
+            amount: ci.amount,
+          })));
+        }
+        if (data.method) setMethod(data.method);
+        if (data.imageUrl) setImageUrl(data.imageUrl);
+        if (data.isCustom) setIsCustom(true);
+        return data;
+      } catch (e) {
+        console.error("[loadDetail] fetch error:", e);
+        return null;
+      }
     }
-  }, [router]);
 
-  if (!cocktail) {
+    async function init() {
+      if (sel) {
+        const c = JSON.parse(sel) as RecommendedCocktail;
+        // Use sessionStorage if it matches the URL id (or no URL id)
+        if (!targetId || c.id === targetId) {
+          setCocktail(c);
+          if (c.id && c.id !== "creative") {
+            await loadDetail(c.id);
+          }
+          setLoading(false);
+          return;
+        }
+      }
+      // Fallback: fetch from API using URL id
+      if (targetId && targetId !== "creative") {
+        const data = await loadDetail(targetId);
+        if (data) {
+          setCocktail({
+            id: data.id,
+            name: data.name,
+            description: data.description ?? null,
+            category: data.category ?? null,
+            glassType: data.glassType ?? null,
+            abv: data.abv,
+            imageUrl: data.imageUrl ?? null,
+            sweetness: data.sweetness,
+            sourness: data.sourness,
+            bitterness: data.bitterness,
+            strength: data.strength,
+            freshness: data.freshness,
+            popularity: data.popularity,
+            aiDescription: "",
+            score: 0,
+          });
+        } else {
+          router.back();
+        }
+      } else {
+        router.back();
+      }
+      setLoading(false);
+    }
+
+    init();
+  }, [router, urlId]);
+
+  if (!cocktail || loading) {
     return (
       <>
-        <div className="cordial-web" style={{ background: W.bg, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ color: W.textMuted, fontFamily: W.sans }}>로딩 중...</div>
+        <div className="cordial-web" style={{ background: W.bg, minHeight: "100vh", fontFamily: W.sans }}>
+          <WebNav />
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "calc(100vh - 60px)", gap: 40 }}>
+            <GlassSilhouette type="rocks" size={140} stroke={W.accent} liquid={W.accent} fillLevel={0.55} strokeWidth={1.3} />
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontFamily: W.mono, fontSize: 11, letterSpacing: 1.8, color: W.accent, marginBottom: 14, textTransform: "uppercase" }}>LOADING</div>
+              <h2 style={{ fontSize: 22, fontWeight: 500, letterSpacing: -0.4, lineHeight: 1.45, margin: 0, color: W.text }}>레시피를 불러오고 있어요.</h2>
+            </div>
+          </div>
         </div>
         <div className="cordial-mob">
-          <div style={{ background: T.darkBg, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <div style={{ color: T.darkTextMuted, fontFamily: T.sans }}>로딩 중...</div>
+          <div style={{ width: "100%", minHeight: "100vh", background: T.darkBg, color: T.darkText, fontFamily: T.sans, maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 40, padding: "0 40px" }}>
+            <GlassSilhouette type="rocks" size={140} stroke={T.accent} liquid={T.accent} fillLevel={0.55} strokeWidth={1.3} />
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.8, color: T.accent, marginBottom: 16, textTransform: "uppercase" }}>LOADING</div>
+              <h2 style={{ fontSize: 22, fontWeight: 500, letterSpacing: -0.4, lineHeight: 1.45, margin: 0 }}>레시피를 불러오고 있어요.</h2>
+            </div>
           </div>
         </div>
       </>
     );
   }
 
-  const glassType = pickGlass(cocktail.name);
+  const glassType: GlassType = (cocktail.glassType as GlassType | null) ?? pickGlass(cocktail.name);
   const profile = [
     ["SOUR", toBarValue(cocktail.sourness)],
     ["SWEET", toBarValue(cocktail.sweetness)],
@@ -194,7 +279,7 @@ export default function CocktailDetailPage() {
         <div style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 40px 60px" }}>
           <button onClick={() => router.back()} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, color: W.textMuted, fontFamily: W.sans, marginBottom: 40, padding: 0, display: "flex", alignItems: "center", gap: 6 }}>
             <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M12 4 L6 10 L12 16" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
-            추천 결과로
+            뒤로
           </button>
 
           <div style={{ display: "flex", gap: 64 }}>
@@ -205,8 +290,14 @@ export default function CocktailDetailPage() {
                 <GlassSilhouette type={glassType} size={200} stroke={W.accent} liquid={W.accent} fillLevel={0.78} garnish strokeWidth={1.2} />
               )}
               <div style={{ textAlign: "center" }}>
-                <div style={{ fontFamily: W.mono, fontSize: 10, letterSpacing: 1.4, color: W.accent, marginBottom: 8, textTransform: "uppercase" }}>{cocktail.category ?? "Classic"}</div>
+                <div style={{ fontFamily: W.mono, fontSize: 10, letterSpacing: 1.4, color: W.accent, marginBottom: 8, textTransform: "uppercase", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                  {isCustom ? "CUSTOM" : (cocktail.category ?? "Classic")}
+                  {isCustom && <span style={{ background: W.accent, color: W.bg, fontSize: 9, padding: "2px 6px", borderRadius: 4, letterSpacing: 0.8 }}>MY RECIPE</span>}
+                </div>
                 <h1 style={{ fontSize: 30, fontWeight: 600, letterSpacing: -0.6, margin: "0 0 10px", lineHeight: 1.1 }}>{cocktail.name}</h1>
+                {cocktail.description && (
+                  <div style={{ fontSize: 13, color: W.textMuted, letterSpacing: -0.1, marginBottom: 6, lineHeight: 1.5 }}>{cocktail.description}</div>
+                )}
                 <div style={{ fontSize: 14, color: W.textMuted, fontFamily: W.mono }}>ABV {Math.round(cocktail.abv)}%</div>
               </div>
 
@@ -227,10 +318,12 @@ export default function CocktailDetailPage() {
             </div>
 
             <div style={{ flex: 1 }}>
-              <div style={{ padding: "18px 20px", borderLeft: `2px solid ${W.accent}`, marginBottom: 32 }}>
-                <div style={{ fontFamily: W.mono, fontSize: 9, letterSpacing: 1.4, color: W.accent, marginBottom: 8, textTransform: "uppercase" }}>BARTENDER&apos;S NOTE</div>
-                <p style={{ margin: 0, fontSize: 14, lineHeight: 1.7, letterSpacing: -0.2, color: W.textMuted }}>{cocktail.aiDescription}</p>
-              </div>
+              {cocktail.aiDescription && (
+                <div style={{ padding: "18px 20px", borderLeft: `2px solid ${W.accent}`, marginBottom: 32 }}>
+                  <div style={{ fontFamily: W.mono, fontSize: 9, letterSpacing: 1.4, color: W.accent, marginBottom: 8, textTransform: "uppercase" }}>BARTENDER&apos;S NOTE</div>
+                  <p style={{ margin: 0, fontSize: 14, lineHeight: 1.7, letterSpacing: -0.2, color: W.textMuted }}>{cocktail.aiDescription}</p>
+                </div>
+              )}
 
               <div style={{ fontFamily: W.mono, fontSize: 10, letterSpacing: 1.6, color: W.textFaint, marginBottom: 14, textTransform: "uppercase" }}>FLAVOR PROFILE</div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px 32px", marginBottom: 36 }}>
@@ -278,16 +371,21 @@ export default function CocktailDetailPage() {
             <div style={{ flex: 1 }}>
               <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.4, color: T.accent, marginBottom: 8 }}>{cocktail.category ?? "CLASSIC"}</div>
               <h1 style={{ fontSize: 26, fontWeight: 600, letterSpacing: -0.6, margin: 0, lineHeight: 1.1 }}>{cocktail.name}</h1>
-              <div style={{ marginTop: 8, fontFamily: T.mono, fontSize: 11, color: T.darkTextMuted }}>ABV {Math.round(cocktail.abv)}%</div>
+              {cocktail.description && (
+                <div style={{ fontSize: 12, color: T.darkTextMuted, letterSpacing: -0.1, marginTop: 4, lineHeight: 1.5 }}>{cocktail.description}</div>
+              )}
+              <div style={{ marginTop: 6, fontFamily: T.mono, fontSize: 11, color: T.darkTextMuted }}>ABV {Math.round(cocktail.abv)}%</div>
             </div>
           </div>
 
-          <div style={{ padding: "0 24px 24px" }}>
-            <div style={{ padding: "16px 18px", borderLeft: `2px solid ${T.accent}` }}>
-              <div style={{ fontFamily: T.mono, fontSize: 9, letterSpacing: 1.4, color: T.accent, marginBottom: 8, textTransform: "uppercase" }}>BARTENDER&apos;S NOTE</div>
-              <p style={{ margin: 0, fontSize: 13, lineHeight: 1.7, letterSpacing: -0.2, color: T.darkTextMuted }}>{cocktail.aiDescription}</p>
+          {cocktail.aiDescription && (
+            <div style={{ padding: "0 24px 24px" }}>
+              <div style={{ padding: "16px 18px", borderLeft: `2px solid ${T.accent}` }}>
+                <div style={{ fontFamily: T.mono, fontSize: 9, letterSpacing: 1.4, color: T.accent, marginBottom: 8, textTransform: "uppercase" }}>BARTENDER&apos;S NOTE</div>
+                <p style={{ margin: 0, fontSize: 13, lineHeight: 1.7, letterSpacing: -0.2, color: T.darkTextMuted }}>{cocktail.aiDescription}</p>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Ingredients Mobile */}
           {ingredients.length > 0 && (
@@ -331,7 +429,7 @@ export default function CocktailDetailPage() {
           </div>
 
           <div style={{ padding: "8px 24px 12px" }}>
-            <button onClick={() => router.back()} style={{ fontSize: 13, color: T.darkTextFaint, background: "none", border: "none", cursor: "pointer", fontFamily: T.sans, letterSpacing: -0.1 }}>← 추천 결과로</button>
+            <button onClick={() => router.back()} style={{ fontSize: 13, color: T.darkTextFaint, background: "none", border: "none", cursor: "pointer", fontFamily: T.sans, letterSpacing: -0.1 }}>← 뒤로</button>
           </div>
         </div>
       </div>
