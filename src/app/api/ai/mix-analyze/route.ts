@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "재료를 입력해 주세요." }, { status: 400 });
     }
 
-    const validMethods: MixMethod[] = ["shaking", "stirring", "build", "blending", "neat"];
+    const validMethods: MixMethod[] = ["shaking", "stirring", "build", "blending", "neat", "floating"];
     if (!validMethods.includes(method)) {
       return NextResponse.json({ error: "올바른 제조법을 선택해 주세요." }, { status: 400 });
     }

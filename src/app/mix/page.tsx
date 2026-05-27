@@ -2,9 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { GlassSilhouette, GlassGlyph } from "@/shared/ui/GlassSilhouette";
 import { WebNav } from "@/shared/ui/WebNav";
+import { IngredientSearch } from "@/shared/ui/IngredientSearch";
 import type { GlassType } from "@/shared/ui/GlassSilhouette";
+import type { IngredientOption } from "@/shared/ui/IngredientSearch";
 import type { MixIngredient, MixMethod, MixAnalysisResult } from "@/shared/types";
 
 const W = {
@@ -39,6 +42,7 @@ const METHODS: { id: MixMethod; label: string; labelEn: string }[] = [
   { id: "build", label: "빌드", labelEn: "Build" },
   { id: "blending", label: "블렌딩", labelEn: "Blending" },
   { id: "neat", label: "니트", labelEn: "Neat" },
+  { id: "floating", label: "플로팅", labelEn: "Floating" },
 ];
 
 const TABS = [
@@ -65,22 +69,27 @@ const PROFILE_LABELS: Record<(typeof PROFILE_KEYS)[number], string> = {
 
 let nextId = 4;
 
+type SaveStatus = "idle" | "saving" | "saved" | "error";
+
 export default function MixPage() {
+  const { status: authStatus } = useSession();
+  const isLoggedIn = authStatus === "authenticated";
   const [ings, setIngs] = useState(INITIAL_INGS);
   const [method, setMethod] = useState<MixMethod>("shaking");
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<MixAnalysisResult | null>(null);
+  const [showSearchWeb, setShowSearchWeb] = useState(false);
+  const [showSearchMob, setShowSearchMob] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+  const [savedId, setSavedId] = useState<string | null>(null);
+  const [customName, setCustomName] = useState("나만의 칵테일");
 
   const totalVolume = ings.reduce((s, i) => s + i.amount, 0);
   const fillLevel = Math.min(totalVolume / 150, 1);
 
-  function addIng() {
-    const name = prompt("재료 이름을 입력하세요");
-    if (!name?.trim()) return;
-    const abvStr = prompt("도수 (%)를 입력하세요 (없으면 0)") ?? "0";
-    const abv = parseFloat(abvStr) || 0;
-    setIngs((prev) => [...prev, { id: nextId++, name: name.trim(), amount: 30, abv }]);
+  function addIng(item: IngredientOption | { name: string; abv: number; isCustom: true }) {
+    setIngs((prev) => [...prev, { id: nextId++, name: item.name, amount: 30, abv: item.abv }]);
   }
 
   function updateField(id: number, field: "amount" | "abv", value: string) {
@@ -95,6 +104,8 @@ export default function MixPage() {
 
   async function analyze() {
     setLoading(true);
+    setSaveStatus("idle");
+    setSavedId(null);
     try {
       const res = await fetch("/api/ai/mix-analyze", {
         method: "POST",
@@ -103,10 +114,36 @@ export default function MixPage() {
       });
       const data = await res.json() as MixAnalysisResult;
       setResult(data);
+      setCustomName(data.name);
     } catch {
       alert("분석 중 오류가 발생했습니다.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function saveRecipe() {
+    if (!result) return;
+    setSaveStatus("saving");
+    try {
+      const res = await fetch("/api/cocktail/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: customName || result.name,
+          description: result.description,
+          method,
+          ingredients: ings.map(i => ({ name: i.name, amount: i.amount, abv: i.abv })),
+          taste: result.taste,
+          abv: result.calculatedAbv,
+        }),
+      });
+      if (!res.ok) throw new Error("save failed");
+      const data = await res.json() as { id: string };
+      setSavedId(data.id);
+      setSaveStatus("saved");
+    } catch {
+      setSaveStatus("error");
     }
   }
 
@@ -191,7 +228,15 @@ export default function MixPage() {
 
               <div>
                 <div style={{ fontFamily: W.mono, fontSize: 10, letterSpacing: 1.6, color: W.textFaint, marginBottom: 12, textTransform: "uppercase" }}>EST. RESULT</div>
-                <div style={{ fontSize: 20, fontWeight: 600, letterSpacing: -0.3 }}>{displayResult.name}</div>
+                {result ? (
+                  <input
+                    value={customName}
+                    onChange={(e) => setCustomName(e.target.value)}
+                    style={{ fontSize: 20, fontWeight: 600, letterSpacing: -0.3, background: "transparent", border: "none", borderBottom: `1px solid ${W.borderStrong}`, outline: "none", color: W.text, fontFamily: W.sans, width: "100%", padding: "2px 0" }}
+                  />
+                ) : (
+                  <div style={{ fontSize: 20, fontWeight: 600, letterSpacing: -0.3 }}>{displayResult.name}</div>
+                )}
                 <div style={{ fontFamily: W.mono, fontSize: 12, color: W.textMuted, letterSpacing: 0.3, marginTop: 6 }}>
                   ABV ~{displayResult.calculatedAbv}% · {totalVolume}ml
                 </div>
@@ -203,20 +248,52 @@ export default function MixPage() {
               </div>
 
               {result && (
-                <div style={{ padding: "16px 18px", borderLeft: `2px solid ${W.accent}`, background: W.surface }}>
-                  <div style={{ fontFamily: W.mono, fontSize: 9, letterSpacing: 1.4, color: W.accent, marginBottom: 8, textTransform: "uppercase" }}>BARTENDER&apos;S TAKE</div>
-                  <p style={{ margin: 0, fontSize: 13, lineHeight: 1.65, color: W.text }}>{result.description}</p>
-                  {result.aroma && <p style={{ margin: "8px 0 0", fontSize: 12, color: W.textMuted, lineHeight: 1.6 }}>🌿 {result.aroma}</p>}
-                </div>
+                <>
+                  <div style={{ padding: "16px 18px", borderLeft: `2px solid ${W.accent}`, background: W.surface }}>
+                    <div style={{ fontFamily: W.mono, fontSize: 9, letterSpacing: 1.4, color: W.accent, marginBottom: 8, textTransform: "uppercase" }}>BARTENDER&apos;S TAKE</div>
+                    <p style={{ margin: 0, fontSize: 13, lineHeight: 1.65, color: W.text }}>{result.description}</p>
+                    {result.aroma && <p style={{ margin: "8px 0 0", fontSize: 12, color: W.textMuted, lineHeight: 1.6 }}>🌿 {result.aroma}</p>}
+                  </div>
+                  <div style={{ marginTop: 14 }}>
+                    {isLoggedIn ? (
+                      saveStatus === "saved" && savedId ? (
+                        <Link href={`/cocktail/${savedId}`} style={{ textDecoration: "none" }}>
+                          <div style={{ padding: "12px 16px", borderRadius: 10, background: "rgba(184,135,82,0.1)", border: `0.5px solid ${W.accent}`, fontSize: 13, color: W.accent, fontFamily: W.mono, letterSpacing: 0.3, textAlign: "center" }}>
+                            ✓ 저장됨 — 레시피 보기
+                          </div>
+                        </Link>
+                      ) : (
+                        <button onClick={saveRecipe} disabled={saveStatus === "saving"} style={{ width: "100%", padding: "12px", borderRadius: 10, border: `0.5px solid ${W.accent}`, background: "transparent", fontSize: 13, color: W.accent, fontFamily: W.sans, cursor: saveStatus === "saving" ? "not-allowed" : "pointer", opacity: saveStatus === "saving" ? 0.6 : 1 }}>
+                          {saveStatus === "saving" ? "저장 중..." : saveStatus === "error" ? "저장 실패 — 다시 시도" : "레시피 저장하기"}
+                        </button>
+                      )
+                    ) : (
+                      <Link href="/login" style={{ textDecoration: "none" }}>
+                        <div style={{ padding: "12px 16px", borderRadius: 10, border: `0.5px solid ${W.borderStrong}`, fontSize: 13, color: W.textMuted, textAlign: "center", fontFamily: W.sans }}>
+                          로그인하면 레시피를 저장할 수 있어요
+                        </div>
+                      </Link>
+                    )}
+                  </div>
+                </>
               )}
             </div>
 
             <div>
               <div style={{ fontFamily: W.mono, fontSize: 10, letterSpacing: 1.6, color: W.textFaint, marginBottom: 16, textTransform: "uppercase" }}>INGREDIENTS · {ings.length}</div>
               {ings.map((ing) => <IngRow key={ing.id} ing={ing} />)}
-              <div onClick={addIng} style={{ padding: "14px 0", display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: W.textMuted, cursor: "pointer", borderBottom: `0.5px solid ${W.border}` }}>
-                <span style={{ fontSize: 18, color: W.textFaint }}>+</span> 재료 더하기
-              </div>
+              {showSearchWeb ? (
+                <div style={{ padding: "12px 0", borderBottom: `0.5px solid ${W.border}` }}>
+                  <IngredientSearch
+                    onSelect={(item) => { addIng(item); setShowSearchWeb(false); }}
+                    placeholder="재료 검색 또는 직접 추가..."
+                  />
+                </div>
+              ) : (
+                <div onClick={() => setShowSearchWeb(true)} style={{ padding: "14px 0", display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: W.textMuted, cursor: "pointer", borderBottom: `0.5px solid ${W.border}` }}>
+                  <span style={{ fontSize: 18, color: W.textFaint }}>+</span> 재료 더하기
+                </div>
+              )}
 
               <div style={{ marginTop: 28 }}>
                 <div style={{ fontFamily: W.mono, fontSize: 10, letterSpacing: 1.6, color: W.textFaint, marginBottom: 12, textTransform: "uppercase" }}>METHOD</div>
@@ -276,7 +353,15 @@ export default function MixPage() {
             <GlassSilhouette type="coupe" size={110} stroke={T.accent} liquid={T.accent} fillLevel={fillLevel} strokeWidth={1.2} />
             <div style={{ flex: 1, paddingBottom: 10 }}>
               <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.4, color: T.darkTextFaint, marginBottom: 6, textTransform: "uppercase" }}>EST. RESULT</div>
-              <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: -0.3, marginBottom: 6 }}>{displayResult.name}</div>
+              {result ? (
+                <input
+                  value={customName}
+                  onChange={(e) => setCustomName(e.target.value)}
+                  style={{ fontSize: 16, fontWeight: 600, letterSpacing: -0.3, marginBottom: 6, background: "transparent", border: "none", borderBottom: `1px solid ${T.darkBorderStrong}`, outline: "none", color: T.darkText, fontFamily: T.sans, width: "100%", padding: "2px 0" }}
+                />
+              ) : (
+                <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: -0.3, marginBottom: 6 }}>{displayResult.name}</div>
+              )}
               <div style={{ fontFamily: T.mono, fontSize: 11, color: T.darkTextMuted }}>ABV ~{displayResult.calculatedAbv}% · {totalVolume}ml</div>
             </div>
           </div>
@@ -284,9 +369,19 @@ export default function MixPage() {
           <div style={{ padding: "0 24px" }}>
             <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.6, color: T.darkTextFaint, marginBottom: 12, textTransform: "uppercase" }}>INGREDIENTS · {ings.length}</div>
             {ings.map((ing) => <IngRow key={ing.id} ing={ing} dark />)}
-            <div onClick={addIng} style={{ padding: "14px 0", display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: T.darkTextMuted, cursor: "pointer", borderBottom: `0.5px solid ${T.darkBorder}` }}>
-              <span style={{ fontSize: 18, color: T.darkTextFaint }}>+</span> 재료 더하기
-            </div>
+            {showSearchMob ? (
+              <div style={{ padding: "12px 0", borderBottom: `0.5px solid ${T.darkBorder}` }}>
+                <IngredientSearch
+                  dark
+                  onSelect={(item) => { addIng(item); setShowSearchMob(false); }}
+                  placeholder="재료 검색 또는 직접 추가..."
+                />
+              </div>
+            ) : (
+              <div onClick={() => setShowSearchMob(true)} style={{ padding: "14px 0", display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: T.darkTextMuted, cursor: "pointer", borderBottom: `0.5px solid ${T.darkBorder}` }}>
+                <span style={{ fontSize: 18, color: T.darkTextFaint }}>+</span> 재료 더하기
+              </div>
+            )}
           </div>
 
           <div style={{ padding: "20px 24px" }}>
@@ -315,6 +410,27 @@ export default function MixPage() {
                 <div style={{ fontFamily: T.mono, fontSize: 9, letterSpacing: 1.4, color: T.accent, marginBottom: 8, textTransform: "uppercase" }}>BARTENDER&apos;S TAKE</div>
                 <p style={{ margin: 0, fontSize: 14, lineHeight: 1.65 }}>{result.description}</p>
                 {result.aroma && <p style={{ margin: "8px 0 0", fontSize: 12, color: T.darkTextMuted, lineHeight: 1.6 }}>🌿 {result.aroma}</p>}
+              </div>
+              <div style={{ marginTop: 14 }}>
+                {isLoggedIn ? (
+                  saveStatus === "saved" && savedId ? (
+                    <Link href={`/cocktail/${savedId}`} style={{ textDecoration: "none" }}>
+                      <div style={{ padding: "12px 16px", borderRadius: 10, background: "rgba(184,135,82,0.1)", border: `0.5px solid ${T.accent}`, fontSize: 13, color: T.accent, fontFamily: T.mono, letterSpacing: 0.3, textAlign: "center" }}>
+                        ✓ 저장됨 — 레시피 보기
+                      </div>
+                    </Link>
+                  ) : (
+                    <button onClick={saveRecipe} disabled={saveStatus === "saving"} style={{ width: "100%", padding: "12px", borderRadius: 10, border: `0.5px solid ${T.accent}`, background: "transparent", fontSize: 13, color: T.accent, fontFamily: T.sans, cursor: saveStatus === "saving" ? "not-allowed" : "pointer", opacity: saveStatus === "saving" ? 0.6 : 1 }}>
+                      {saveStatus === "saving" ? "저장 중..." : saveStatus === "error" ? "저장 실패 — 다시 시도" : "레시피 저장하기"}
+                    </button>
+                  )
+                ) : (
+                  <Link href="/login" style={{ textDecoration: "none" }}>
+                    <div style={{ padding: "12px 16px", borderRadius: 10, border: `0.5px solid ${T.darkBorderStrong}`, fontSize: 13, color: T.darkTextMuted, textAlign: "center", fontFamily: T.sans }}>
+                      로그인하면 레시피를 저장할 수 있어요
+                    </div>
+                  </Link>
+                )}
               </div>
             </div>
           )}

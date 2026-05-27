@@ -9,6 +9,7 @@ const DILUTION_RATES: Record<MixMethod, number> = {
   build: 0.125,
   blending: 0.35,
   neat: 0,
+  floating: 0.05,
 };
 
 const TASTE_AROMA_PROMPT = `당신은 전문 바텐더입니다. 칵테일 재료와 계산된 도수를 바탕으로
@@ -36,23 +37,109 @@ export function calculateAbv(ingredients: MixIngredient[], method: MixMethod): n
   return Math.round(baseAbv * (1 - dilutionRate) * 10) / 10;
 }
 
+// 재료 이름 키워드 → 맛 기여값 (규칙 기반)
+function ruleBased(ingredients: MixIngredient[], calculatedAbv: number): MixAnalysisResult {
+  const totalVol = ingredients.reduce((s, i) => s + i.amount, 0) || 1;
+
+  let sw = 0, so = 0, bi = 0, fr = 0;
+
+  for (const ing of ingredients) {
+    const w = ing.amount / totalVol; // 비중
+    const n = ing.name.toLowerCase();
+
+    // 단맛
+    if (/시럽|슈거|설탕|그레나딘|아마레토|베일리|리큐|코인트로|코앵|아페롤|피치|멜론|코코넛/.test(n)) sw += w * 0.8;
+    else if (/오렌지 주스|파인애플 주스|망고|패션/.test(n)) sw += w * 0.55;
+    else if (/주스/.test(n)) sw += w * 0.2;
+
+    // 신맛
+    if (/레몬 주스|라임 주스|레몬|라임/.test(n)) so += w * 0.85;
+    else if (/자몽|그레이프프루트|크랜베리/.test(n)) so += w * 0.6;
+    else if (/식초|사이다/.test(n)) so += w * 0.4;
+
+    // 쓴맛
+    if (/비터스|앙고스투라|캄파리|아페롤|압생트/.test(n)) bi += w * 0.9;
+    else if (/드라이 베르무트|베르무트/.test(n)) bi += w * 0.35;
+    else if (/스타우트|에일|맥주/.test(n)) bi += w * 0.4;
+
+    // 상쾌함
+    if (/민트|소다|탄산|진저비어|진저에일|소다수/.test(n)) fr += w * 0.85;
+    else if (/라임 주스|레몬 주스|자몽/.test(n)) fr += w * 0.5;
+    else if (/오이|바질|허브/.test(n)) fr += w * 0.6;
+  }
+
+  const strength = Math.min(calculatedAbv / 45, 1);
+
+  // 주재료 이름으로 칵테일 이름 추론
+  const spirits = ingredients
+    .filter(i => i.abv >= 20)
+    .sort((a, b) => b.amount - a.amount);
+
+  const mainSpirit = spirits[0]?.name ?? "나만의 칵테일";
+
+  const allNames = ingredients.map(i => i.name.toLowerCase()).join(" ");
+  const hasMint = /민트/.test(allNames);
+  const hasSoda = /소다|탄산/.test(allNames);
+
+  const suggestedName = (() => {
+    if (spirits.length === 0) return "나만의 목테일";
+    const n = mainSpirit.toLowerCase();
+    if (n.includes("진")) return so > 0.3 ? "진 사워" : fr > 0.4 ? "진 토닉" : "진 스페셜";
+    if (n.includes("보드카")) return fr > 0.4 ? "보드카 소다" : "보드카 스페셜";
+    if (n.includes("럼")) {
+      if (hasMint && hasSoda) return "모히토 스타일";
+      return so > 0.3 ? "다이키리 스타일" : "럼 스페셜";
+    }
+    if (n.includes("위스키")) return bi > 0.4 ? "위스키 사워" : hasSoda ? "위스키 하이볼" : "위스키 스페셜";
+    if (n.includes("테킬라")) return so > 0.15 ? "마르가리타 스타일" : "테킬라 스페셜";
+    return `${mainSpirit} 스페셜`;
+  })();
+
+  const description = (() => {
+    const parts: string[] = [];
+    if (sw > 0.4) parts.push("달콤한");
+    if (so > 0.3) parts.push("상큼한");
+    if (bi > 0.4) parts.push("쌉쌀한");
+    if (fr > 0.4) parts.push("청량한");
+    if (strength > 0.6) parts.push("강한");
+    const flavor = parts.length > 0 ? parts.join("고 ") : "균형 잡힌";
+    return `${flavor} 칵테일입니다. ${mainSpirit} 베이스로 만든 나만의 레시피예요.`;
+  })();
+
+  const aroma = (() => {
+    const aromas: string[] = [];
+    if (/민트/.test(ingredients.map(i => i.name).join(" "))) aromas.push("민트의 청량감");
+    if (/라임|레몬/.test(ingredients.map(i => i.name).join(" "))) aromas.push("시트러스 향");
+    if (/오렌지/.test(ingredients.map(i => i.name).join(" "))) aromas.push("오렌지 향");
+    if (spirits.length > 0 && spirits[0].abv >= 35) aromas.push("알코올의 따뜻한 기운");
+    return aromas.length > 0 ? aromas.join(", ") + "이 느껴져요." : "재료가 어우러진 복합적인 향이에요.";
+  })();
+
+  return {
+    calculatedAbv,
+    taste: {
+      sweetness: Math.min(sw, 1),
+      sourness: Math.min(so, 1),
+      bitterness: Math.min(bi, 1),
+      strength,
+      freshness: Math.min(fr, 1),
+    },
+    aroma,
+    description,
+    name: suggestedName,
+  };
+}
+
 export async function mixAnalyze(
   ingredients: MixIngredient[],
   method: MixMethod,
   notes?: string
 ): Promise<MixAnalysisResult> {
   const calculatedAbv = calculateAbv(ingredients, method);
-  const totalVolume = ingredients.reduce((s, i) => s + i.amount, 0);
 
-  const fallback: MixAnalysisResult = {
-    calculatedAbv,
-    taste: { sweetness: 0.4, sourness: 0.3, bitterness: 0.2, strength: calculatedAbv / 50, freshness: 0.4 },
-    aroma: "재료를 분석할 수 없습니다.",
-    description: "재료를 확인해 주세요.",
-    name: "나만의 칵테일",
-  };
-
-  if (ingredients.length === 0) return fallback;
+  if (ingredients.length === 0) {
+    return ruleBased([], calculatedAbv);
+  }
 
   try {
     const ingredientDesc = ingredients
@@ -66,11 +153,11 @@ export async function mixAnalyze(
     });
 
     const result = await model.generateContent(
-      `재료: ${ingredientDesc}\n제조법: ${method}\n총 볼륨: ${totalVolume}ml\n계산된 도수: ${calculatedAbv}%${notes ? `\n메모: ${notes}` : ""}`
+      `재료: ${ingredientDesc}\n제조법: ${method}\n총 볼륨: ${ingredients.reduce((s, i) => s + i.amount, 0)}ml\n계산된 도수: ${calculatedAbv}%${notes ? `\n메모: ${notes}` : ""}`
     );
 
     const parsed = JSON.parse(result.response.text()) as unknown;
-    if (typeof parsed !== "object" || parsed === null) return fallback;
+    if (typeof parsed !== "object" || parsed === null) return ruleBased(ingredients, calculatedAbv);
 
     const p = parsed as Record<string, unknown>;
     const taste: CocktailVector = {
@@ -89,6 +176,7 @@ export async function mixAnalyze(
       name: String(p.suggestedName ?? "나만의 칵테일"),
     };
   } catch {
-    return fallback;
+    // Gemini 실패(쿼터 초과 등) 시 규칙 기반 분석으로 fallback
+    return ruleBased(ingredients, calculatedAbv);
   }
 }
