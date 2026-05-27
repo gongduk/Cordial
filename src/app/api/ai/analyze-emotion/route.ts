@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     const emotion = await analyzeEmotion(text);
 
     const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-    const userId = token?.id as string | undefined;
+    const userId = (token?.id ?? token?.sub) as string | undefined;
 
     await prisma.emotionLog.create({
       data: {

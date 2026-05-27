@@ -33,9 +33,15 @@ const T = {
 const Q2_OPTIONS = ["비 오는 창가", "늦은 저녁의 부엌", "도시의 야경", "조용한 서재"] as const;
 const Q3_CHIPS = ["산뜻한 시트러스", "깊은 단맛", "약간의 쓴맛", "허브향", "드라이한 끝맛", "플로럴"] as const;
 const Q4_HINTS = ["평온", "약간 들뜸", "아련함", "여유롭게"] as const;
+const CAPACITY_OPTIONS = [
+  { value: "LOW" as const, label: "가볍게", sub: "한두 잔이면 충분해요" },
+  { value: "MEDIUM" as const, label: "적당히", sub: "보통 마시는 편이에요" },
+  { value: "HIGH" as const, label: "오늘은 좀", sub: "충분히 즐기고 싶어요" },
+];
 
 type Q2Option = (typeof Q2_OPTIONS)[number];
 type Q3Chip = (typeof Q3_CHIPS)[number];
+type Capacity = "LOW" | "MEDIUM" | "HIGH";
 
 interface StepContentProps {
   theme: "dark" | "light";
@@ -43,21 +49,31 @@ interface StepContentProps {
   q1Value: number;
   setQ1Value: (v: number) => void;
   q2Selected: Q2Option | null;
-  setQ2Selected: (v: Q2Option) => void;
+  setQ2Selected: (v: Q2Option | null) => void;
+  q2Other: string;
+  setQ2Other: (v: string) => void;
   q3Selected: Set<Q3Chip>;
   toggleQ3: (chip: Q3Chip) => void;
+  q3Other: string;
+  setQ3Other: (v: string) => void;
   q4Text: string;
   setQ4Text: (v: string) => void;
+  drinkingCapacity: Capacity | null;
+  setDrinkingCapacity: (v: Capacity) => void;
   error: string | null;
+  setError: (v: string | null) => void;
 }
 
 function StepContent({
   theme, step,
   q1Value, setQ1Value,
   q2Selected, setQ2Selected,
+  q2Other, setQ2Other,
   q3Selected, toggleQ3,
+  q3Other, setQ3Other,
   q4Text, setQ4Text,
-  error,
+  drinkingCapacity, setDrinkingCapacity,
+  error, setError,
 }: StepContentProps) {
   const dark = theme === "dark";
   const accent = T.accent;
@@ -114,7 +130,7 @@ function StepContent({
       </p>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
         {Q2_OPTIONS.map(opt => (
-          <button key={opt} onClick={() => setQ2Selected(opt)} style={{
+          <button key={opt} onClick={() => { setQ2Selected(opt); setQ2Other(""); setError(null); }} style={{
             padding: "20px 18px", borderRadius: 14,
             background: q2Selected === opt ? txt : surface,
             color: q2Selected === opt ? bg : txt,
@@ -123,7 +139,24 @@ function StepContent({
             cursor: "pointer", textAlign: "left", fontFamily: sans, transition: "all 0.15s",
           }}>{opt}</button>
         ))}
+        <div style={{
+          gridColumn: "1 / -1", borderRadius: 14, overflow: "hidden",
+          border: `0.5px solid ${q2Other ? accent : border1}`, background: surface,
+        }}>
+          <input
+            type="text"
+            placeholder="기타 — 직접 입력"
+            value={q2Other}
+            maxLength={40}
+            onChange={e => { setQ2Other(e.target.value); if (e.target.value) { setQ2Selected(null); setError(null); } }}
+            style={{
+              width: "100%", padding: "18px", background: "transparent", border: "none", outline: "none",
+              fontSize: 14, color: txt, fontFamily: sans, letterSpacing: -0.2, boxSizing: "border-box",
+            }}
+          />
+        </div>
       </div>
+      {error && <p style={{ marginTop: 16, color: accent, fontSize: 13, letterSpacing: -0.1 }}>{error}</p>}
     </div>
   );
 
@@ -151,10 +184,25 @@ function StepContent({
           );
         })}
       </div>
+      <div style={{ marginTop: 12, borderRadius: 100, overflow: "hidden", border: `0.5px solid ${q3Other ? accent : borderS}`, background: "transparent" }}>
+        <input
+          type="text"
+          placeholder="기타 — 직접 입력 (예: 스모키한, 우디한)"
+          value={q3Other}
+          maxLength={40}
+          onChange={e => { setQ3Other(e.target.value); if (e.target.value) setError(null); }}
+          style={{
+            width: "100%", padding: "12px 18px", background: "transparent", border: "none", outline: "none",
+            fontSize: 13, color: q3Other ? (dark ? T.darkText : W.text) : txtMuted,
+            fontFamily: sans, letterSpacing: -0.1, boxSizing: "border-box",
+          }}
+        />
+      </div>
+      {error && <p style={{ marginTop: 16, color: accent, fontSize: 13, letterSpacing: -0.1 }}>{error}</p>}
     </div>
   );
 
-  return (
+  if (step === 4) return (
     <div>
       <div style={{ fontFamily: mono, fontSize: 11, letterSpacing: 1.6, color: accent, marginBottom: 14 }}>QUESTION 04</div>
       <h2 style={{ fontSize: 26, fontWeight: 600, letterSpacing: -0.5, lineHeight: 1.35, margin: "0 0 10px", color: txt }}>
@@ -191,6 +239,37 @@ function StepContent({
       {error && <p style={{ marginTop: 16, color: accent, fontSize: 13 }}>{error}</p>}
     </div>
   );
+
+  // step === 5
+  return (
+    <div>
+      <div style={{ fontFamily: mono, fontSize: 11, letterSpacing: 1.6, color: accent, marginBottom: 14 }}>QUESTION 05</div>
+      <h2 style={{ fontSize: 26, fontWeight: 600, letterSpacing: -0.5, lineHeight: 1.35, margin: "0 0 10px", color: txt }}>
+        오늘은 얼마나<br />드실 것 같아요?
+      </h2>
+      <p style={{ fontSize: 13, color: txtMuted, lineHeight: 1.6, letterSpacing: -0.2, marginBottom: 28, marginTop: 0 }}>
+        주량에 맞는 칵테일을 더 잘 찾아드릴 수 있어요.
+      </p>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        {CAPACITY_OPTIONS.map(({ value, label, sub }) => {
+          const sel = drinkingCapacity === value;
+          return (
+            <button key={value} onClick={() => { setDrinkingCapacity(value); setError(null); }} style={{
+              padding: "18px 20px", borderRadius: 14, textAlign: "left", cursor: "pointer",
+              background: sel ? txt : surface,
+              color: sel ? bg : txt,
+              border: sel ? "none" : `0.5px solid ${border1}`,
+              fontFamily: sans, transition: "all 0.15s",
+            }}>
+              <div style={{ fontSize: 15, fontWeight: 600, letterSpacing: -0.2 }}>{label}</div>
+              <div style={{ fontSize: 12, opacity: 0.6, marginTop: 4, letterSpacing: -0.1 }}>{sub}</div>
+            </button>
+          );
+        })}
+      </div>
+      {error && <p style={{ marginTop: 16, color: accent, fontSize: 13 }}>{error}</p>}
+    </div>
+  );
 }
 
 export default function EmotionPage() {
@@ -198,15 +277,19 @@ export default function EmotionPage() {
   const [step, setStep] = useState(1);
   const [q1Value, setQ1Value] = useState(35);
   const [q2Selected, setQ2Selected] = useState<Q2Option | null>(null);
+  const [q2Other, setQ2Other] = useState("");
   const [q3Selected, setQ3Selected] = useState<Set<Q3Chip>>(new Set());
+  const [q3Other, setQ3Other] = useState("");
   const [q4Text, setQ4Text] = useState("");
+  const [drinkingCapacity, setDrinkingCapacity] = useState<Capacity | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   function buildEmotionText(): string {
     const moodLabel = q1Value < 30 ? "매우 차분함" : q1Value < 50 ? "차분함" : q1Value < 70 ? "보통" : "활기참";
-    const scene = q2Selected ? `가장 가까운 풍경: ${q2Selected}.` : "";
-    const tastes = q3Selected.size > 0 ? `선호하는 맛: ${Array.from(q3Selected).join(", ")}.` : "";
+    const scene = q2Selected ? `가장 가까운 풍경: ${q2Selected}.` : q2Other.trim() ? `가장 가까운 풍경: ${q2Other.trim()}.` : "";
+    const tasteList = [...Array.from(q3Selected), ...(q3Other.trim() ? [q3Other.trim()] : [])];
+    const tastes = tasteList.length > 0 ? `선호하는 맛: ${tasteList.join(", ")}.` : "";
     const freeText = q4Text.trim() ? `오늘 하루: ${q4Text.trim()}.` : "";
     return [`오늘 기분의 톤: ${moodLabel} (${q1Value}/100).`, scene, tastes, freeText].filter(Boolean).join(" ");
   }
@@ -227,6 +310,7 @@ export default function EmotionPage() {
       }
       const emotionVector = await res.json();
       sessionStorage.setItem("emotionVector", JSON.stringify(emotionVector));
+      sessionStorage.setItem("drinkingCapacity", drinkingCapacity ?? "MEDIUM");
       router.push("/recommend");
     } catch {
       setError("네트워크 오류가 발생했습니다.");
@@ -235,21 +319,35 @@ export default function EmotionPage() {
     }
   }
 
-  function next() { if (step < 4) setStep(s => s + 1); else submit(); }
-  function prev() { if (step > 1) setStep(s => s - 1); else router.back(); }
+  function validate(): string | null {
+    if (step === 2 && !q2Selected && !q2Other.trim()) return "풍경을 선택하거나 직접 입력해주세요.";
+    if (step === 3 && q3Selected.size === 0 && !q3Other.trim()) return "맛을 하나 이상 선택하거나 직접 입력해주세요.";
+    if (step === 5 && !drinkingCapacity) return "주량을 선택해주세요.";
+    return null;
+  }
+
+  function next() {
+    const msg = validate();
+    if (msg) { setError(msg); return; }
+    setError(null);
+    if (step < 5) setStep(s => s + 1); else submit();
+  }
+  function prev() { setError(null); if (step > 1) setStep(s => s - 1); else router.back(); }
   function toggleQ3(chip: Q3Chip) {
+    setError(null);
     setQ3Selected(prev => { const n = new Set(prev); n.has(chip) ? n.delete(chip) : n.add(chip); return n; });
   }
 
-  const ctaLabel = loading ? "분석 중..." : step < 4 ? "다음" : "오늘의 한 잔 찾기";
-  const progressWidth = `${(step / 4) * 100}%`;
+  const ctaLabel = loading ? "분석 중..." : step < 5 ? "다음" : "오늘의 한 잔 찾기";
+  const progressWidth = `${(step / 5) * 100}%`;
 
   const stepProps: Omit<StepContentProps, "theme"> = {
     step, q1Value, setQ1Value,
-    q2Selected, setQ2Selected,
-    q3Selected, toggleQ3,
+    q2Selected, setQ2Selected, q2Other, setQ2Other,
+    q3Selected, toggleQ3, q3Other, setQ3Other,
     q4Text, setQ4Text,
-    error,
+    drinkingCapacity, setDrinkingCapacity,
+    error, setError,
   };
 
   return (
@@ -259,7 +357,7 @@ export default function EmotionPage() {
         <WebNav active="/emotion" />
         <div style={{ maxWidth: 640, margin: "0 auto", padding: "56px 40px" }}>
           <div style={{ display: "flex", gap: 8, marginBottom: 48 }}>
-            {[1, 2, 3, 4].map(n => (
+            {[1, 2, 3, 4, 5].map(n => (
               <div key={n} style={{ flex: 1, height: 3, borderRadius: 2, background: n <= step ? W.accent : W.border, transition: "background 0.3s" }} />
             ))}
           </div>
@@ -292,9 +390,13 @@ export default function EmotionPage() {
               </svg>
             </button>
             <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.6, textTransform: "uppercase", color: T.darkTextMuted }}>
-              {step < 4 ? `0${step} / 04` : "04 / 04"}
+              {String(step).padStart(2, "0")} / 05
             </div>
-            <button onClick={next} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, color: T.darkTextMuted, fontFamily: T.sans }}>건너뛰기</button>
+            {step === 4 ? (
+              <button onClick={next} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, color: T.darkTextMuted, fontFamily: T.sans }}>건너뛰기</button>
+            ) : (
+              <div style={{ width: 52 }} />
+            )}
           </div>
 
           <div style={{ padding: "0 24px", marginBottom: 40 }}>
