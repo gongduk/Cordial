@@ -1,0 +1,238 @@
+import Link from "next/link";
+import { GlassSilhouette, GlassGlyph } from "@/shared/ui/GlassSilhouette";
+import { CordialLogo } from "@/shared/ui/CordialLogo";
+import { WebNav } from "@/shared/ui/WebNav";
+
+const W = {
+  accent: "#B88752",
+  bg: "#FCFBF9",
+  surface: "#FFFFFF",
+  border: "rgba(40,30,20,0.08)",
+  text: "#1A1612",
+  textMuted: "rgba(26,22,18,0.62)",
+  textFaint: "rgba(26,22,18,0.38)",
+  sans: '"Pretendard Variable","Pretendard",-apple-system,BlinkMacSystemFont,sans-serif',
+  mono: '"JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace',
+} as const;
+
+const T = {
+  accent: "#B88752",
+  darkBg: "#15110D",
+  darkSurface: "#1C1814",
+  darkBorder: "rgba(255,246,232,0.08)",
+  darkText: "#F5EFE6",
+  darkTextMuted: "rgba(245,239,230,0.62)",
+  darkTextFaint: "rgba(245,239,230,0.38)",
+  sans: '"Pretendard Variable","Pretendard",-apple-system,BlinkMacSystemFont,sans-serif',
+  mono: '"JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace',
+} as const;
+
+const SECONDARY_ITEMS = [
+  { num: "02", name: "내 술로 만들기", glass: "rocks" as const, desc: "가진 재료로 만들 수 있는 칵테일", href: "/pantry" },
+  { num: "03", name: "모의 제조", glass: "highball" as const, desc: "재료를 조합해 맛·도수·향 분석", href: "/mix" },
+  { num: "04", name: "바 찾기", glass: "coupe" as const, desc: "분위기와 칵테일로 주변 바 매칭", href: "/bars" },
+] as const;
+
+const RECENT = [
+  { name: "Whiskey Sour", date: "5월 5일 · 차분함", glass: "rocks" as const },
+  { name: "Aviation", date: "5월 2일 · 그리움", glass: "coupe" as const },
+] as const;
+
+export default function UserHomePage() {
+  return (
+    <>
+      {/* ── WEB ── */}
+      <div className="cordial-web" style={{ background: W.bg, minHeight: "100vh", color: W.text, fontFamily: W.sans }}>
+        <WebNav active="/home" />
+        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "56px 40px" }}>
+          {/* Hero */}
+          <div style={{ marginBottom: 56 }}>
+            <div style={{ fontFamily: W.mono, fontSize: 10, letterSpacing: 1.8, color: W.accent, marginBottom: 18, textTransform: "uppercase" }}>
+              Tonight · 오늘
+            </div>
+            <h1 style={{ fontSize: 52, fontWeight: 600, letterSpacing: -1.2, lineHeight: 1.1, margin: "0 0 18px" }}>
+              오늘의 당신을<br />한 잔으로 읽어드릴게요.
+            </h1>
+            <p style={{ fontSize: 16, color: W.textMuted, lineHeight: 1.65, letterSpacing: -0.2, margin: 0 }}>
+              기분, 가진 재료, 가고 싶은 분위기까지. 바텐더가 오늘의 한 잔을 골라드려요.
+            </p>
+          </div>
+
+          {/* Main CTA */}
+          <Link href="/emotion" style={{ textDecoration: "none", display: "block", marginBottom: 14 }}>
+            <div style={{
+              background: W.text, color: W.bg,
+              borderRadius: 18, padding: "36px 40px",
+              display: "flex", alignItems: "center", gap: 40,
+            }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontFamily: W.mono, fontSize: 9, letterSpacing: 1.6, color: W.accent, marginBottom: 12, textTransform: "uppercase" }}>
+                  01 · MOOD RECOMMENDATION
+                </div>
+                <div style={{ fontSize: 30, fontWeight: 600, letterSpacing: -0.6, lineHeight: 1.2, marginBottom: 12 }}>
+                  감정으로 추천받기
+                </div>
+                <div style={{ fontSize: 14, color: "rgba(252,251,249,0.62)", lineHeight: 1.6, letterSpacing: -0.1 }}>
+                  간단한 질문 4개로 오늘의 한 잔을 찾아요
+                </div>
+              </div>
+              <GlassSilhouette type="martini" size={120} stroke={W.accent} liquid={W.accent} fillLevel={0.62} garnish strokeWidth={1.2} />
+            </div>
+          </Link>
+
+          {/* Secondary 3-col */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 14, marginBottom: 48 }}>
+            {SECONDARY_ITEMS.map(item => (
+              <Link key={item.num} href={item.href} style={{ textDecoration: "none" }}>
+                <div style={{
+                  background: W.surface, border: `0.5px solid ${W.border}`,
+                  borderRadius: 14, padding: "24px 24px",
+                  display: "flex", flexDirection: "column", gap: 0,
+                }}>
+                  <GlassGlyph type={item.glass} size={28} color={W.accent} strokeWidth={1.3} />
+                  <div style={{ fontFamily: W.mono, fontSize: 9, letterSpacing: 1.4, color: W.textFaint, marginTop: 18, marginBottom: 6, textTransform: "uppercase" }}>{item.num}</div>
+                  <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: -0.3, marginBottom: 6 }}>{item.name}</div>
+                  <div style={{ fontSize: 12, color: W.textMuted, lineHeight: 1.55 }}>{item.desc}</div>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          {/* Recent */}
+          <div style={{ fontFamily: W.mono, fontSize: 10, letterSpacing: 1.6, color: W.textFaint, textTransform: "uppercase", marginBottom: 18 }}>RECENT</div>
+          <div style={{ display: "flex", gap: 12 }}>
+            {RECENT.map(r => (
+              <div key={r.name} style={{
+                background: W.surface, border: `0.5px solid ${W.border}`,
+                borderRadius: 12, padding: "16px 22px",
+                display: "flex", alignItems: "center", gap: 14,
+              }}>
+                <GlassGlyph type={r.glass} size={22} color={W.accent} />
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 500, letterSpacing: -0.2 }}>{r.name}</div>
+                  <div style={{ fontSize: 11, color: W.textFaint, marginTop: 2 }}>{r.date}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── MOBILE ── */}
+      <div className="cordial-mob">
+        <div style={{
+          width: "100%", minHeight: "100vh",
+          background: T.darkBg, color: T.darkText, fontFamily: T.sans,
+          maxWidth: 430, margin: "0 auto", position: "relative", paddingBottom: 90,
+        }}>
+          <div style={{ paddingTop: 62, paddingBottom: 16, paddingLeft: 20, paddingRight: 20, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <CordialLogo size={14} color={T.accent} tracking={2} />
+            <svg width="20" height="20" viewBox="0 0 20 20" fill={T.darkTextMuted}>
+              <circle cx="4" cy="10" r="1.4" /><circle cx="10" cy="10" r="1.4" /><circle cx="16" cy="10" r="1.4" />
+            </svg>
+          </div>
+
+          <div style={{ padding: "28px 24px 36px" }}>
+            <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.6, color: T.accent, marginBottom: 16, textTransform: "uppercase" }}>Tonight · 오늘</div>
+            <h1 style={{ fontSize: 30, fontWeight: 600, letterSpacing: -0.6, lineHeight: 1.25, margin: 0, color: T.darkText }}>
+              오늘의 당신을<br />한 잔으로 읽어드릴게요.
+            </h1>
+            <p style={{ fontSize: 14, color: T.darkTextMuted, marginTop: 14, lineHeight: 1.6, letterSpacing: -0.2 }}>
+              기분, 가진 재료, 가고 싶은 분위기까지.<br />바텐더가 한 잔을 골라드려요.
+            </p>
+          </div>
+
+          <div style={{ padding: "0 20px 14px" }}>
+            <Link href="/emotion" style={{ textDecoration: "none" }}>
+              <div style={{
+                background: T.darkSurface, border: `0.5px solid ${T.darkBorder}`,
+                borderRadius: 18, padding: "22px 20px",
+                display: "flex", alignItems: "center", gap: 16, overflow: "hidden",
+              }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.4, color: T.accent, marginBottom: 6 }}>01 · MOOD</div>
+                  <div style={{ fontSize: 17, fontWeight: 600, marginBottom: 4, letterSpacing: -0.3, color: T.darkText }}>감정으로 추천받기</div>
+                  <div style={{ fontSize: 12, color: T.darkTextMuted, lineHeight: 1.5 }}>간단한 질문 4개로<br />오늘의 한 잔을 찾아요</div>
+                </div>
+                <GlassSilhouette type="martini" size={84} stroke={T.accent} liquid={T.accent} fillLevel={0.62} garnish strokeWidth={1.2} />
+              </div>
+            </Link>
+          </div>
+
+          <div style={{ padding: "0 20px", display: "flex", flexDirection: "column", gap: 10 }}>
+            {SECONDARY_ITEMS.map(item => (
+              <Link key={item.num} href={item.href} style={{ textDecoration: "none" }}>
+                <div style={{
+                  background: T.darkSurface, border: `0.5px solid ${T.darkBorder}`,
+                  borderRadius: 14, padding: "16px 18px",
+                  display: "flex", alignItems: "center", gap: 14,
+                }}>
+                  <GlassGlyph type={item.glass} size={28} color={T.darkTextMuted} strokeWidth={1.3} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 2 }}>
+                      <span style={{ fontFamily: T.mono, fontSize: 9, letterSpacing: 1.4, color: T.darkTextFaint }}>{item.num}</span>
+                      <span style={{ fontSize: 14, fontWeight: 500, letterSpacing: -0.2, color: T.darkText }}>{item.name}</span>
+                    </div>
+                    <div style={{ fontSize: 11, color: T.darkTextMuted, letterSpacing: -0.1 }}>{item.desc}</div>
+                  </div>
+                  <svg width="14" height="14" viewBox="0 0 20 20" fill="none" style={{ transform: "rotate(180deg)" }}>
+                    <path d="M12 4 L6 10 L12 16" stroke={T.darkTextFaint} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          <div style={{ padding: "32px 20px 20px" }}>
+            <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.6, color: T.darkTextFaint, textTransform: "uppercase", marginBottom: 14 }}>RECENT</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {RECENT.map(r => (
+                <div key={r.name} style={{ display: "flex", alignItems: "center", gap: 14, padding: "4px 0" }}>
+                  <GlassGlyph type={r.glass} size={22} color={T.darkTextMuted} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 14, fontWeight: 500, letterSpacing: -0.2, color: T.darkText }}>{r.name}</div>
+                    <div style={{ fontSize: 11, color: T.darkTextFaint, marginTop: 2 }}>{r.date}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <MobileTabBar active="home" />
+        </div>
+      </div>
+    </>
+  );
+}
+
+function MobileTabBar({ active }: { active: "home" | "pantry" | "mix" | "bars" }) {
+  const tabs = [
+    { id: "home" as const, label: "홈", glass: "martini" as const, href: "/home" },
+    { id: "pantry" as const, label: "내 술장", glass: "rocks" as const, href: "/pantry" },
+    { id: "mix" as const, label: "모의 제조", glass: "highball" as const, href: "/mix" },
+    { id: "bars" as const, label: "바", glass: "coupe" as const, href: "/bars" },
+  ] as const;
+  return (
+    <div style={{
+      position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)",
+      width: "100%", maxWidth: 430,
+      paddingBottom: 28, paddingTop: 10,
+      background: "linear-gradient(180deg,rgba(21,17,13,0) 0%,rgba(21,17,13,0.92) 30%,rgba(21,17,13,1) 60%)",
+      display: "flex", justifyContent: "space-around",
+      borderTop: "0.5px solid rgba(255,246,232,0.08)",
+    }}>
+      {tabs.map(t => {
+        const isActive = t.id === active;
+        const c = isActive ? "#B88752" : "rgba(245,239,230,0.38)";
+        return (
+          <Link key={t.id} href={t.href} style={{ textDecoration: "none" }}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, padding: "6px 12px" }}>
+              <GlassGlyph type={t.glass} size={22} color={c} strokeWidth={1.4} />
+              <span style={{ fontSize: 10, color: c, fontWeight: 500, fontFamily: '"Pretendard Variable","Pretendard",sans-serif' }}>{t.label}</span>
+            </div>
+          </Link>
+        );
+      })}
+    </div>
+  );
+}

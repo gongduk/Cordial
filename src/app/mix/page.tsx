@@ -1,0 +1,356 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { GlassSilhouette, GlassGlyph } from "@/shared/ui/GlassSilhouette";
+import { WebNav } from "@/shared/ui/WebNav";
+import type { GlassType } from "@/shared/ui/GlassSilhouette";
+import type { MixIngredient, MixMethod, MixAnalysisResult } from "@/shared/types";
+
+const W = {
+  accent: "#B88752",
+  bg: "#FCFBF9",
+  surface: "#FFFFFF",
+  border: "rgba(40,30,20,0.08)",
+  borderStrong: "rgba(40,30,20,0.16)",
+  text: "#1A1612",
+  textMuted: "rgba(26,22,18,0.62)",
+  textFaint: "rgba(26,22,18,0.38)",
+  sans: '"Pretendard Variable","Pretendard",-apple-system,BlinkMacSystemFont,sans-serif',
+  mono: '"JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace',
+} as const;
+
+const T = {
+  accent: "#B88752",
+  darkBg: "#15110D",
+  darkSurface: "#1C1814",
+  darkBorder: "rgba(255,246,232,0.08)",
+  darkBorderStrong: "rgba(255,246,232,0.14)",
+  darkText: "#F5EFE6",
+  darkTextMuted: "rgba(245,239,230,0.62)",
+  darkTextFaint: "rgba(245,239,230,0.38)",
+  sans: '"Pretendard Variable","Pretendard",-apple-system,BlinkMacSystemFont,sans-serif',
+  mono: '"JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace',
+} as const;
+
+const METHODS: { id: MixMethod; label: string; labelEn: string }[] = [
+  { id: "shaking", label: "셰이킹", labelEn: "Shaking" },
+  { id: "stirring", label: "스터링", labelEn: "Stirring" },
+  { id: "build", label: "빌드", labelEn: "Build" },
+  { id: "blending", label: "블렌딩", labelEn: "Blending" },
+  { id: "neat", label: "니트", labelEn: "Neat" },
+];
+
+const TABS = [
+  { id: "home" as const, label: "홈", glass: "martini" as GlassType, href: "/home" },
+  { id: "pantry" as const, label: "내 술장", glass: "rocks" as GlassType, href: "/pantry" },
+  { id: "mix" as const, label: "모의 제조", glass: "highball" as GlassType, href: "/mix" },
+  { id: "bars" as const, label: "바", glass: "coupe" as GlassType, href: "/bars" },
+] as const;
+
+const INITIAL_INGS: (MixIngredient & { id: number })[] = [
+  { id: 1, name: "진", amount: 45, abv: 40 },
+  { id: 2, name: "레몬 주스", amount: 20, abv: 0 },
+  { id: 3, name: "심플 시럽", amount: 15, abv: 0 },
+];
+
+const PROFILE_KEYS = ["sourness", "sweetness", "bitterness", "strength", "freshness"] as const;
+const PROFILE_LABELS: Record<(typeof PROFILE_KEYS)[number], string> = {
+  sourness: "SOUR",
+  sweetness: "SWEET",
+  bitterness: "BITTER",
+  strength: "STRONG",
+  freshness: "FRESH",
+};
+
+let nextId = 4;
+
+export default function MixPage() {
+  const [ings, setIngs] = useState(INITIAL_INGS);
+  const [method, setMethod] = useState<MixMethod>("shaking");
+  const [notes, setNotes] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<MixAnalysisResult | null>(null);
+
+  const totalVolume = ings.reduce((s, i) => s + i.amount, 0);
+  const fillLevel = Math.min(totalVolume / 150, 1);
+
+  function addIng() {
+    const name = prompt("재료 이름을 입력하세요");
+    if (!name?.trim()) return;
+    const abvStr = prompt("도수 (%)를 입력하세요 (없으면 0)") ?? "0";
+    const abv = parseFloat(abvStr) || 0;
+    setIngs((prev) => [...prev, { id: nextId++, name: name.trim(), amount: 30, abv }]);
+  }
+
+  function updateField(id: number, field: "amount" | "abv", value: string) {
+    const num = parseFloat(value);
+    if (isNaN(num) || num < 0) return;
+    setIngs((prev) => prev.map((i) => i.id === id ? { ...i, [field]: num } : i));
+  }
+
+  function removeIng(id: number) {
+    setIngs((prev) => prev.filter((i) => i.id !== id));
+  }
+
+  async function analyze() {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/ai/mix-analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ingredients: ings, method, notes }),
+      });
+      const data = await res.json() as MixAnalysisResult;
+      setResult(data);
+    } catch {
+      alert("분석 중 오류가 발생했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const displayResult = result ?? {
+    calculatedAbv: 0,
+    taste: { sweetness: 0, sourness: 0, bitterness: 0, strength: 0, freshness: 0 },
+    aroma: "",
+    description: "",
+    name: "나만의 칵테일",
+  };
+
+  function IngRow({ ing, dark }: { ing: (typeof INITIAL_INGS)[number]; dark?: boolean }) {
+    const txt = dark ? T.darkText : W.text;
+    const border1 = dark ? T.darkBorder : W.border;
+    const accent = T.accent;
+    const mono = T.mono;
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 0", borderBottom: `0.5px solid ${border1}` }}>
+        <span style={{ flex: 1, fontSize: 14, fontWeight: 500, color: txt }}>{ing.name}</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <input
+            type="number" min="0" step="5"
+            value={ing.amount}
+            onChange={(e) => updateField(ing.id, "amount", e.target.value)}
+            style={{ width: 56, background: "transparent", border: "none", borderBottom: `0.5px solid ${accent}`, outline: "none", fontSize: 13, color: accent, fontFamily: mono, textAlign: "right", padding: "2px 0" }}
+          />
+          <span style={{ fontSize: 11, color: dark ? T.darkTextFaint : W.textFaint, fontFamily: mono }}>ml</span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          <input
+            type="number" min="0" max="100" step="1"
+            value={ing.abv}
+            onChange={(e) => updateField(ing.id, "abv", e.target.value)}
+            style={{ width: 42, background: "transparent", border: "none", borderBottom: `0.5px solid ${dark ? T.darkBorderStrong : W.borderStrong}`, outline: "none", fontSize: 12, color: dark ? T.darkTextMuted : W.textMuted, fontFamily: mono, textAlign: "right", padding: "2px 0" }}
+          />
+          <span style={{ fontSize: 11, color: dark ? T.darkTextFaint : W.textFaint, fontFamily: mono }}>%</span>
+        </div>
+        <button onClick={() => removeIng(ing.id)} style={{ background: "none", border: "none", cursor: "pointer", color: dark ? T.darkTextFaint : W.textFaint, fontSize: 18, lineHeight: 1, padding: "0 0 0 4px" }} aria-label="삭제">×</button>
+      </div>
+    );
+  }
+
+  function FlavorBars({ dark }: { dark?: boolean }) {
+    const txt = dark ? T.darkTextMuted : W.textMuted;
+    const border1 = dark ? T.darkBorder : W.border;
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {PROFILE_KEYS.map((k) => {
+          const v = Math.round(result ? result.taste[k] * 5 : 0);
+          return (
+            <div key={k} style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <span style={{ width: 60, fontFamily: T.mono, fontSize: 10, color: txt, letterSpacing: 1.2, textTransform: "uppercase" }}>{PROFILE_LABELS[k]}</span>
+              <div style={{ flex: 1, display: "flex", gap: 4 }}>
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <div key={n} style={{ flex: 1, height: 6, borderRadius: 1, background: n <= v ? T.accent : border1 }} />
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {/* ── WEB ── */}
+      <div className="cordial-web" style={{ background: W.bg, minHeight: "100vh", color: W.text, fontFamily: W.sans }}>
+        <WebNav active="/mix" />
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "56px 40px" }}>
+          <div style={{ marginBottom: 40 }}>
+            <div style={{ fontFamily: W.mono, fontSize: 10, letterSpacing: 1.8, color: W.accent, marginBottom: 14, textTransform: "uppercase" }}>Mix Lab</div>
+            <h1 style={{ fontSize: 44, fontWeight: 600, letterSpacing: -1, lineHeight: 1.1, margin: "0 0 14px" }}>당신만의<br />레시피.</h1>
+            <p style={{ fontSize: 15, color: W.textMuted, margin: 0, letterSpacing: -0.2 }}>재료를 조합하면 도수·맛·향을 분석해드려요.</p>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+              <div style={{ display: "flex", justifyContent: "center" }}>
+                <GlassSilhouette type="coupe" size={180} stroke={W.accent} liquid={W.accent} fillLevel={fillLevel} strokeWidth={1.2} />
+              </div>
+
+              <div>
+                <div style={{ fontFamily: W.mono, fontSize: 10, letterSpacing: 1.6, color: W.textFaint, marginBottom: 12, textTransform: "uppercase" }}>EST. RESULT</div>
+                <div style={{ fontSize: 20, fontWeight: 600, letterSpacing: -0.3 }}>{displayResult.name}</div>
+                <div style={{ fontFamily: W.mono, fontSize: 12, color: W.textMuted, letterSpacing: 0.3, marginTop: 6 }}>
+                  ABV ~{displayResult.calculatedAbv}% · {totalVolume}ml
+                </div>
+              </div>
+
+              <div>
+                <div style={{ fontFamily: W.mono, fontSize: 10, letterSpacing: 1.6, color: W.textFaint, marginBottom: 16, textTransform: "uppercase" }}>FLAVOR PROFILE</div>
+                <FlavorBars />
+              </div>
+
+              {result && (
+                <div style={{ padding: "16px 18px", borderLeft: `2px solid ${W.accent}`, background: W.surface }}>
+                  <div style={{ fontFamily: W.mono, fontSize: 9, letterSpacing: 1.4, color: W.accent, marginBottom: 8, textTransform: "uppercase" }}>BARTENDER&apos;S TAKE</div>
+                  <p style={{ margin: 0, fontSize: 13, lineHeight: 1.65, color: W.text }}>{result.description}</p>
+                  {result.aroma && <p style={{ margin: "8px 0 0", fontSize: 12, color: W.textMuted, lineHeight: 1.6 }}>🌿 {result.aroma}</p>}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <div style={{ fontFamily: W.mono, fontSize: 10, letterSpacing: 1.6, color: W.textFaint, marginBottom: 16, textTransform: "uppercase" }}>INGREDIENTS · {ings.length}</div>
+              {ings.map((ing) => <IngRow key={ing.id} ing={ing} />)}
+              <div onClick={addIng} style={{ padding: "14px 0", display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: W.textMuted, cursor: "pointer", borderBottom: `0.5px solid ${W.border}` }}>
+                <span style={{ fontSize: 18, color: W.textFaint }}>+</span> 재료 더하기
+              </div>
+
+              <div style={{ marginTop: 28 }}>
+                <div style={{ fontFamily: W.mono, fontSize: 10, letterSpacing: 1.6, color: W.textFaint, marginBottom: 12, textTransform: "uppercase" }}>METHOD</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {METHODS.map((m) => (
+                    <button key={m.id} onClick={() => setMethod(m.id)} style={{
+                      padding: "8px 14px", borderRadius: 100, fontSize: 12,
+                      background: method === m.id ? W.text : "transparent",
+                      color: method === m.id ? W.bg : W.textMuted,
+                      border: `0.5px solid ${method === m.id ? W.text : W.borderStrong}`,
+                      cursor: "pointer", fontFamily: W.sans, transition: "all 0.15s",
+                    }}>{m.label}</button>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ marginTop: 28 }}>
+                <div style={{ fontFamily: W.mono, fontSize: 10, letterSpacing: 1.6, color: W.textFaint, marginBottom: 12, textTransform: "uppercase" }}>NOTES</div>
+                <div style={{ background: W.surface, border: `0.5px solid ${W.borderStrong}`, borderRadius: 12, padding: "14px 16px" }}>
+                  <textarea
+                    value={notes} onChange={(e) => setNotes(e.target.value)}
+                    placeholder="레몬 필을 뿌린다." rows={3}
+                    style={{ width: "100%", background: "transparent", border: "none", outline: "none", resize: "none", fontSize: 13, lineHeight: 1.7, color: W.text, fontFamily: W.sans }}
+                  />
+                </div>
+              </div>
+
+              <button onClick={analyze} disabled={loading || ings.length === 0} style={{
+                marginTop: 24, width: "100%", height: 48, borderRadius: 12,
+                background: W.accent, color: W.bg, border: "none", fontSize: 15,
+                fontWeight: 600, fontFamily: W.sans, cursor: loading ? "not-allowed" : "pointer",
+                opacity: loading ? 0.7 : 1, letterSpacing: -0.2,
+              }}>
+                {loading ? "분석 중..." : "AI 분석하기"}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── MOBILE ── */}
+      <div className="cordial-mob">
+        <div style={{ width: "100%", minHeight: "100vh", background: T.darkBg, color: T.darkText, fontFamily: T.sans, maxWidth: 430, margin: "0 auto", paddingBottom: 90, overflowY: "auto" }}>
+          <div style={{ paddingTop: 62, paddingBottom: 16, paddingLeft: 20, paddingRight: 20, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Link href="/home" style={{ textDecoration: "none", display: "flex" }}>
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12 4 L6 10 L12 16" stroke={T.darkText} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            </Link>
+            <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.6, textTransform: "uppercase", color: T.darkTextMuted }}>MIX LAB</div>
+            <button onClick={() => { setIngs(INITIAL_INGS); setNotes(""); setResult(null); }} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, color: T.darkTextMuted, fontFamily: T.sans }}>초기화</button>
+          </div>
+
+          <div style={{ padding: "8px 24px 24px" }}>
+            <h1 style={{ fontSize: 28, fontWeight: 600, letterSpacing: -0.6, margin: 0, lineHeight: 1.2 }}>당신만의<br />레시피.</h1>
+          </div>
+
+          <div style={{ padding: "0 24px 24px", display: "flex", alignItems: "flex-end", gap: 20 }}>
+            <GlassSilhouette type="coupe" size={110} stroke={T.accent} liquid={T.accent} fillLevel={fillLevel} strokeWidth={1.2} />
+            <div style={{ flex: 1, paddingBottom: 10 }}>
+              <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.4, color: T.darkTextFaint, marginBottom: 6, textTransform: "uppercase" }}>EST. RESULT</div>
+              <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: -0.3, marginBottom: 6 }}>{displayResult.name}</div>
+              <div style={{ fontFamily: T.mono, fontSize: 11, color: T.darkTextMuted }}>ABV ~{displayResult.calculatedAbv}% · {totalVolume}ml</div>
+            </div>
+          </div>
+
+          <div style={{ padding: "0 24px" }}>
+            <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.6, color: T.darkTextFaint, marginBottom: 12, textTransform: "uppercase" }}>INGREDIENTS · {ings.length}</div>
+            {ings.map((ing) => <IngRow key={ing.id} ing={ing} dark />)}
+            <div onClick={addIng} style={{ padding: "14px 0", display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: T.darkTextMuted, cursor: "pointer", borderBottom: `0.5px solid ${T.darkBorder}` }}>
+              <span style={{ fontSize: 18, color: T.darkTextFaint }}>+</span> 재료 더하기
+            </div>
+          </div>
+
+          <div style={{ padding: "20px 24px" }}>
+            <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.6, color: T.darkTextFaint, marginBottom: 12, textTransform: "uppercase" }}>METHOD</div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {METHODS.map((m) => (
+                <button key={m.id} onClick={() => setMethod(m.id)} style={{
+                  padding: "7px 12px", borderRadius: 100, fontSize: 12,
+                  background: method === m.id ? T.accent : "transparent",
+                  color: method === m.id ? T.darkBg : T.darkTextMuted,
+                  border: `0.5px solid ${method === m.id ? T.accent : T.darkBorderStrong}`,
+                  cursor: "pointer", fontFamily: T.sans,
+                }}>{m.label}</button>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ padding: "0 24px 20px" }}>
+            <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.6, color: T.darkTextFaint, marginBottom: 12, textTransform: "uppercase" }}>FLAVOR PROFILE</div>
+            <FlavorBars dark />
+          </div>
+
+          {result && (
+            <div style={{ padding: "0 24px 20px" }}>
+              <div style={{ padding: "16px 18px", borderLeft: `2px solid ${T.accent}` }}>
+                <div style={{ fontFamily: T.mono, fontSize: 9, letterSpacing: 1.4, color: T.accent, marginBottom: 8, textTransform: "uppercase" }}>BARTENDER&apos;S TAKE</div>
+                <p style={{ margin: 0, fontSize: 14, lineHeight: 1.65 }}>{result.description}</p>
+                {result.aroma && <p style={{ margin: "8px 0 0", fontSize: 12, color: T.darkTextMuted, lineHeight: 1.6 }}>🌿 {result.aroma}</p>}
+              </div>
+            </div>
+          )}
+
+          <div style={{ padding: "0 24px 24px" }}>
+            <button onClick={analyze} disabled={loading || ings.length === 0} style={{
+              width: "100%", height: 48, borderRadius: 12, background: T.accent, color: T.darkBg,
+              border: "none", fontSize: 15, fontWeight: 600, fontFamily: T.sans,
+              cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1,
+            }}>
+              {loading ? "분석 중..." : "AI 분석하기"}
+            </button>
+          </div>
+
+          <MobileTabBar active="mix" />
+        </div>
+      </div>
+    </>
+  );
+}
+
+function MobileTabBar({ active }: { active: "home" | "pantry" | "mix" | "bars" }) {
+  return (
+    <div style={{ position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 430, paddingBottom: 28, paddingTop: 10, background: "linear-gradient(180deg,rgba(21,17,13,0) 0%,rgba(21,17,13,0.92) 30%,rgba(21,17,13,1) 60%)", display: "flex", justifyContent: "space-around", borderTop: "0.5px solid rgba(255,246,232,0.08)" }}>
+      {TABS.map((t) => {
+        const isActive = t.id === active;
+        const c = isActive ? "#B88752" : "rgba(245,239,230,0.38)";
+        return (
+          <Link key={t.id} href={t.href} style={{ textDecoration: "none" }}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, padding: "6px 12px" }}>
+              <GlassGlyph type={t.glass} size={22} color={c} strokeWidth={1.4} />
+              <span style={{ fontSize: 10, color: c, fontWeight: 500, fontFamily: '"Pretendard Variable","Pretendard",sans-serif' }}>{t.label}</span>
+            </div>
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
