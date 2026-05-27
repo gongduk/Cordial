@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { prisma } from "@/shared/lib/prisma";
+import { expandSynonyms } from "@/shared/lib/ingredientSynonyms";
 import type { RecommendedCocktail } from "@/shared/types";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
@@ -38,7 +39,7 @@ interface PantryMatch {
   matchRatio: number;
 }
 
-export async function pantryRecommend(ingredientNames: string[]): Promise<{
+export async function pantryRecommend(ingredientNames: string[], userId?: string): Promise<{
   exact: PantryMatch[];
   almost: PantryMatch[];
   creative: RecommendedCocktail | null;
@@ -47,9 +48,13 @@ export async function pantryRecommend(ingredientNames: string[]): Promise<{
     return { exact: [], almost: [], creative: null };
   }
 
-  const normalizedNames = ingredientNames.map((n) => n.toLowerCase().trim());
+  // Expand each pantry name with synonyms for fuzzy matching (e.g. "탄산수" matches "소다수")
+  const expandedNames: string[][] = ingredientNames.map(expandSynonyms);
 
   const cocktails = await prisma.cocktail.findMany({
+    where: userId
+      ? { OR: [{ isCustom: false }, { createdBy: userId }] }
+      : { isCustom: false },
     include: { ingredients: { include: { ingredient: true } } },
   });
 
@@ -61,7 +66,9 @@ export async function pantryRecommend(ingredientNames: string[]): Promise<{
     if (required.length === 0) continue;
 
     const missing = required.filter(
-      (r) => !normalizedNames.some((n) => n.includes(r) || r.includes(n))
+      (r) => !expandedNames.some((candidates) =>
+        candidates.some((c) => c.includes(r) || r.includes(c))
+      )
     );
     const matchRatio = (required.length - missing.length) / required.length;
 

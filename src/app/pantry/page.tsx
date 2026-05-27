@@ -1,10 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { GlassSilhouette, GlassGlyph } from "@/shared/ui/GlassSilhouette";
 import { WebNav } from "@/shared/ui/WebNav";
+import { IngredientSearch } from "@/shared/ui/IngredientSearch";
 import type { GlassType } from "@/shared/ui/GlassSilhouette";
+import type { IngredientOption } from "@/shared/ui/IngredientSearch";
 import type { RecommendedCocktail } from "@/shared/types";
 
 const W = {
@@ -54,46 +58,121 @@ function pickGlass(name: string): GlassType {
   return "rocks";
 }
 
-export default function PantryPage() {
-  const [owned, setOwned] = useState<string[]>(["버번 위스키", "진", "캄파리", "베르무트", "레몬", "심플 시럽"]);
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<PantryResult | null>(null);
+const DEFAULT_PANTRY = ["버번 위스키", "진", "캄파리", "드라이 베르무트", "레몬 주스", "심플 시럽"];
+const STORAGE_KEY = "cordial_pantry";
 
-  async function fetchMatches(ingredients: string[]) {
+export default function PantryPage() {
+  const { status } = useSession();
+  const isLoggedIn = status === "authenticated";
+  const router = useRouter();
+
+  function openCocktail(c: RecommendedCocktail & { abv: number }) {
+    sessionStorage.setItem("selectedCocktail", JSON.stringify({ ...c, aiDescription: c.aiDescription ?? "", score: 0 }));
+    router.push(`/cocktail/${c.id}`);
+  }
+
+  const [owned, setOwned] = useState<string[]>([]);
+  const [loadingPantry, setLoadingPantry] = useState(true);
+  const [matchLoading, setMatchLoading] = useState(false);
+  const [result, setResult] = useState<PantryResult | null>(null);
+  const [showSearchWeb, setShowSearchWeb] = useState(false);
+  const [showSearchMob, setShowSearchMob] = useState(false);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // 매칭 요청
+  const fetchMatches = useCallback(async (ingredients: string[]) => {
     if (ingredients.length === 0) { setResult(null); return; }
-    setLoading(true);
+    setMatchLoading(true);
     try {
       const res = await fetch("/api/ai/pantry-recommend", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ingredients }),
       });
-      const data = await res.json() as PantryResult;
-      setResult(data);
+      setResult(await res.json() as PantryResult);
     } catch {
       setResult(null);
     } finally {
-      setLoading(false);
+      setMatchLoading(false);
+    }
+  }, []);
+
+  // DB 저장 (로그인 시, 디바운스)
+  const saveToDB = useCallback((items: string[]) => {
+    if (!isLoggedIn) return;
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      fetch("/api/user/pantry", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pantry: items }),
+      }).catch(() => {});
+    }, 800);
+  }, [isLoggedIn]);
+
+  // 초기 로드
+  useEffect(() => {
+    if (status === "loading") return;
+
+    async function loadPantry() {
+      if (isLoggedIn) {
+        try {
+          const res = await fetch("/api/user/pantry");
+          const data = await res.json() as { pantry: string[] };
+          const items = data.pantry.length > 0 ? data.pantry : DEFAULT_PANTRY;
+          setOwned(items);
+          fetchMatches(items);
+        } catch {
+          setOwned(DEFAULT_PANTRY);
+          fetchMatches(DEFAULT_PANTRY);
+        }
+      } else {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        const items = saved ? JSON.parse(saved) as string[] : DEFAULT_PANTRY;
+        setOwned(items);
+        fetchMatches(items);
+      }
+      setLoadingPantry(false);
+    }
+
+    loadPantry();
+  }, [status, isLoggedIn, fetchMatches]);
+
+  function applyItems(next: string[]) {
+    setOwned(next);
+    fetchMatches(next);
+    if (isLoggedIn) {
+      saveToDB(next);
+    } else {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
     }
   }
 
-  useEffect(() => { fetchMatches(owned); }, []);
-
-  function addItem() {
-    const name = prompt("추가할 재료를 입력하세요");
-    if (!name?.trim()) return;
-    const next = [...owned, name.trim()];
-    setOwned(next);
-    fetchMatches(next);
+  function addItem(item: IngredientOption | { name: string; abv: number; isCustom: true }) {
+    if (owned.includes(item.name)) return;
+    applyItems([...owned, item.name]);
   }
 
   function removeItem(name: string) {
-    const next = owned.filter((i) => i !== name);
-    setOwned(next);
-    fetchMatches(next);
+    applyItems(owned.filter(i => i !== name));
   }
 
   const exactCount = result?.exact.length ?? 0;
+
+  if (loadingPantry) {
+    return (
+      <>
+        <div className="cordial-web" style={{ background: W.bg, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ color: W.textMuted, fontFamily: W.sans }}>로딩 중...</div>
+        </div>
+        <div className="cordial-mob">
+          <div style={{ background: T.darkBg, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ color: T.darkTextMuted, fontFamily: T.sans }}>로딩 중...</div>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -104,30 +183,39 @@ export default function PantryPage() {
           <div style={{ marginBottom: 40 }}>
             <div style={{ fontFamily: W.mono, fontSize: 10, letterSpacing: 1.8, color: W.accent, marginBottom: 14, textTransform: "uppercase" }}>My Pantry</div>
             <h1 style={{ fontSize: 44, fontWeight: 600, letterSpacing: -1, lineHeight: 1.1, margin: "0 0 14px" }}>가진 재료로<br />만들 수 있는 한 잔.</h1>
-            <p style={{ fontSize: 15, color: W.textMuted, margin: 0 }}>
-              {owned.length}가지 재료로 {loading ? "확인 중..." : `${exactCount}잔이 가능해요.`}
+            <p style={{ fontSize: 15, color: W.textMuted, margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
+              {owned.length}가지 재료로 {matchLoading ? "확인 중..." : `${exactCount}잔이 가능해요.`}
+              {isLoggedIn && <span style={{ fontSize: 12, color: W.accent, fontFamily: W.mono }}>· 자동 저장됨</span>}
             </p>
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1.4fr", gap: 48 }}>
             <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                 <div style={{ fontFamily: W.mono, fontSize: 10, letterSpacing: 1.6, color: W.textFaint, textTransform: "uppercase" }}>YOUR INVENTORY · {owned.length}</div>
-                <button onClick={addItem} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, color: W.accent, fontFamily: W.sans }}>+ 추가</button>
               </div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
                 {owned.map((item) => (
                   <div key={item} style={{ padding: "8px 10px 8px 14px", borderRadius: 100, background: W.surface, border: `0.5px solid ${W.borderStrong}`, display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
                     {item}
                     <button onClick={() => removeItem(item)} style={{ background: "none", border: "none", cursor: "pointer", color: W.textFaint, fontSize: 14, lineHeight: 1, padding: "0 2px" }}>×</button>
                   </div>
                 ))}
-                <div onClick={addItem} style={{ padding: "10px 14px", borderRadius: 100, border: `0.5px dashed ${W.borderStrong}`, fontSize: 13, color: W.textFaint, cursor: "pointer" }}>+ 재료 추가</div>
               </div>
+              {showSearchWeb ? (
+                <div style={{ marginTop: 4 }}>
+                  <IngredientSearch
+                    onSelect={(item) => { addItem(item); setShowSearchWeb(false); }}
+                    placeholder="재료 검색 또는 직접 추가..."
+                  />
+                </div>
+              ) : (
+                <button onClick={() => setShowSearchWeb(true)} style={{ padding: "10px 14px", borderRadius: 100, border: `0.5px dashed ${W.borderStrong}`, fontSize: 13, color: W.textFaint, cursor: "pointer", background: "none" }}>+ 재료 추가</button>
+              )}
             </div>
 
             <div>
-              {loading ? (
+              {matchLoading ? (
                 <div style={{ display: "flex", justifyContent: "center", padding: "40px 0", color: W.textFaint, fontFamily: W.mono, fontSize: 12, letterSpacing: 0.5 }}>MATCHING...</div>
               ) : (
                 <>
@@ -137,12 +225,16 @@ export default function PantryPage() {
                   )}
                   <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 32 }}>
                     {result?.exact.map(({ cocktail: c }) => (
-                      <div key={c.id} style={{ background: W.surface, border: `0.5px solid ${W.border}`, borderRadius: 14, padding: "16px 20px", display: "flex", alignItems: "center", gap: 16 }}>
+                      <div key={c.id} onClick={() => openCocktail(c)} style={{ background: W.surface, border: `0.5px solid ${W.border}`, borderRadius: 14, padding: "16px 20px", display: "flex", alignItems: "center", gap: 16, cursor: "pointer", transition: "box-shadow 0.15s" }}
+                        onMouseEnter={e => (e.currentTarget.style.boxShadow = "0 4px 16px rgba(184,135,82,0.12)")}
+                        onMouseLeave={e => (e.currentTarget.style.boxShadow = "none")}
+                      >
                         <GlassSilhouette type={pickGlass(c.name)} size={52} stroke={W.accent} liquid={W.accent} fillLevel={0.7} strokeWidth={1.3} />
                         <div style={{ flex: 1 }}>
                           <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: -0.3 }}>{c.name}</div>
                           <div style={{ fontSize: 11, color: W.accent, marginTop: 4, fontFamily: W.mono }}>바로 만들 수 있어요 · ABV {c.abv}%</div>
                         </div>
+                        <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M8 4l6 6-6 6" stroke={W.textFaint} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       </div>
                     ))}
                   </div>
@@ -151,9 +243,10 @@ export default function PantryPage() {
                     <>
                       <div style={{ fontFamily: W.mono, fontSize: 10, letterSpacing: 1.6, color: W.textFaint, marginBottom: 14, textTransform: "uppercase" }}>ALMOST · 한 가지만 더</div>
                       {result?.almost.map(({ cocktail: c, missingIngredients }) => (
-                        <div key={c.id} style={{ padding: "14px 0", display: "flex", alignItems: "baseline", borderBottom: `0.5px solid ${W.border}`, gap: 12 }}>
+                        <div key={c.id} onClick={() => openCocktail(c)} style={{ padding: "14px 0", display: "flex", alignItems: "baseline", borderBottom: `0.5px solid ${W.border}`, gap: 12, cursor: "pointer" }}>
                           <span style={{ fontSize: 14, fontWeight: 500 }}>{c.name}</span>
                           <span style={{ flex: 1, fontSize: 11, color: W.textFaint }}>{missingIngredients[0]} 필요</span>
+                          <svg width="12" height="12" viewBox="0 0 20 20" fill="none"><path d="M8 4l6 6-6 6" stroke={W.textFaint} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
                         </div>
                       ))}
                     </>
@@ -181,18 +274,19 @@ export default function PantryPage() {
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12 4 L6 10 L12 16" stroke={T.darkText} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </Link>
             <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.6, textTransform: "uppercase", color: T.darkTextMuted }}>MY PANTRY</div>
-            <button onClick={addItem} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, color: T.accent, fontFamily: T.sans }}>+ 추가</button>
+            <button onClick={() => setShowSearchMob(v => !v)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, color: T.accent, fontFamily: T.sans }}>+ 추가</button>
           </div>
 
-          <div style={{ padding: "8px 24px 24px" }}>
+          <div style={{ padding: "8px 24px 16px" }}>
             <h1 style={{ fontSize: 28, fontWeight: 600, letterSpacing: -0.6, margin: 0, lineHeight: 1.2 }}>가진 재료로<br />만들 수 있는 한 잔.</h1>
-            <p style={{ fontSize: 13, color: T.darkTextMuted, marginTop: 12, lineHeight: 1.6 }}>
-              {owned.length}가지 재료 · {loading ? "확인 중..." : `${exactCount}잔 가능`}
+            <p style={{ fontSize: 13, color: T.darkTextMuted, marginTop: 10, lineHeight: 1.6 }}>
+              {owned.length}가지 재료 · {matchLoading ? "확인 중..." : `${exactCount}잔 가능`}
+              {isLoggedIn && <span style={{ color: T.accent, marginLeft: 6 }}>· 저장됨</span>}
             </p>
           </div>
 
-          <div style={{ padding: "0 24px 28px" }}>
-            <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.6, color: T.darkTextFaint, marginBottom: 14, textTransform: "uppercase" }}>YOUR INVENTORY · {owned.length}</div>
+          <div style={{ padding: "0 24px 20px" }}>
+            <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.6, color: T.darkTextFaint, marginBottom: 12, textTransform: "uppercase" }}>YOUR INVENTORY · {owned.length}</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {owned.map((item) => (
                 <div key={item} style={{ padding: "8px 10px 8px 14px", borderRadius: 100, background: T.darkSurface, border: `0.5px solid ${T.darkBorderStrong}`, display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
@@ -200,23 +294,32 @@ export default function PantryPage() {
                   <button onClick={() => removeItem(item)} style={{ background: "none", border: "none", cursor: "pointer", color: T.darkTextFaint, fontSize: 14, lineHeight: 1, padding: "0 2px" }}>×</button>
                 </div>
               ))}
-              <div onClick={addItem} style={{ padding: "10px 14px", borderRadius: 100, border: `0.5px dashed ${T.darkBorderStrong}`, fontSize: 13, color: T.darkTextFaint, cursor: "pointer" }}>+ 추가</div>
             </div>
+            {showSearchMob && (
+              <div style={{ marginTop: 12 }}>
+                <IngredientSearch
+                  dark
+                  onSelect={(item) => { addItem(item); setShowSearchMob(false); }}
+                  placeholder="재료 검색 또는 직접 추가..."
+                />
+              </div>
+            )}
           </div>
 
-          {loading ? (
+          {matchLoading ? (
             <div style={{ textAlign: "center", padding: "24px", color: T.darkTextFaint, fontFamily: T.mono, fontSize: 12 }}>MATCHING...</div>
           ) : (
             <div style={{ padding: "0 24px" }}>
               <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.6, color: T.darkTextFaint, marginBottom: 14, textTransform: "uppercase" }}>MATCHES · {exactCount}</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 24 }}>
                 {result?.exact.map(({ cocktail: c }) => (
-                  <div key={c.id} style={{ background: T.darkSurface, border: `0.5px solid ${T.darkBorder}`, borderRadius: 14, padding: "18px 20px", display: "flex", alignItems: "center", gap: 16 }}>
+                  <div key={c.id} onClick={() => openCocktail(c)} style={{ background: T.darkSurface, border: `0.5px solid ${T.darkBorder}`, borderRadius: 14, padding: "18px 20px", display: "flex", alignItems: "center", gap: 16, cursor: "pointer" }}>
                     <GlassSilhouette type={pickGlass(c.name)} size={56} stroke={T.accent} liquid={T.accent} fillLevel={0.7} strokeWidth={1.3} />
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: -0.3 }}>{c.name}</div>
                       <div style={{ fontSize: 11, color: T.accent, marginTop: 4, fontFamily: T.mono }}>바로 만들 수 있어요</div>
                     </div>
+                    <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M8 4l6 6-6 6" stroke={T.darkTextFaint} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
                   </div>
                 ))}
                 {result?.exact.length === 0 && <p style={{ fontSize: 13, color: T.darkTextMuted }}>만들 수 있는 칵테일이 없어요.</p>}
@@ -226,9 +329,10 @@ export default function PantryPage() {
                 <>
                   <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.6, color: T.darkTextFaint, marginBottom: 14, textTransform: "uppercase" }}>ALMOST · 한 가지만 더</div>
                   {result?.almost.map(({ cocktail: c, missingIngredients }) => (
-                    <div key={c.id} style={{ padding: "14px 0", display: "flex", alignItems: "baseline", borderBottom: `0.5px solid ${T.darkBorder}`, gap: 12 }}>
+                    <div key={c.id} onClick={() => openCocktail(c)} style={{ padding: "14px 0", display: "flex", alignItems: "baseline", borderBottom: `0.5px solid ${T.darkBorder}`, gap: 12, cursor: "pointer" }}>
                       <span style={{ fontSize: 14, color: T.darkTextMuted }}>{c.name}</span>
                       <span style={{ flex: 1, fontSize: 11, color: T.darkTextFaint }}>{missingIngredients[0]} 필요</span>
+                      <svg width="12" height="12" viewBox="0 0 20 20" fill="none"><path d="M8 4l6 6-6 6" stroke={T.darkTextFaint} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     </div>
                   ))}
                 </>
