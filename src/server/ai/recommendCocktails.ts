@@ -52,14 +52,20 @@ async function generateDescription(name: string, emotion: EmotionVector): Promis
 interface RecommendOptions {
   emotionVector: EmotionVector;
   userId?: string;
+  drinkingCapacity?: string;
 }
 
 export async function recommendCocktails({
   emotionVector,
   userId,
+  drinkingCapacity,
 }: RecommendOptions): Promise<RecommendedCocktail[]> {
   const [cocktails, user, pastRecs] = await Promise.all([
-    prisma.cocktail.findMany(),
+    prisma.cocktail.findMany({
+      where: userId
+        ? { OR: [{ isCustom: false }, { isCustom: true, createdBy: userId }] }
+        : { isCustom: false },
+    }),
     userId ? prisma.user.findUnique({ where: { id: userId } }) : null,
     userId
       ? prisma.recommendation.findMany({
@@ -117,6 +123,9 @@ export async function recommendCocktails({
         })()
       : null;
 
+  const recentIds = new Set(pastRecs.slice(0, 5).map(r => r.cocktail.id));
+  const effectiveCapacity = drinkingCapacity ?? user?.drinkingCapacity ?? "MEDIUM";
+
   const ranked = cocktails
     .map((c) => {
       const cv: CocktailVector = {
@@ -129,26 +138,31 @@ export async function recommendCocktails({
 
       const emotionSim = euclideanSim(targetVector, cv);
       const popularity = c.popularity;
+      const jitter = (Math.random() - 0.5) * 0.15;
 
       let score: number;
       if (user && userPrefVector) {
         const tasteSim = euclideanSim(userPrefVector, cv);
-        const volumeFit = volumeFitScore(user.drinkingCapacity, c.strength);
-        const pastSim = pastAvgVector ? euclideanSim(pastAvgVector, cv) : 0;
+        const volumeFit = volumeFitScore(effectiveCapacity, c.strength);
+        const pastNovelty = pastAvgVector ? 1 - euclideanSim(pastAvgVector, cv) : 0.5;
         score =
           0.4 * emotionSim +
           0.2 * tasteSim +
           0.15 * volumeFit +
-          0.15 * pastSim +
-          0.1 * popularity;
+          0.15 * pastNovelty +
+          0.1 * popularity +
+          jitter;
       } else {
-        score = (0.4 * emotionSim + 0.1 * popularity) / 0.5;
+        const volumeFit = volumeFitScore(effectiveCapacity, c.strength);
+        score = (0.4 * emotionSim + 0.1 * popularity + 0.1 * volumeFit) / 0.6 + jitter;
       }
+
+      if (recentIds.has(c.id)) score *= 0.3;
 
       return { ...c, score };
     })
     .sort((a, b) => b.score - a.score)
-    .slice(0, 3);
+    .slice(0, 9);
 
   const results = await Promise.allSettled(
     ranked.map(async (c) => {

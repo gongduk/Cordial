@@ -70,7 +70,8 @@ export default function RecommendPage() {
   const [list, setList] = useState<RecommendedCocktail[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [batch, setBatch] = useState(0);
+  const [innerIndex, setInnerIndex] = useState(0);
   const [doneCount, setDoneCount] = useState(0);
   const router = useRouter();
 
@@ -78,7 +79,18 @@ export default function RecommendPage() {
     const ev = typeof window !== "undefined" ? sessionStorage.getItem("emotionVector") : null;
     if (!ev) { router.replace("/emotion"); return; }
 
-    const emotionVector = JSON.parse(ev);
+    // Use cached results if emotionVector hasn't changed (prevents re-fetch on back navigation)
+    const cachedEv = sessionStorage.getItem("recommendCacheEv");
+    const cachedList = sessionStorage.getItem("recommendCache");
+    if (cachedList && cachedEv === ev) {
+      setList(JSON.parse(cachedList) as RecommendedCocktail[]);
+      setDoneCount(3);
+      setLoading(false);
+      return;
+    }
+
+    const emotionVector = JSON.parse(ev) as Record<string, number>;
+    const drinkingCapacity = sessionStorage.getItem("drinkingCapacity") ?? "MEDIUM";
 
     const t1 = setTimeout(() => setDoneCount(1), 600);
     const t2 = setTimeout(() => setDoneCount(2), 1200);
@@ -86,11 +98,15 @@ export default function RecommendPage() {
     fetch("/api/ai/recommend", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ emotionVector }),
+      body: JSON.stringify({ emotionVector, drinkingCapacity }),
     })
-      .then(async res => { if (!res.ok) throw new Error((await res.json()).error || "추천 실패"); return res.json(); })
-      .then(data => setList(data))
-      .catch(e => setError(String(e.message || e)))
+      .then(async res => { if (!res.ok) throw new Error((await res.json() as { error?: string }).error || "추천 실패"); return res.json() as Promise<RecommendedCocktail[]>; })
+      .then(data => {
+        setList(data);
+        sessionStorage.setItem("recommendCache", JSON.stringify(data));
+        sessionStorage.setItem("recommendCacheEv", ev);
+      })
+      .catch(e => setError(String((e as Error).message || e)))
       .finally(() => setLoading(false));
 
     return () => { clearTimeout(t1); clearTimeout(t2); };
@@ -101,6 +117,11 @@ export default function RecommendPage() {
   function goToDetail(c: RecommendedCocktail) {
     sessionStorage.setItem("selectedCocktail", JSON.stringify(c));
     router.push(`/cocktail/${c.id}`);
+  }
+
+  function nextBatch() {
+    setBatch(b => b + 1);
+    setInnerIndex(0);
   }
 
   /* Loading */
@@ -157,8 +178,12 @@ export default function RecommendPage() {
   }
 
   /* Success */
-  const c = list[currentIndex];
-  const glassType = GLASS_ORDER[currentIndex % GLASS_ORDER.length];
+  const currentBatch = list.slice(batch * 3, batch * 3 + 3);
+  const safeInner = Math.min(innerIndex, currentBatch.length - 1);
+  const c = currentBatch[safeInner];
+  const globalIndex = batch * 3 + safeInner;
+  const glassType: GlassType = (c.glassType as GlassType | null) ?? GLASS_ORDER[globalIndex % GLASS_ORDER.length];
+  const hasMoreBatch = list.length > (batch + 1) * 3;
   const profile = [
     ["SOUR", toBar(c.sourness)],
     ["SWEET", toBar(c.sweetness)],
@@ -168,10 +193,10 @@ export default function RecommendPage() {
 
   const Dots = ({ dark }: { dark?: boolean }) => (
     <div style={{ display: "flex", gap: 6 }}>
-      {list.map((_, i) => (
-        <button key={i} onClick={() => setCurrentIndex(i)} style={{
-          width: i === currentIndex ? 18 : 6, height: 6, borderRadius: 3,
-          background: i === currentIndex ? T.accent : (dark ? T.darkBorderStrong : W.borderStrong),
+      {currentBatch.map((_, i) => (
+        <button key={i} onClick={() => setInnerIndex(i)} style={{
+          width: i === safeInner ? 18 : 6, height: 6, borderRadius: 3,
+          background: i === safeInner ? T.accent : (dark ? T.darkBorderStrong : W.borderStrong),
           border: "none", cursor: "pointer", padding: 0, transition: "width 0.25s",
         }} />
       ))}
@@ -187,7 +212,7 @@ export default function RecommendPage() {
           {/* Left: glass + name + dots */}
           <div style={{ flex: "0 0 420px", display: "flex", flexDirection: "column", alignItems: "center", gap: 28 }}>
             <div style={{ fontFamily: W.mono, fontSize: 11, letterSpacing: 1.6, color: W.accent }}>
-              0{currentIndex + 1} · {currentIndex === 0 ? "TOP PICK" : `TOP #${currentIndex + 1}`}
+              {String(globalIndex + 1).padStart(2, "0")} · {globalIndex === 0 ? "TOP PICK" : `TOP #${globalIndex + 1}`}
             </div>
             <GlassSilhouette type={glassType} size={240} stroke={W.accent} liquid={W.accent} fillLevel={0.7} garnish strokeWidth={1.1} />
             <div style={{ textAlign: "center" }}>
@@ -218,12 +243,22 @@ export default function RecommendPage() {
               ))}
             </div>
 
-            <button onClick={() => goToDetail(c)} style={{
-              width: "100%", height: 52, borderRadius: 12,
-              background: W.text, color: W.bg,
-              border: "none", fontSize: 15, fontWeight: 600, letterSpacing: -0.2,
-              fontFamily: W.sans, cursor: "pointer",
-            }}>레시피 보기</button>
+            <div style={{ display: "flex", gap: 12 }}>
+              {hasMoreBatch && (
+                <button onClick={nextBatch} style={{
+                  flex: "0 0 auto", height: 52, padding: "0 22px", borderRadius: 12,
+                  background: "transparent", color: W.text,
+                  border: `1px solid ${W.borderStrong}`, fontSize: 14, fontWeight: 500, letterSpacing: -0.2,
+                  fontFamily: W.sans, cursor: "pointer",
+                }}>다른 추천</button>
+              )}
+              <button onClick={() => goToDetail(c)} style={{
+                flex: 1, height: 52, borderRadius: 12,
+                background: W.text, color: W.bg,
+                border: "none", fontSize: 15, fontWeight: 600, letterSpacing: -0.2,
+                fontFamily: W.sans, cursor: "pointer",
+              }}>레시피 보기</button>
+            </div>
           </div>
         </div>
       </div>
@@ -235,13 +270,13 @@ export default function RecommendPage() {
             <button onClick={() => router.back()} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12 4 L6 10 L12 16" stroke={T.darkText} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </button>
-            <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.6, textTransform: "uppercase", color: T.darkTextMuted }}>{currentIndex + 1} / {list.length}</div>
+            <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.6, textTransform: "uppercase", color: T.darkTextMuted }}>{globalIndex + 1} / {list.length}</div>
             <button style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, color: T.darkTextMuted, fontFamily: T.sans }}>저장</button>
           </div>
 
           <div style={{ padding: "8px 24px 0", flex: 1, display: "flex", flexDirection: "column" }}>
             <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 8 }}>
-              <span style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.6, color: T.accent }}>0{currentIndex + 1} · {currentIndex === 0 ? "TOP PICK" : `TOP #${currentIndex + 1}`}</span>
+              <span style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.6, color: T.accent }}>{String(globalIndex + 1).padStart(2, "0")} · {globalIndex === 0 ? "TOP PICK" : `TOP #${globalIndex + 1}`}</span>
             </div>
             <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", minHeight: 280 }}>
               <GlassSilhouette type={glassType} size={210} stroke={T.accent} liquid={T.accent} fillLevel={0.7} garnish strokeWidth={1.1} />
@@ -269,8 +304,16 @@ export default function RecommendPage() {
             </div>
           </div>
 
-          <div style={{ padding: "16px 24px 36px", borderTop: `0.5px solid ${T.darkBorder}`, display: "flex", alignItems: "center", gap: 14 }}>
+          <div style={{ padding: "16px 24px 36px", borderTop: `0.5px solid ${T.darkBorder}`, display: "flex", alignItems: "center", gap: 12 }}>
             <Dots dark />
+            {hasMoreBatch && (
+              <button onClick={nextBatch} style={{
+                flex: "0 0 auto", height: 48, padding: "0 16px", borderRadius: 12,
+                background: "transparent", color: T.darkText,
+                border: `0.5px solid ${T.darkBorderStrong}`, fontSize: 13, fontWeight: 500,
+                fontFamily: T.sans, cursor: "pointer", letterSpacing: -0.2,
+              }}>다른 추천</button>
+            )}
             <button onClick={() => goToDetail(c)} style={{
               flex: 1, height: 48, borderRadius: 12,
               background: T.darkText, color: T.darkBg,

@@ -6,17 +6,17 @@ import type { EmotionVector } from "@/shared/types";
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json() as { emotionVector: EmotionVector };
-    const { emotionVector } = body;
+    const body = await req.json() as { emotionVector: EmotionVector; drinkingCapacity?: string };
+    const { emotionVector, drinkingCapacity } = body;
 
     if (!emotionVector) {
       return NextResponse.json({ error: "emotionVector는 필수입니다." }, { status: 400 });
     }
 
     const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-    const userId = token?.id as string | undefined;
+    const userId = (token?.id ?? token?.sub) as string | undefined;
 
-    const recommendations = await recommendCocktails({ emotionVector, userId });
+    const recommendations = await recommendCocktails({ emotionVector, userId, drinkingCapacity });
 
     if (userId && recommendations.length > 0) {
       await prisma.recommendation.createMany({
@@ -27,6 +27,12 @@ export async function POST(req: NextRequest) {
         })),
         skipDuplicates: true,
       });
+      if (drinkingCapacity && ["LOW", "MEDIUM", "HIGH"].includes(drinkingCapacity)) {
+        await prisma.user.update({
+          where: { id: userId },
+          data: { drinkingCapacity: drinkingCapacity as "LOW" | "MEDIUM" | "HIGH" },
+        });
+      }
     }
 
     return NextResponse.json(recommendations);
