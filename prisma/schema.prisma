@@ -6,69 +6,139 @@ datasource db {
   provider = "postgresql"
 }
 
-model User {
-  id       String  @id @default(cuid())
-  email    String  @unique
-  password String
-  role     Role    @default(OWNER)
-  stores   Store[]
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
 }
 
-model Store {
-  id        String     @id @default(cuid())
-  name      String
-  ownerId   String
-  createdAt DateTime   @default(now())
-  owner     User       @relation(fields: [ownerId], references: [id])
-  cocktails Cocktail[]
-  orders    Order[]
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model User {
+  id               String           @id @default(cuid())
+  email            String?          @unique
+  emailVerified    DateTime?
+  name             String?
+  image            String?
+  password         String?
+  drinkingCapacity DrinkingCapacity @default(MEDIUM)
+  sweetPref        Float            @default(0.5)
+  sourPref         Float            @default(0.5)
+  bitterPref       Float            @default(0.5)
+  strongPref       Float            @default(0.5)
+  freshPref        Float            @default(0.5)
+  accounts         Account[]
+  sessions         Session[]
+  emotionLogs      EmotionLog[]
+  recommendations  Recommendation[]
+  createdAt        DateTime         @default(now())
+}
+
+model EmotionLog {
+  id              String   @id @default(cuid())
+  userId          String?
+  user            User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  joy             Float    @default(0)
+  sadness         Float    @default(0)
+  stress          Float    @default(0)
+  fatigue         Float    @default(0)
+  excitement      Float    @default(0)
+  rawText         String?  @db.Text
+  createdAt       DateTime @default(now())
 }
 
 model Cocktail {
-  id          String      @id @default(cuid())
-  storeId     String
+  id              String               @id @default(cuid())
+  name            String
+  nameEn          String?
+  description     String?              @db.Text
+  category        String?
+  glassType       String?
+  method          String?
+  sweetness       Float                @default(0)
+  sourness        Float                @default(0)
+  bitterness      Float                @default(0)
+  strength        Float                @default(0)
+  freshness       Float                @default(0)
+  abv             Float                @default(0)
+  popularity      Float                @default(0.5)
+  imageUrl        String?
+  ingredients     CocktailIngredient[]
+  recommendations Recommendation[]
+}
+
+model Ingredient {
+  id       String               @id @default(cuid())
+  name     String               @unique
+  nameEn   String?
+  category String?
+  abv      Float                @default(0)
+  cocktails CocktailIngredient[]
+}
+
+model CocktailIngredient {
+  id           String     @id @default(cuid())
+  cocktailId   String
+  ingredientId String
+  amount       String?
+  cocktail     Cocktail   @relation(fields: [cocktailId], references: [id], onDelete: Cascade)
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
+}
+
+model Recommendation {
+  id           String   @id @default(cuid())
+  userId       String?
+  user         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  cocktailId   String
+  cocktail     Cocktail @relation(fields: [cocktailId], references: [id])
+  score        Float
+  emotionLogId String?
+  liked        Boolean?
+  createdAt    DateTime @default(now())
+}
+
+model Bar {
+  id          String   @id @default(cuid())
   name        String
-  description String?
-  price       Int
+  address     String
+  area        String?
+  moodTags    String[]
+  signature   String?
   imageUrl    String?
-  isAvailable Boolean     @default(true)
-  // 칵테일 속성 벡터 (AI 매칭용) 0~1
-  sweetness   Float       @default(0)
-  sourness    Float       @default(0)
-  bitterness  Float       @default(0)
-  strength    Float       @default(0)
-  freshness   Float       @default(0)
-  store       Store       @relation(fields: [storeId], references: [id])
-  orders      OrderItem[]
+  latitude    Float?
+  longitude   Float?
+  description String?  @db.Text
+  createdAt   DateTime @default(now())
 }
 
-model Order {
-  id        String      @id @default(cuid())
-  storeId   String
-  tableNum  Int?
-  status    OrderStatus @default(PENDING)
-  createdAt DateTime    @default(now())
-  store     Store       @relation(fields: [storeId], references: [id])
-  items     OrderItem[]
-}
-
-model OrderItem {
-  id         String   @id @default(cuid())
-  orderId    String
-  cocktailId String
-  quantity   Int      @default(1)
-  order      Order    @relation(fields: [orderId], references: [id])
-  cocktail   Cocktail @relation(fields: [cocktailId], references: [id])
-}
-
-enum OrderStatus {
-  PENDING
-  ACCEPTED
-  DONE
-  CANCELLED
-}
-
-enum Role {
-  OWNER
-  ADMIN
+enum DrinkingCapacity {
+  LOW
+  MEDIUM
+  HIGH
 }
