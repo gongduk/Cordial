@@ -40,7 +40,7 @@ export interface MixIngredient {
   abv: number;
 }
 
-export type MixMethod = "shaking" | "stirring" | "build" | "blending" | "neat";
+export type MixMethod = "shaking" | "stirring" | "build" | "blending" | "neat" | "floating";
 
 export interface MixAnalysisResult {
   calculatedAbv: number;

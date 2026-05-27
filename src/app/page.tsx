@@ -18,14 +18,14 @@ const T = {
 
 const NAV_ITEMS = [
   { id: "home", label: "홈", href: "/" },
-  { id: "mood", label: "감정 추천", href: "/emotion" },
+  { id: "mood", label: "칵테일 추천", href: "/emotion" },
   { id: "pantry", label: "내 술장", href: "/pantry" },
   { id: "mix", label: "모의 제조", href: "/mix" },
   { id: "bars", label: "바", href: "/bars" },
 ] as const;
 
 const FEATURES = [
-  { num: "01", glass: "martini" as const, name: "감정 추천", desc: "4가지 질문에 답하면 감정에 맞는 칵테일 Top 3와 추천 이유를 받을 수 있어요.", fill: 0.65, href: "/emotion" },
+  { num: "01", glass: "martini" as const, name: "칵테일 추천", desc: "4가지 질문에 답하면 감정에 맞는 칵테일과 추천 이유를 받을 수 있어요.", fill: 0.65, href: "/emotion" },
   { num: "02", glass: "rocks" as const, name: "내 술로 추천", desc: "술장에 있는 재료를 등록하세요. 지금 만들 수 있는 칵테일을 찾아드려요.", fill: 0.78, href: "/pantry" },
   { num: "03", glass: "highball" as const, name: "모의 제조", desc: "재료를 자유롭게 조합하면 예상되는 맛과 도수, 향까지 분석해 드려요.", fill: 0.55, href: "/mix" },
   { num: "04", glass: "coupe" as const, name: "바 매칭", desc: "원하는 분위기와 칵테일을 알려주세요. 주변의 어울리는 바를 매칭해요.", fill: 0.5, href: "/bars" },
