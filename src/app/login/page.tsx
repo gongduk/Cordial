@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { CordialLogo } from "@/shared/ui/CordialLogo";
 
 const T = {
@@ -20,34 +21,21 @@ const T = {
 
 export default function LoginPage() {
   const router = useRouter();
-  const [mode, setMode] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  async function handleCredentials(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setLoading(true);
-
     try {
-      if (mode === "register") {
-        const res = await fetch("/api/auth/register", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password, name }),
-        });
-        const data = await res.json() as { error?: string };
-        if (!res.ok) { setError(data.error ?? "회원가입에 실패했습니다."); return; }
-      }
-
-      const result = await signIn("credentials", { email, password, redirect: false });
+      const result = await signIn("credentials", { email, password, redirect: false, callbackUrl: "/home" });
       if (result?.error) {
         setError("이메일 또는 비밀번호가 올바르지 않습니다.");
       } else {
-        router.push("/home");
+        window.location.href = "/home";
       }
     } catch {
       setError("네트워크 오류가 발생했습니다.");
@@ -118,21 +106,14 @@ export default function LoginPage() {
           <div style={{ flex: 1, height: 0.5, background: T.border }} />
         </div>
 
-        <form onSubmit={handleCredentials} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {mode === "register" && (
-            <input
-              type="text" placeholder="이름 (선택)"
-              value={name} onChange={(e) => setName(e.target.value)}
-              style={inputStyle}
-            />
-          )}
+        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <input
             type="email" placeholder="이메일"
             value={email} onChange={(e) => setEmail(e.target.value)}
             required style={inputStyle}
           />
           <input
-            type="password" placeholder="비밀번호 (8자 이상)"
+            type="password" placeholder="비밀번호"
             value={password} onChange={(e) => setPassword(e.target.value)}
             required style={inputStyle}
           />
@@ -150,20 +131,17 @@ export default function LoginPage() {
               letterSpacing: -0.2, marginTop: 4,
             }}
           >
-            {loading ? "처리 중..." : mode === "login" ? "로그인" : "회원가입"}
+            {loading ? "로그인 중..." : "로그인"}
           </button>
         </form>
 
         <div style={{ textAlign: "center", marginTop: 16 }}>
-          <button
-            onClick={() => { setMode(mode === "login" ? "register" : "login"); setError(null); }}
-            style={{
-              background: "none", border: "none", cursor: "pointer",
-              fontSize: 13, color: T.textMuted, fontFamily: T.sans, letterSpacing: -0.1,
-            }}
-          >
-            {mode === "login" ? "처음이신가요? 회원가입" : "이미 계정이 있어요 · 로그인"}
-          </button>
+          <Link href="/signup" style={{
+            fontSize: 13, color: T.textMuted, fontFamily: T.sans,
+            letterSpacing: -0.1, textDecoration: "none",
+          }}>
+            처음이신가요? 회원가입
+          </Link>
         </div>
 
         <div style={{ textAlign: "center", marginTop: 12 }}>
