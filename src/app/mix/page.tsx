@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { GlassSilhouette, GlassGlyph } from "@/shared/ui/GlassSilhouette";
@@ -155,36 +155,6 @@ export default function MixPage() {
     name: "나만의 칵테일",
   };
 
-  function IngRow({ ing, dark }: { ing: (typeof INITIAL_INGS)[number]; dark?: boolean }) {
-    const txt = dark ? T.darkText : W.text;
-    const border1 = dark ? T.darkBorder : W.border;
-    const accent = T.accent;
-    const mono = T.mono;
-    return (
-      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 0", borderBottom: `0.5px solid ${border1}` }}>
-        <span style={{ flex: 1, fontSize: 14, fontWeight: 500, color: txt }}>{ing.name}</span>
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <input
-            type="number" min="0" step="5"
-            value={ing.amount}
-            onChange={(e) => updateField(ing.id, "amount", e.target.value)}
-            style={{ width: 56, background: "transparent", border: "none", borderBottom: `0.5px solid ${accent}`, outline: "none", fontSize: 13, color: accent, fontFamily: mono, textAlign: "right", padding: "2px 0" }}
-          />
-          <span style={{ fontSize: 11, color: dark ? T.darkTextFaint : W.textFaint, fontFamily: mono }}>ml</span>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-          <input
-            type="number" min="0" max="100" step="1"
-            value={ing.abv}
-            onChange={(e) => updateField(ing.id, "abv", e.target.value)}
-            style={{ width: 42, background: "transparent", border: "none", borderBottom: `0.5px solid ${dark ? T.darkBorderStrong : W.borderStrong}`, outline: "none", fontSize: 12, color: dark ? T.darkTextMuted : W.textMuted, fontFamily: mono, textAlign: "right", padding: "2px 0" }}
-          />
-          <span style={{ fontSize: 11, color: dark ? T.darkTextFaint : W.textFaint, fontFamily: mono }}>%</span>
-        </div>
-        <button onClick={() => removeIng(ing.id)} style={{ background: "none", border: "none", cursor: "pointer", color: dark ? T.darkTextFaint : W.textFaint, fontSize: 18, lineHeight: 1, padding: "0 0 0 4px" }} aria-label="삭제">×</button>
-      </div>
-    );
-  }
 
   function FlavorBars({ dark }: { dark?: boolean }) {
     const txt = dark ? T.darkTextMuted : W.textMuted;
@@ -216,7 +186,7 @@ export default function MixPage() {
         <div style={{ maxWidth: 1100, margin: "0 auto", padding: "56px 40px" }}>
           <div style={{ marginBottom: 40 }}>
             <div style={{ fontFamily: W.mono, fontSize: 10, letterSpacing: 1.8, color: W.accent, marginBottom: 14, textTransform: "uppercase" }}>Mix Lab</div>
-            <h1 style={{ fontSize: 44, fontWeight: 600, letterSpacing: -1, lineHeight: 1.1, margin: "0 0 14px" }}>당신만의<br />레시피.</h1>
+            <h1 style={{ fontSize: 44, fontWeight: 600, letterSpacing: -1, lineHeight: 1.1, margin: "0 0 14px" }}>당신만의 레시피.</h1>
             <p style={{ fontSize: 15, color: W.textMuted, margin: 0, letterSpacing: -0.2 }}>재료를 조합하면 도수·맛·향을 분석해드려요.</p>
           </div>
 
@@ -281,7 +251,7 @@ export default function MixPage() {
 
             <div>
               <div style={{ fontFamily: W.mono, fontSize: 10, letterSpacing: 1.6, color: W.textFaint, marginBottom: 16, textTransform: "uppercase" }}>INGREDIENTS · {ings.length}</div>
-              {ings.map((ing) => <IngRow key={ing.id} ing={ing} />)}
+              {ings.map((ing) => <IngRow key={ing.id} ing={ing} onUpdate={updateField} onRemove={removeIng} />)}
               {showSearchWeb ? (
                 <div style={{ padding: "12px 0", borderBottom: `0.5px solid ${W.border}` }}>
                   <IngredientSearch
@@ -346,7 +316,7 @@ export default function MixPage() {
           </div>
 
           <div style={{ padding: "8px 24px 24px" }}>
-            <h1 style={{ fontSize: 28, fontWeight: 600, letterSpacing: -0.6, margin: 0, lineHeight: 1.2 }}>당신만의<br />레시피.</h1>
+            <h1 style={{ fontSize: 28, fontWeight: 600, letterSpacing: -0.6, margin: 0, lineHeight: 1.2 }}>당신만의 레시피.</h1>
           </div>
 
           <div style={{ padding: "0 24px 24px", display: "flex", alignItems: "flex-end", gap: 20 }}>
@@ -368,7 +338,7 @@ export default function MixPage() {
 
           <div style={{ padding: "0 24px" }}>
             <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.6, color: T.darkTextFaint, marginBottom: 12, textTransform: "uppercase" }}>INGREDIENTS · {ings.length}</div>
-            {ings.map((ing) => <IngRow key={ing.id} ing={ing} dark />)}
+            {ings.map((ing) => <IngRow key={ing.id} ing={ing} dark onUpdate={updateField} onRemove={removeIng} />)}
             {showSearchMob ? (
               <div style={{ padding: "12px 0", borderBottom: `0.5px solid ${T.darkBorder}` }}>
                 <IngredientSearch
@@ -449,6 +419,52 @@ export default function MixPage() {
         </div>
       </div>
     </>
+  );
+}
+
+interface IngRowProps {
+  ing: { id: number; name: string; amount: number; abv: number };
+  dark?: boolean;
+  onUpdate: (id: number, field: "amount" | "abv", value: string) => void;
+  onRemove: (id: number) => void;
+}
+
+function IngRow({ ing, dark, onUpdate, onRemove }: IngRowProps) {
+  const [amountStr, setAmountStr] = useState(String(ing.amount));
+  const [abvStr, setAbvStr] = useState(String(ing.abv));
+
+  useEffect(() => { setAmountStr(String(ing.amount)); setAbvStr(String(ing.abv)); }, [ing.id]);
+
+  const txt = dark ? T.darkText : W.text;
+  const border1 = dark ? T.darkBorder : W.border;
+  const accent = T.accent;
+  const mono = T.mono;
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 0", borderBottom: `0.5px solid ${border1}` }}>
+      <span style={{ flex: 1, fontSize: 14, fontWeight: 500, color: txt }}>{ing.name}</span>
+      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        <input
+          type="number" min="0" step="5"
+          value={amountStr}
+          onChange={(e) => { setAmountStr(e.target.value); onUpdate(ing.id, "amount", e.target.value); }}
+          onBlur={() => { if (amountStr === "" || isNaN(parseFloat(amountStr))) setAmountStr(String(ing.amount)); }}
+          style={{ width: 56, background: "transparent", border: "none", borderBottom: `0.5px solid ${accent}`, outline: "none", fontSize: 13, color: accent, fontFamily: mono, textAlign: "right", padding: "2px 0" }}
+        />
+        <span style={{ fontSize: 11, color: dark ? T.darkTextFaint : W.textFaint, fontFamily: mono }}>ml</span>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+        <input
+          type="number" min="0" max="100" step="1"
+          value={abvStr}
+          onChange={(e) => { setAbvStr(e.target.value); onUpdate(ing.id, "abv", e.target.value); }}
+          onBlur={() => { if (abvStr === "" || isNaN(parseFloat(abvStr))) setAbvStr(String(ing.abv)); }}
+          style={{ width: 42, background: "transparent", border: "none", borderBottom: `0.5px solid ${dark ? T.darkBorderStrong : W.borderStrong}`, outline: "none", fontSize: 12, color: dark ? T.darkTextMuted : W.textMuted, fontFamily: mono, textAlign: "right", padding: "2px 0" }}
+        />
+        <span style={{ fontSize: 11, color: dark ? T.darkTextFaint : W.textFaint, fontFamily: mono }}>%</span>
+      </div>
+      <button onClick={() => onRemove(ing.id)} style={{ background: "none", border: "none", cursor: "pointer", color: dark ? T.darkTextFaint : W.textFaint, fontSize: 18, lineHeight: 1, padding: "0 0 0 4px" }} aria-label="삭제">×</button>
+    </div>
   );
 }
 
