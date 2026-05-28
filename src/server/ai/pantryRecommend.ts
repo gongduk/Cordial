@@ -132,7 +132,8 @@ export async function pantryRecommend(ingredientNames: string[], userId?: string
           score: 1,
         };
       }
-    } catch {
+    } catch (e) {
+      console.error("[pantryRecommend] creative generation failed:", e);
       creative = null;
     }
   }

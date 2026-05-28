@@ -128,7 +128,10 @@ export default function PantryPage() {
         }
       } else {
         const saved = localStorage.getItem(STORAGE_KEY);
-        const items = saved ? JSON.parse(saved) as string[] : DEFAULT_PANTRY;
+        let items: string[] = DEFAULT_PANTRY;
+        if (saved) {
+          try { items = JSON.parse(saved) as string[]; } catch { localStorage.removeItem(STORAGE_KEY); }
+        }
         setOwned(items);
         fetchMatches(items);
       }
