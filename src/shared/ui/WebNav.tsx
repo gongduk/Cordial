@@ -57,7 +57,7 @@ export function WebNav({ active }: { active?: string }) {
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <Link href="/mypage" style={{ textDecoration: "none" }}>
               <span style={{ fontSize: 12, color: muted, fontFamily: sans, letterSpacing: -0.1 }}>
-                {session.user?.name ?? session.user?.email}
+                {session.user?.name ?? session.user?.email}님
               </span>
             </Link>
             <button
