@@ -49,7 +49,15 @@ export async function PATCH(req: NextRequest) {
 
     const updated = await prisma.user.update({
       where: { id: userId },
-      data: body,
+      data: {
+        drinkingCapacity: body.drinkingCapacity,
+        sweetPref: body.sweetPref,
+        sourPref: body.sourPref,
+        bitterPref: body.bitterPref,
+        strongPref: body.strongPref,
+        freshPref: body.freshPref,
+        name: body.name,
+      },
       select: {
         id: true,
         name: true,
