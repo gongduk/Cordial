@@ -83,13 +83,24 @@ export default function RecommendPage() {
     const cachedEv = sessionStorage.getItem("recommendCacheEv");
     const cachedList = sessionStorage.getItem("recommendCache");
     if (cachedList && cachedEv === ev) {
-      setList(JSON.parse(cachedList) as RecommendedCocktail[]);
-      setDoneCount(3);
-      setLoading(false);
-      return;
+      try {
+        setList(JSON.parse(cachedList) as RecommendedCocktail[]);
+        setDoneCount(3);
+        setLoading(false);
+        return;
+      } catch {
+        sessionStorage.removeItem("recommendCache");
+        sessionStorage.removeItem("recommendCacheEv");
+      }
     }
 
-    const emotionVector = JSON.parse(ev) as Record<string, number>;
+    let emotionVector: Record<string, number>;
+    try {
+      emotionVector = JSON.parse(ev) as Record<string, number>;
+    } catch {
+      router.replace("/emotion");
+      return;
+    }
     const drinkingCapacity = sessionStorage.getItem("drinkingCapacity") ?? "MEDIUM";
 
     const t1 = setTimeout(() => setDoneCount(1), 600);
@@ -98,7 +109,7 @@ export default function RecommendPage() {
     fetch("/api/ai/recommend", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ emotionVector, drinkingCapacity }),
+      body: JSON.stringify({ emotionVector: emotionVector, drinkingCapacity }),
     })
       .then(async res => { if (!res.ok) throw new Error((await res.json() as { error?: string }).error || "추천 실패"); return res.json() as Promise<RecommendedCocktail[]>; })
       .then(data => {

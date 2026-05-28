@@ -190,7 +190,27 @@ export default function CocktailDetailPage() {
 
     async function init() {
       if (sel) {
-        const c = JSON.parse(sel) as RecommendedCocktail;
+        let c: RecommendedCocktail;
+        try {
+          c = JSON.parse(sel) as RecommendedCocktail;
+        } catch {
+          sessionStorage.removeItem("selectedCocktail");
+          if (targetId && targetId !== "creative") {
+            const data = await loadDetail(targetId);
+            if (data) {
+              setCocktail({
+                id: data.id, name: data.name, description: data.description ?? null,
+                category: data.category ?? null, glassType: data.glassType ?? null,
+                abv: data.abv, imageUrl: data.imageUrl ?? null,
+                sweetness: data.sweetness, sourness: data.sourness,
+                bitterness: data.bitterness, strength: data.strength, freshness: data.freshness,
+                popularity: data.popularity, aiDescription: "", score: 0,
+              });
+            } else { router.back(); }
+          } else { router.back(); }
+          setLoading(false);
+          return;
+        }
         // Use sessionStorage if it matches the URL id (or no URL id)
         if (!targetId || c.id === targetId) {
           setCocktail(c);
