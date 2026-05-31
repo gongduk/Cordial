@@ -127,9 +127,11 @@ export default function UserHomePage() {
         }}>
           <div style={{ paddingTop: 62, paddingBottom: 16, paddingLeft: 20, paddingRight: 20, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <CordialLogo size={14} color={T.accent} tracking={2} />
-            <svg width="20" height="20" viewBox="0 0 20 20" fill={T.darkTextMuted}>
-              <circle cx="4" cy="10" r="1.4" /><circle cx="10" cy="10" r="1.4" /><circle cx="16" cy="10" r="1.4" />
-            </svg>
+            <Link href="/mypage" style={{ textDecoration: "none", display: "flex" }}>
+              <svg width="20" height="20" viewBox="0 0 20 20" fill={T.darkTextMuted}>
+                <circle cx="4" cy="10" r="1.4" /><circle cx="10" cy="10" r="1.4" /><circle cx="16" cy="10" r="1.4" />
+              </svg>
+            </Link>
           </div>
 
           <div style={{ padding: "28px 24px 36px" }}>
