@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useMutation } from "@tanstack/react-query";
+import api from "@/shared/lib/api";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -73,28 +75,25 @@ export default function PantryPage() {
 
   const [owned, setOwned] = useState<string[]>([]);
   const [loadingPantry, setLoadingPantry] = useState(true);
-  const [matchLoading, setMatchLoading] = useState(false);
   const [result, setResult] = useState<PantryResult | null>(null);
   const [showSearchWeb, setShowSearchWeb] = useState(false);
   const [showSearchMob, setShowSearchMob] = useState(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const matchMutation = useMutation({
+    mutationFn: (ingredients: string[]) =>
+      api.post<PantryResult>("/ai/pantry-recommend", { ingredients }).then(r => r.data),
+    onSuccess: (data) => setResult(data),
+    onError: () => setResult(null),
+  });
+
+  const matchLoading = matchMutation.isPending;
+
   // 매칭 요청
-  const fetchMatches = useCallback(async (ingredients: string[]) => {
+  const fetchMatches = useCallback((ingredients: string[]) => {
     if (ingredients.length === 0) { setResult(null); return; }
-    setMatchLoading(true);
-    try {
-      const res = await fetch("/api/ai/pantry-recommend", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ingredients }),
-      });
-      setResult(await res.json() as PantryResult);
-    } catch {
-      setResult(null);
-    } finally {
-      setMatchLoading(false);
-    }
+    matchMutation.mutate(ingredients);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // DB 저장 (로그인 시, 디바운스)
@@ -102,11 +101,7 @@ export default function PantryPage() {
     if (!isLoggedIn) return;
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => {
-      fetch("/api/user/pantry", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pantry: items }),
-      }).catch(() => {});
+      api.put("/user/pantry", { pantry: items }).catch(() => {});
     }, 800);
   }, [isLoggedIn]);
 
@@ -117,8 +112,8 @@ export default function PantryPage() {
     async function loadPantry() {
       if (isLoggedIn) {
         try {
-          const res = await fetch("/api/user/pantry");
-          const data = await res.json() as { pantry: string[] };
+          const res = await api.get<{ pantry: string[] }>("/user/pantry");
+          const data = res.data;
           const items = data.pantry.length > 0 ? data.pantry : DEFAULT_PANTRY;
           setOwned(items);
           fetchMatches(items);

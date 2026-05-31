@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import api from "@/shared/lib/api";
 import Link from "next/link";
 import { GlassGlyph } from "@/shared/ui/GlassSilhouette";
 import { WebNav } from "@/shared/ui/WebNav";
@@ -59,19 +61,13 @@ function pickGlass(signature?: string | null): GlassType {
 }
 
 export default function BarsPage() {
-  const [bars, setBars] = useState<BarData[]>([]);
-  const [loading, setLoading] = useState(true);
   const [activeMood, setActiveMood] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetch("/api/bars")
-      .then((r) => r.json())
-      .then((data: BarData[]) => {
-        setBars(data.length > 0 ? data : FALLBACK_BARS);
-      })
-      .catch(() => setBars(FALLBACK_BARS))
-      .finally(() => setLoading(false));
-  }, []);
+  const { data, isLoading: loading } = useQuery({
+    queryKey: ["bars"],
+    queryFn: () => api.get<BarData[]>("/bars").then(r => r.data),
+  });
+  const bars = data && data.length > 0 ? data : FALLBACK_BARS;
 
   const allMoods = Array.from(new Set(bars.flatMap((b) => b.moodTags))).slice(0, 6);
   const filtered = activeMood ? bars.filter((b) => b.moodTags.includes(activeMood)) : bars;

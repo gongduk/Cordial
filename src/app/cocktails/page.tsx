@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import api from "@/shared/lib/api";
 import { useRouter } from "next/navigation";
 import { WebNav } from "@/shared/ui/WebNav";
 import { GlassSilhouette } from "@/shared/ui/GlassSilhouette";
@@ -50,18 +52,13 @@ const CATEGORIES = ["전체", "커스텀", "IBA", "Classic"];
 
 export default function CocktailsPage() {
   const router = useRouter();
-  const [cocktails, setCocktails] = useState<CocktailItem[]>([]);
-  const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("전체");
 
-  useEffect(() => {
-    fetch("/api/cocktails")
-      .then(r => r.json())
-      .then((data: CocktailItem[]) => setCocktails(data))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+  const { data: cocktails = [], isLoading: loading } = useQuery({
+    queryKey: ["cocktails"],
+    queryFn: () => api.get<CocktailItem[]>("/cocktails").then(r => r.data),
+  });
 
   const filtered = useMemo(() => {
     let items = cocktails;

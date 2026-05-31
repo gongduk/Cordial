@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import api from "@/shared/lib/api";
 import { WebNav } from "@/shared/ui/WebNav";
 import type { DrinkingCapacity } from "@/shared/types";
 
@@ -48,45 +50,30 @@ export default function MyPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.replace("/login");
-      return;
-    }
-    if (status !== "authenticated") return;
-
-    fetch("/api/user/profile")
-      .then(r => r.json() as Promise<Profile>)
-      .then(data => setProfile(data))
-      .finally(() => setLoading(false));
+    if (status === "unauthenticated") router.replace("/login");
   }, [status, router]);
 
-  async function handleSave() {
+  const { isLoading: loading } = useQuery({
+    queryKey: ["profile"],
+    queryFn: () => api.get<Profile>("/user/profile").then(r => r.data),
+    enabled: status === "authenticated",
+    onSuccess: (data: Profile) => setProfile(data),
+  } as Parameters<typeof useQuery>[0]);
+
+  const saveMutation = useMutation({
+    mutationFn: (data: Omit<Profile, "name" | "email">) => api.patch("/user/profile", data),
+    onSuccess: () => { setSaved(true); setTimeout(() => setSaved(false), 2000); },
+  });
+
+  const saving = saveMutation.isPending;
+
+  function handleSave() {
     if (!profile) return;
-    setSaving(true);
-    setSaved(false);
-    try {
-      const res = await fetch("/api/user/profile", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          drinkingCapacity: profile.drinkingCapacity,
-          sweetPref: profile.sweetPref,
-          sourPref: profile.sourPref,
-          bitterPref: profile.bitterPref,
-          strongPref: profile.strongPref,
-          freshPref: profile.freshPref,
-        }),
-      });
-      if (res.ok) setSaved(true);
-    } finally {
-      setSaving(false);
-      setTimeout(() => setSaved(false), 2000);
-    }
+    const { drinkingCapacity, sweetPref, sourPref, bitterPref, strongPref, freshPref } = profile;
+    saveMutation.mutate({ drinkingCapacity, sweetPref, sourPref, bitterPref, strongPref, freshPref });
   }
 
   function setPref(key: keyof Profile, value: number) {

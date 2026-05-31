@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useMutation } from "@tanstack/react-query";
+import api from "@/shared/lib/api";
 import Link from "next/link";
 import { CordialLogo } from "@/shared/ui/CordialLogo";
 
@@ -24,26 +26,22 @@ export default function SignupPage() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
+  const registerMutation = useMutation({
+    mutationFn: () => api.post("/auth/register", { email, password, name }),
+    onSuccess: () => router.push("/login?registered=1"),
+    onError: (e: unknown) => {
+      const msg = (e as { response?: { data?: { error?: string } } })?.response?.data?.error;
+      setError(msg ?? "회원가입에 실패했습니다.");
+    },
+  });
+
+  const loading = registerMutation.isPending;
+
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    setLoading(true);
-    try {
-      const res = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, name }),
-      });
-      const data = await res.json() as { error?: string };
-      if (!res.ok) { setError(data.error ?? "회원가입에 실패했습니다."); return; }
-      router.push("/login?registered=1");
-    } catch {
-      setError("네트워크 오류가 발생했습니다.");
-    } finally {
-      setLoading(false);
-    }
+    registerMutation.mutate();
   }
 
   const inputStyle: React.CSSProperties = {

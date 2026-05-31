@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useMutation } from "@tanstack/react-query";
+import api from "@/shared/lib/api";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { GlassSilhouette, GlassGlyph } from "@/shared/ui/GlassSilhouette";
@@ -77,7 +79,6 @@ export default function MixPage() {
   const [ings, setIngs] = useState(INITIAL_INGS);
   const [method, setMethod] = useState<MixMethod>("shaking");
   const [notes, setNotes] = useState("");
-  const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<MixAnalysisResult | null>(null);
   const [showSearchWeb, setShowSearchWeb] = useState(false);
   const [showSearchMob, setShowSearchMob] = useState(false);
@@ -102,50 +103,35 @@ export default function MixPage() {
     setIngs((prev) => prev.filter((i) => i.id !== id));
   }
 
-  async function analyze() {
-    setLoading(true);
-    setSaveStatus("idle");
-    setSavedId(null);
-    try {
-      const res = await fetch("/api/ai/mix-analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ingredients: ings, method, notes }),
-      });
-      const data = await res.json() as MixAnalysisResult;
-      setResult(data);
-      setCustomName(data.name);
-    } catch {
-      alert("분석 중 오류가 발생했습니다.");
-    } finally {
-      setLoading(false);
-    }
-  }
+  const analyzeMutation = useMutation({
+    mutationFn: () =>
+      api.post<MixAnalysisResult>("/ai/mix-analyze", { ingredients: ings, method, notes }).then(r => r.data),
+    onSuccess: (data) => { setResult(data); setCustomName(data.name); setSaveStatus("idle"); setSavedId(null); },
+    onError: () => alert("분석 중 오류가 발생했습니다."),
+  });
 
-  async function saveRecipe() {
-    if (!result) return;
-    setSaveStatus("saving");
-    try {
-      const res = await fetch("/api/cocktail/save", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: customName || result.name,
-          description: result.description,
-          method,
-          ingredients: ings.map(i => ({ name: i.name, amount: i.amount, abv: i.abv })),
-          taste: result.taste,
-          abv: result.calculatedAbv,
-        }),
-      });
-      if (!res.ok) throw new Error("save failed");
-      const data = await res.json() as { id: string };
-      setSavedId(data.id);
-      setSaveStatus("saved");
-    } catch {
-      setSaveStatus("error");
-    }
-  }
+  const loading = analyzeMutation.isPending;
+
+  function analyze() { analyzeMutation.mutate(); }
+
+  const saveMutation = useMutation({
+    mutationFn: () => {
+      if (!result) throw new Error("no result");
+      return api.post<{ id: string }>("/cocktail/save", {
+        name: customName || result.name,
+        description: result.description,
+        method,
+        ingredients: ings.map(i => ({ name: i.name, amount: i.amount, abv: i.abv })),
+        taste: result.taste,
+        abv: result.calculatedAbv,
+      }).then(r => r.data);
+    },
+    onMutate: () => setSaveStatus("saving"),
+    onSuccess: (data) => { setSavedId(data.id); setSaveStatus("saved"); },
+    onError: () => setSaveStatus("error"),
+  });
+
+  function saveRecipe() { saveMutation.mutate(); }
 
   const displayResult = result ?? {
     calculatedAbv: 0,

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import api from "@/shared/lib/api";
 import { useRouter } from "next/navigation";
 import { GlassSilhouette } from "@/shared/ui/GlassSilhouette";
 import { WebNav } from "@/shared/ui/WebNav";
@@ -106,18 +107,13 @@ export default function RecommendPage() {
     const t1 = setTimeout(() => setDoneCount(1), 600);
     const t2 = setTimeout(() => setDoneCount(2), 1200);
 
-    fetch("/api/ai/recommend", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ emotionVector: emotionVector, drinkingCapacity }),
-    })
-      .then(async res => { if (!res.ok) throw new Error((await res.json() as { error?: string }).error || "추천 실패"); return res.json() as Promise<RecommendedCocktail[]>; })
-      .then(data => {
-        setList(data);
-        sessionStorage.setItem("recommendCache", JSON.stringify(data));
+    api.post<RecommendedCocktail[]>("/ai/recommend", { emotionVector, drinkingCapacity })
+      .then(res => {
+        setList(res.data);
+        sessionStorage.setItem("recommendCache", JSON.stringify(res.data));
         sessionStorage.setItem("recommendCacheEv", ev);
       })
-      .catch(e => setError(String((e as Error).message || e)))
+      .catch(e => setError((e as Error).message || "추천 실패"))
       .finally(() => setLoading(false));
 
     return () => { clearTimeout(t1); clearTimeout(t2); };
