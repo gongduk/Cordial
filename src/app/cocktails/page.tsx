@@ -6,7 +6,8 @@ import api from "@/shared/lib/api";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { WebNav } from "@/shared/ui/WebNav";
-import { GlassSilhouette, GlassGlyph } from "@/shared/ui/GlassSilhouette";
+import { GlassSilhouette } from "@/shared/ui/GlassSilhouette";
+import { MobileTabBar } from "@/shared/ui/MobileTabBar";
 import type { GlassType } from "@/shared/ui/GlassSilhouette";
 
 const W = {
@@ -34,13 +35,6 @@ const T = {
   sans: '"Pretendard Variable","Pretendard",-apple-system,BlinkMacSystemFont,sans-serif',
   mono: '"JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace',
 } as const;
-
-const TABS = [
-  { id: "home", label: "홈", glass: "martini" as GlassType, href: "/home" },
-  { id: "pantry", label: "내 술장", glass: "rocks" as GlassType, href: "/pantry" },
-  { id: "mix", label: "모의 제조", glass: "highball" as GlassType, href: "/mix" },
-  { id: "bars", label: "바", glass: "coupe" as GlassType, href: "/bars" },
-] as const;
 
 interface CocktailItem {
   id: string;
@@ -286,35 +280,9 @@ export default function CocktailsPage() {
             </div>
           )}
 
-          <MobileTabBar active="" />
+          <MobileTabBar active="cocktails" />
         </div>
       </div>
     </>
-  );
-}
-
-function MobileTabBar({ active }: { active: string }) {
-  return (
-    <div style={{
-      position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)",
-      width: "100%", maxWidth: 430,
-      paddingBottom: 28, paddingTop: 10,
-      background: "linear-gradient(180deg,rgba(21,17,13,0) 0%,rgba(21,17,13,0.92) 30%,rgba(21,17,13,1) 60%)",
-      display: "flex", justifyContent: "space-around",
-      borderTop: "0.5px solid rgba(255,246,232,0.08)",
-    }}>
-      {TABS.map(t => {
-        const isActive = t.id === active;
-        const c = isActive ? "#B88752" : "rgba(245,239,230,0.38)";
-        return (
-          <Link key={t.id} href={t.href} style={{ textDecoration: "none" }}>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, padding: "6px 12px" }}>
-              <GlassGlyph type={t.glass} size={22} color={c} strokeWidth={1.4} />
-              <span style={{ fontSize: 10, color: c, fontWeight: 500, fontFamily: '"Pretendard Variable","Pretendard",sans-serif' }}>{t.label}</span>
-            </div>
-          </Link>
-        );
-      })}
-    </div>
   );
 }
