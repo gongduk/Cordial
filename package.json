@@ -15,6 +15,7 @@
     "db:fetch-images": "tsx prisma/fetch-images.ts",
     "db:fix-images": "tsx prisma/fix-images.ts",
     "db:check-missing": "tsx prisma/check-missing.ts",
+    "db:seed-bars": "tsx prisma/seed-bars-bexco.ts",
     "type-check": "tsc --noEmit"
   },
   "repository": {
