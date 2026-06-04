@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import axios from "axios";
 import Link from "next/link";
 import { CordialLogo } from "@/shared/ui/CordialLogo";
 
@@ -35,6 +36,10 @@ export default function LoginPage() {
       if (result?.error) {
         setError("이메일 또는 비밀번호가 올바르지 않습니다.");
       } else {
+        try {
+          const { data } = await axios.post<{ accessToken: string }>("/api/auth/token");
+          localStorage.setItem("cordial_access_token", data.accessToken);
+        } catch { /* non-fatal */ }
         window.location.href = "/home";
       }
     } catch {

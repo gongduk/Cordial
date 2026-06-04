@@ -59,7 +59,17 @@ model User {
   emotionLogs      EmotionLog[]
   recommendations  Recommendation[]
   customCocktails  Cocktail[]       @relation("UserCustomCocktails")
+  refreshTokens    RefreshToken[]
   createdAt        DateTime         @default(now())
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 }
 
 model EmotionLog {
@@ -129,17 +139,23 @@ model Recommendation {
 }
 
 model Bar {
-  id          String   @id @default(cuid())
-  name        String
-  address     String
-  area        String?
-  moodTags    String[]
-  signature   String?
-  imageUrl    String?
-  latitude    Float?
-  longitude   Float?
-  description String?  @db.Text
-  createdAt   DateTime @default(now())
+  id           String    @id @default(cuid())
+  name         String
+  address      String
+  area         String?
+  moodTags     String[]
+  signature    String?
+  imageUrl     String?
+  latitude     Float?
+  longitude    Float?
+  description  String?   @db.Text
+  placeId      String?   @unique
+  rating       Float?
+  priceLevel   Int?
+  reviewCount  Int?
+  purposeTags  String[]
+  analyzedAt   DateTime?
+  createdAt    DateTime  @default(now())
 }
 
 enum DrinkingCapacity {

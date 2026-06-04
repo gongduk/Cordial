@@ -15,6 +15,7 @@
     "db:fetch-images": "tsx prisma/fetch-images.ts",
     "db:fix-images": "tsx prisma/fix-images.ts",
     "db:check-missing": "tsx prisma/check-missing.ts",
+    "db:seed-bars": "tsx prisma/seed-bars-bexco.ts",
     "type-check": "tsc --noEmit"
   },
   "repository": {
@@ -36,7 +37,12 @@
     "@prisma/client": "^7.7.0",
     "@supabase/supabase-js": "^2.49.4",
     "@tailwindcss/postcss": "^4.2.2",
+    "@tanstack/react-query": "^5.100.14",
+    "@tanstack/react-query-devtools": "^5.100.14",
+    "@types/jsonwebtoken": "^9.0.10",
+    "axios": "^1.16.1",
     "bcryptjs": "^3.0.3",
+    "jsonwebtoken": "^9.0.3",
     "next": "^14.2.35",
     "next-auth": "^4.24.14",
     "pg": "^8.20.0",

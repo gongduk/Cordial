@@ -2,16 +2,29 @@ import Link from "next/link";
 import { GlassSilhouette } from "@/shared/ui/GlassSilhouette";
 import { CordialLogo } from "@/shared/ui/CordialLogo";
 
+const W = {
+  accent: "#B88752",
+  bg: "#FCFBF9",
+  surface: "#FFFFFF",
+  surface2: "#F4F0EA",
+  border: "rgba(40, 30, 20, 0.08)",
+  borderStrong: "rgba(40, 30, 20, 0.16)",
+  text: "#1A1612",
+  textMuted: "rgba(26, 22, 18, 0.62)",
+  textFaint: "rgba(26, 22, 18, 0.38)",
+  sans: '"Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif',
+  mono: '"JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace',
+} as const;
+
 const T = {
   accent: "#B88752",
-  lightBg: "#FCFBF9",
-  lightSurface: "#FFFFFF",
-  lightSurface2: "#F4F0EA",
-  lightBorder: "rgba(40, 30, 20, 0.08)",
-  lightBorderStrong: "rgba(40, 30, 20, 0.16)",
-  lightText: "#1A1612",
-  lightTextMuted: "rgba(26, 22, 18, 0.62)",
-  lightTextFaint: "rgba(26, 22, 18, 0.38)",
+  darkBg: "#15110D",
+  darkSurface: "#1C1814",
+  darkBorder: "rgba(255,246,232,0.08)",
+  darkBorderStrong: "rgba(255,246,232,0.14)",
+  darkText: "#F5EFE6",
+  darkTextMuted: "rgba(245,239,230,0.62)",
+  darkTextFaint: "rgba(245,239,230,0.38)",
   sans: '"Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif',
   mono: '"JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace',
 } as const;
@@ -33,186 +46,199 @@ const FEATURES = [
 
 export default function LandingPage() {
   return (
-    <div style={{ background: T.lightBg, color: T.lightText, fontFamily: T.sans, minHeight: "100vh" }}>
-      {/* Nav */}
-      <nav style={{
-        padding: "20px 56px",
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        borderBottom: `0.5px solid ${T.lightBorder}`,
-        background: T.lightBg,
-        position: "sticky", top: 0, zIndex: 10,
-      }}>
-        <CordialLogo size={15} color={T.lightText} tracking={2} />
-        <div style={{ display: "flex", gap: 32 }}>
-          {NAV_ITEMS.map(({ id, label, href }) => (
-            <Link key={id} href={href} style={{
-              fontSize: 13, fontWeight: id === "home" ? 600 : 500,
-              color: id === "home" ? T.lightText : T.lightTextMuted,
-              letterSpacing: -0.1, textDecoration: "none",
-              paddingBottom: 4,
-              borderBottom: id === "home" ? `1.5px solid ${T.accent}` : "1.5px solid transparent",
-            }}>{label}</Link>
-          ))}
-        </div>
-        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-          <Link href="/emotion" style={{
-            padding: "8px 18px", borderRadius: 8,
-            background: T.lightText, color: T.lightBg,
-            fontSize: 13, fontWeight: 600, letterSpacing: -0.1, textDecoration: "none",
-            fontFamily: T.sans,
-          }}>시작하기</Link>
-        </div>
-      </nav>
-
-      {/* Hero */}
-      <section style={{
-        padding: "100px 56px 80px",
-        display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 60, alignItems: "center",
-        maxWidth: 1280, margin: "0 auto",
-      }}>
-        <div>
-          <div style={{
-            fontFamily: T.mono, fontSize: 11, letterSpacing: 1.8,
-            color: T.accent, marginBottom: 22, textTransform: "uppercase",
-          }}>AI BARTENDER · BETA</div>
-          <h1 style={{
-            fontSize: 64, fontWeight: 600, letterSpacing: -1.6,
-            lineHeight: 1.05, margin: 0, color: T.lightText,
-          }}>
-            오늘의 당신을<br />
-            <span style={{ color: T.accent }}>한 잔</span>으로<br />
-            읽어드릴게요.
-          </h1>
-          <p style={{
-            fontSize: 17, color: T.lightTextMuted, marginTop: 28,
-            lineHeight: 1.65, letterSpacing: -0.2, maxWidth: 460,
-          }}>
-            네 가지 짧은 질문에 답하세요. AI 바텐더가 당신의 감정을 읽고
-            오늘 밤 어울릴 칵테일 세 잔을 골라드려요.
-          </p>
-          <div style={{ marginTop: 40, display: "flex", gap: 14, alignItems: "center" }}>
+    <>
+      {/* ── WEB ── */}
+      <div className="cordial-web" style={{ background: W.bg, color: W.text, fontFamily: W.sans, minHeight: "100vh" }}>
+        <nav style={{
+          padding: "20px 56px",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          borderBottom: `0.5px solid ${W.border}`,
+          background: W.bg,
+          position: "sticky", top: 0, zIndex: 10,
+        }}>
+          <CordialLogo size={15} color={W.text} tracking={2} />
+          <div style={{ display: "flex", gap: 32 }}>
+            {NAV_ITEMS.map(({ id, label, href }) => (
+              <Link key={id} href={href} style={{
+                fontSize: 13, fontWeight: id === "home" ? 600 : 500,
+                color: id === "home" ? W.text : W.textMuted,
+                letterSpacing: -0.1, textDecoration: "none",
+                paddingBottom: 4,
+                borderBottom: id === "home" ? `1.5px solid ${W.accent}` : "1.5px solid transparent",
+              }}>{label}</Link>
+            ))}
+          </div>
+          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
             <Link href="/emotion" style={{
-              padding: "14px 28px", borderRadius: 10,
-              background: T.lightText, color: T.lightBg,
-              fontSize: 14, fontWeight: 600, letterSpacing: -0.1, textDecoration: "none",
-              fontFamily: T.sans,
-            }}>오늘의 한 잔 찾기</Link>
-            <Link href="/pantry" style={{
-              padding: "14px 24px", borderRadius: 10,
-              background: "transparent", color: T.lightText,
-              border: `0.5px solid ${T.lightBorderStrong}`,
-              fontSize: 14, fontWeight: 500, letterSpacing: -0.1, textDecoration: "none",
-              fontFamily: T.sans,
-            }}>레시피 둘러보기</Link>
+              padding: "8px 18px", borderRadius: 8,
+              background: W.text, color: W.bg,
+              fontSize: 13, fontWeight: 600, letterSpacing: -0.1, textDecoration: "none",
+              fontFamily: W.sans,
+            }}>시작하기</Link>
           </div>
-          <div style={{
-            marginTop: 32, fontFamily: T.mono, fontSize: 11,
-            color: T.lightTextFaint, letterSpacing: 0.4,
-          }}>2,400+ COCKTAILS · 320 BARS · KOREA</div>
-        </div>
+        </nav>
 
-        {/* Glass visuals */}
-        <div style={{
-          display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 24,
-          height: 480,
+        <section style={{
+          padding: "100px 56px 80px",
+          display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 60, alignItems: "center",
+          maxWidth: 1280, margin: "0 auto",
         }}>
-          <div style={{ paddingBottom: 60 }}>
-            <GlassSilhouette type="coupe" size={140} stroke={T.accent} liquid={T.accent} fillLevel={0.55} garnish strokeWidth={1.1} />
-          </div>
           <div>
-            <GlassSilhouette type="martini" size={170} stroke={T.accent} liquid={T.accent} fillLevel={0.65} garnish strokeWidth={1.1} />
+            <div style={{ fontFamily: W.mono, fontSize: 11, letterSpacing: 1.8, color: W.accent, marginBottom: 22, textTransform: "uppercase" }}>AI BARTENDER · BETA</div>
+            <h1 style={{ fontSize: 64, fontWeight: 600, letterSpacing: -1.6, lineHeight: 1.05, margin: 0, color: W.text }}>
+              오늘의 당신을<br />
+              <span style={{ color: W.accent }}>한 잔</span>으로<br />
+              읽어드릴게요.
+            </h1>
+            <p style={{ fontSize: 17, color: W.textMuted, marginTop: 28, lineHeight: 1.65, letterSpacing: -0.2, maxWidth: 460 }}>
+              네 가지 짧은 질문에 답하세요. AI 바텐더가 당신의 감정을 읽고 오늘 밤 어울릴 칵테일 세 잔을 골라드려요.
+            </p>
+            <div style={{ marginTop: 40, display: "flex", gap: 14, alignItems: "center" }}>
+              <Link href="/emotion" style={{
+                padding: "14px 28px", borderRadius: 10,
+                background: W.text, color: W.bg,
+                fontSize: 14, fontWeight: 600, letterSpacing: -0.1, textDecoration: "none",
+                fontFamily: W.sans,
+              }}>오늘의 한 잔 찾기</Link>
+              <Link href="/pantry" style={{
+                padding: "14px 24px", borderRadius: 10,
+                background: "transparent", color: W.text,
+                border: `0.5px solid ${W.borderStrong}`,
+                fontSize: 14, fontWeight: 500, letterSpacing: -0.1, textDecoration: "none",
+                fontFamily: W.sans,
+              }}>레시피 둘러보기</Link>
+            </div>
+            <div style={{ marginTop: 32, fontFamily: W.mono, fontSize: 11, color: W.textFaint, letterSpacing: 0.4 }}>2,400+ COCKTAILS · 320 BARS · KOREA</div>
           </div>
-          <div style={{ paddingBottom: 80 }}>
-            <GlassSilhouette type="rocks" size={120} stroke={T.accent} liquid={T.accent} fillLevel={0.78} strokeWidth={1.1} />
+          <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 24, height: 480 }}>
+            <div style={{ paddingBottom: 60 }}>
+              <GlassSilhouette type="coupe" size={140} stroke={W.accent} liquid={W.accent} fillLevel={0.55} garnish strokeWidth={1.1} />
+            </div>
+            <div>
+              <GlassSilhouette type="martini" size={170} stroke={W.accent} liquid={W.accent} fillLevel={0.65} garnish strokeWidth={1.1} />
+            </div>
+            <div style={{ paddingBottom: 80 }}>
+              <GlassSilhouette type="rocks" size={120} stroke={W.accent} liquid={W.accent} fillLevel={0.78} strokeWidth={1.1} />
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* How it works */}
-      <section style={{
-        padding: "60px 56px 100px", maxWidth: 1280, margin: "0 auto",
-        borderTop: `0.5px solid ${T.lightBorder}`,
-      }}>
-        <div style={{
-          fontFamily: T.mono, fontSize: 11, letterSpacing: 1.8,
-          color: T.accent, marginBottom: 16, textTransform: "uppercase",
-        }}>HOW IT WORKS</div>
-        <h2 style={{
-          fontSize: 36, fontWeight: 600, letterSpacing: -0.8,
-          margin: 0, marginBottom: 64, lineHeight: 1.2, maxWidth: 700,
-        }}>
-          기분, 재료, 조합, 그리고 바.<br />
-          <span style={{ color: T.lightTextMuted }}>네 가지 방식으로 한 잔을 만나요.</span>
-        </h2>
-
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 24 }}>
-          {FEATURES.map((f) => (
-            <Link key={f.num} href={f.href} style={{ textDecoration: "none" }}>
-              <div style={{
-                background: T.lightSurface,
-                border: `0.5px solid ${T.lightBorder}`,
-                borderRadius: 18, padding: "32px 28px 28px",
-                display: "flex", flexDirection: "column", gap: 20,
-                minHeight: 320, cursor: "pointer",
-                transition: "box-shadow 0.15s",
-              }}>
-                <div style={{ fontFamily: T.mono, fontSize: 11, color: T.accent, letterSpacing: 1.4 }}>{f.num}</div>
-                <div style={{ display: "flex", justifyContent: "center", padding: "4px 0" }}>
-                  <GlassSilhouette type={f.glass} size={86} stroke={T.accent} liquid={T.accent} fillLevel={f.fill} strokeWidth={1.3} />
+        <section style={{ padding: "60px 56px 100px", maxWidth: 1280, margin: "0 auto", borderTop: `0.5px solid ${W.border}` }}>
+          <div style={{ fontFamily: W.mono, fontSize: 11, letterSpacing: 1.8, color: W.accent, marginBottom: 16, textTransform: "uppercase" }}>HOW IT WORKS</div>
+          <h2 style={{ fontSize: 36, fontWeight: 600, letterSpacing: -0.8, margin: 0, marginBottom: 64, lineHeight: 1.2, maxWidth: 700 }}>
+            기분, 재료, 조합, 그리고 바.<br />
+            <span style={{ color: W.textMuted }}>네 가지 방식으로 한 잔을 만나요.</span>
+          </h2>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 24 }}>
+            {FEATURES.map((f) => (
+              <Link key={f.num} href={f.href} style={{ textDecoration: "none" }}>
+                <div style={{
+                  background: W.surface, border: `0.5px solid ${W.border}`,
+                  borderRadius: 18, padding: "32px 28px 28px",
+                  display: "flex", flexDirection: "column", gap: 20,
+                  minHeight: 320, cursor: "pointer",
+                }}>
+                  <div style={{ fontFamily: W.mono, fontSize: 11, color: W.accent, letterSpacing: 1.4 }}>{f.num}</div>
+                  <div style={{ display: "flex", justifyContent: "center", padding: "4px 0" }}>
+                    <GlassSilhouette type={f.glass} size={86} stroke={W.accent} liquid={W.accent} fillLevel={f.fill} strokeWidth={1.3} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 18, fontWeight: 600, letterSpacing: -0.3, marginBottom: 8, color: W.text }}>{f.name}</div>
+                    <div style={{ fontSize: 13, lineHeight: 1.65, letterSpacing: -0.15, color: W.textMuted }}>{f.desc}</div>
+                  </div>
                 </div>
-                <div>
-                  <div style={{ fontSize: 18, fontWeight: 600, letterSpacing: -0.3, marginBottom: 8, color: T.lightText }}>{f.name}</div>
-                  <div style={{ fontSize: 13, lineHeight: 1.65, letterSpacing: -0.15, color: T.lightTextMuted }}>{f.desc}</div>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
+              </Link>
+            ))}
+          </div>
+        </section>
 
-      {/* Philosophy quote */}
-      <section style={{
-        padding: "80px 56px",
-        background: T.lightSurface2,
-        borderTop: `0.5px solid ${T.lightBorder}`,
-        borderBottom: `0.5px solid ${T.lightBorder}`,
-      }}>
-        <div style={{ maxWidth: 760, margin: "0 auto", textAlign: "center" }}>
-          <div style={{
-            fontFamily: T.mono, fontSize: 11, letterSpacing: 1.8,
-            color: T.accent, marginBottom: 24, textTransform: "uppercase",
-          }}>OUR PHILOSOPHY</div>
-          <p style={{
-            margin: 0, fontSize: 28, fontWeight: 500, lineHeight: 1.45,
-            letterSpacing: -0.5, color: T.lightText,
-          }}>
-            &ldquo;좋은 바텐더는 칵테일을 만들기 전에<br />
-            손님을 먼저 읽습니다. Cordial은 그 한 호흡을<br />
-            모두에게 건네고 싶었어요.&rdquo;
-          </p>
-          <div style={{ marginTop: 28, fontSize: 13, color: T.lightTextMuted, letterSpacing: -0.1 }}>
-            — 이도현, Founder &amp; Head Bartender
+        <section style={{ padding: "80px 56px", background: W.surface2, borderTop: `0.5px solid ${W.border}`, borderBottom: `0.5px solid ${W.border}` }}>
+          <div style={{ maxWidth: 760, margin: "0 auto", textAlign: "center" }}>
+            <div style={{ fontFamily: W.mono, fontSize: 11, letterSpacing: 1.8, color: W.accent, marginBottom: 24, textTransform: "uppercase" }}>OUR PHILOSOPHY</div>
+            <p style={{ margin: 0, fontSize: 28, fontWeight: 500, lineHeight: 1.45, letterSpacing: -0.5, color: W.text }}>
+              &ldquo;좋은 바텐더는 칵테일을 만들기 전에<br />
+              손님을 먼저 읽습니다. Cordial은 그 한 호흡을<br />
+              모두에게 건네고 싶었어요.&rdquo;
+            </p>
+            <div style={{ marginTop: 28, fontSize: 13, color: W.textMuted, letterSpacing: -0.1 }}>
+              — 이도현, Founder &amp; Head Bartender
+            </div>
+          </div>
+        </section>
+
+        <footer style={{ padding: "40px 56px", display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: 1280, margin: "0 auto" }}>
+          <CordialLogo size={13} color={W.textMuted} tracking={2} />
+          <div style={{ display: "flex", gap: 24, alignItems: "center" }}>
+            <Link href="/login" style={{ fontSize: 12, color: W.textFaint, letterSpacing: -0.1, textDecoration: "none" }}>로그인</Link>
+            <div style={{ fontFamily: W.mono, fontSize: 10, color: W.textFaint, letterSpacing: 1.4 }}>© 2026 · DRINK RESPONSIBLY</div>
+          </div>
+        </footer>
+      </div>
+
+      {/* ── MOBILE ── */}
+      <div className="cordial-mob">
+        <div style={{ width: "100%", minHeight: "100vh", background: T.darkBg, color: T.darkText, fontFamily: T.sans, maxWidth: 430, margin: "0 auto" }}>
+          {/* Header */}
+          <div style={{ padding: "52px 24px 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <CordialLogo size={14} color={T.accent} tracking={2} />
+            <Link href="/login" style={{ fontSize: 12, color: T.darkTextMuted, textDecoration: "none", fontFamily: T.sans }}>로그인</Link>
+          </div>
+
+          {/* Hero */}
+          <div style={{ padding: "40px 24px 32px" }}>
+            <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.8, color: T.accent, marginBottom: 18, textTransform: "uppercase" }}>AI BARTENDER · BETA</div>
+            <h1 style={{ fontSize: 38, fontWeight: 600, letterSpacing: -0.9, lineHeight: 1.15, margin: 0, color: T.darkText }}>
+              오늘의 당신을<br />
+              <span style={{ color: T.accent }}>한 잔</span>으로<br />
+              읽어드릴게요.
+            </h1>
+            <p style={{ fontSize: 14, color: T.darkTextMuted, marginTop: 18, lineHeight: 1.65, letterSpacing: -0.2 }}>
+              네 가지 짧은 질문에 답하세요. AI 바텐더가 오늘 밤 어울릴 칵테일을 골라드려요.
+            </p>
+            <div style={{ marginTop: 28, display: "flex", gap: 10 }}>
+              <Link href="/emotion" style={{
+                flex: 1, padding: "14px 0", borderRadius: 12, textAlign: "center",
+                background: T.darkText, color: T.darkBg,
+                fontSize: 14, fontWeight: 600, letterSpacing: -0.2, textDecoration: "none",
+              }}>오늘의 한 잔 찾기</Link>
+              <Link href="/home" style={{
+                padding: "14px 18px", borderRadius: 12,
+                background: "transparent", color: T.darkText,
+                border: `0.5px solid ${T.darkBorderStrong}`,
+                fontSize: 14, fontWeight: 500, textDecoration: "none",
+              }}>홈으로</Link>
+            </div>
+          </div>
+
+          {/* Features */}
+          <div style={{ padding: "0 24px 48px", display: "flex", flexDirection: "column", gap: 10 }}>
+            {FEATURES.map(f => (
+              <Link key={f.num} href={f.href} style={{ textDecoration: "none" }}>
+                <div style={{
+                  background: T.darkSurface, border: `0.5px solid ${T.darkBorder}`,
+                  borderRadius: 14, padding: "18px 20px",
+                  display: "flex", alignItems: "center", gap: 18,
+                }}>
+                  <GlassSilhouette type={f.glass} size={48} stroke={T.accent} liquid={T.accent} fillLevel={f.fill} strokeWidth={1.2} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontFamily: T.mono, fontSize: 9, color: T.accent, letterSpacing: 1.4, marginBottom: 4 }}>{f.num}</div>
+                    <div style={{ fontSize: 15, fontWeight: 600, letterSpacing: -0.3, color: T.darkText, marginBottom: 4 }}>{f.name}</div>
+                    <div style={{ fontSize: 12, color: T.darkTextMuted, lineHeight: 1.5 }}>{f.desc}</div>
+                  </div>
+                  <svg width="14" height="14" viewBox="0 0 20 20" fill="none" style={{ flexShrink: 0 }}>
+                    <path d="M8 4 L14 10 L8 16" stroke={T.darkTextFaint} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          {/* Footer */}
+          <div style={{ padding: "20px 24px 48px", textAlign: "center", borderTop: `0.5px solid ${T.darkBorder}` }}>
+            <div style={{ fontFamily: T.mono, fontSize: 10, color: T.darkTextFaint, letterSpacing: 1.4 }}>© 2026 · DRINK RESPONSIBLY</div>
           </div>
         </div>
-      </section>
-
-      {/* Footer */}
-      <footer style={{
-        padding: "40px 56px",
-        display: "flex", justifyContent: "space-between", alignItems: "center",
-        maxWidth: 1280, margin: "0 auto",
-      }}>
-        <CordialLogo size={13} color={T.lightTextMuted} tracking={2} />
-        <div style={{ display: "flex", gap: 24, alignItems: "center" }}>
-          <Link href="/login" style={{ fontSize: 12, color: T.lightTextFaint, letterSpacing: -0.1, textDecoration: "none" }}>
-            로그인
-          </Link>
-          <div style={{
-            fontFamily: T.mono, fontSize: 10,
-            color: T.lightTextFaint, letterSpacing: 1.4,
-          }}>© 2026 · DRINK RESPONSIBLY</div>
-        </div>
-      </footer>
-    </div>
+      </div>
+    </>
   );
 }

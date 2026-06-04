@@ -2,6 +2,7 @@ import Link from "next/link";
 import { GlassSilhouette, GlassGlyph } from "@/shared/ui/GlassSilhouette";
 import { CordialLogo } from "@/shared/ui/CordialLogo";
 import { WebNav } from "@/shared/ui/WebNav";
+import { MobileTabBar } from "@/shared/ui/MobileTabBar";
 
 const W = {
   accent: "#B88752",
@@ -127,9 +128,11 @@ export default function UserHomePage() {
         }}>
           <div style={{ paddingTop: 62, paddingBottom: 16, paddingLeft: 20, paddingRight: 20, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <CordialLogo size={14} color={T.accent} tracking={2} />
-            <svg width="20" height="20" viewBox="0 0 20 20" fill={T.darkTextMuted}>
-              <circle cx="4" cy="10" r="1.4" /><circle cx="10" cy="10" r="1.4" /><circle cx="16" cy="10" r="1.4" />
-            </svg>
+            <Link href="/mypage" style={{ textDecoration: "none", display: "flex" }}>
+              <svg width="20" height="20" viewBox="0 0 20 20" fill={T.darkTextMuted}>
+                <circle cx="4" cy="10" r="1.4" /><circle cx="10" cy="10" r="1.4" /><circle cx="16" cy="10" r="1.4" />
+              </svg>
+            </Link>
           </div>
 
           <div style={{ padding: "28px 24px 36px" }}>
@@ -202,37 +205,5 @@ export default function UserHomePage() {
         </div>
       </div>
     </>
-  );
-}
-
-function MobileTabBar({ active }: { active: "home" | "pantry" | "mix" | "bars" }) {
-  const tabs = [
-    { id: "home" as const, label: "홈", glass: "martini" as const, href: "/home" },
-    { id: "pantry" as const, label: "내 술장", glass: "rocks" as const, href: "/pantry" },
-    { id: "mix" as const, label: "모의 제조", glass: "highball" as const, href: "/mix" },
-    { id: "bars" as const, label: "바", glass: "coupe" as const, href: "/bars" },
-  ] as const;
-  return (
-    <div style={{
-      position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)",
-      width: "100%", maxWidth: 430,
-      paddingBottom: 28, paddingTop: 10,
-      background: "linear-gradient(180deg,rgba(21,17,13,0) 0%,rgba(21,17,13,0.92) 30%,rgba(21,17,13,1) 60%)",
-      display: "flex", justifyContent: "space-around",
-      borderTop: "0.5px solid rgba(255,246,232,0.08)",
-    }}>
-      {tabs.map(t => {
-        const isActive = t.id === active;
-        const c = isActive ? "#B88752" : "rgba(245,239,230,0.38)";
-        return (
-          <Link key={t.id} href={t.href} style={{ textDecoration: "none" }}>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, padding: "6px 12px" }}>
-              <GlassGlyph type={t.glass} size={22} color={c} strokeWidth={1.4} />
-              <span style={{ fontSize: 10, color: c, fontWeight: 500, fontFamily: '"Pretendard Variable","Pretendard",sans-serif' }}>{t.label}</span>
-            </div>
-          </Link>
-        );
-      })}
-    </div>
   );
 }

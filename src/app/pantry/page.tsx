@@ -1,12 +1,15 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useMutation } from "@tanstack/react-query";
+import api from "@/shared/lib/api";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { GlassSilhouette, GlassGlyph } from "@/shared/ui/GlassSilhouette";
+import { GlassSilhouette } from "@/shared/ui/GlassSilhouette";
 import { WebNav } from "@/shared/ui/WebNav";
 import { IngredientSearch } from "@/shared/ui/IngredientSearch";
+import { MobileTabBar } from "@/shared/ui/MobileTabBar";
 import type { GlassType } from "@/shared/ui/GlassSilhouette";
 import type { IngredientOption } from "@/shared/ui/IngredientSearch";
 import type { RecommendedCocktail } from "@/shared/types";
@@ -37,12 +40,6 @@ const T = {
   mono: '"JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace',
 } as const;
 
-const TABS = [
-  { id: "home" as const, label: "홈", glass: "martini" as GlassType, href: "/home" },
-  { id: "pantry" as const, label: "내 술장", glass: "rocks" as GlassType, href: "/pantry" },
-  { id: "mix" as const, label: "모의 제조", glass: "highball" as GlassType, href: "/mix" },
-  { id: "bars" as const, label: "바", glass: "coupe" as GlassType, href: "/bars" },
-] as const;
 
 interface PantryResult {
   exact: Array<{ cocktail: RecommendedCocktail & { abv: number }; missingIngredients: string[]; matchRatio: number }>;
@@ -73,28 +70,25 @@ export default function PantryPage() {
 
   const [owned, setOwned] = useState<string[]>([]);
   const [loadingPantry, setLoadingPantry] = useState(true);
-  const [matchLoading, setMatchLoading] = useState(false);
   const [result, setResult] = useState<PantryResult | null>(null);
   const [showSearchWeb, setShowSearchWeb] = useState(false);
   const [showSearchMob, setShowSearchMob] = useState(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const matchMutation = useMutation({
+    mutationFn: (ingredients: string[]) =>
+      api.post<PantryResult>("/ai/pantry-recommend", { ingredients }).then(r => r.data),
+    onSuccess: (data) => setResult(data),
+    onError: () => setResult(null),
+  });
+
+  const matchLoading = matchMutation.isPending;
+
   // 매칭 요청
-  const fetchMatches = useCallback(async (ingredients: string[]) => {
+  const fetchMatches = useCallback((ingredients: string[]) => {
     if (ingredients.length === 0) { setResult(null); return; }
-    setMatchLoading(true);
-    try {
-      const res = await fetch("/api/ai/pantry-recommend", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ingredients }),
-      });
-      setResult(await res.json() as PantryResult);
-    } catch {
-      setResult(null);
-    } finally {
-      setMatchLoading(false);
-    }
+    matchMutation.mutate(ingredients);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // DB 저장 (로그인 시, 디바운스)
@@ -102,11 +96,7 @@ export default function PantryPage() {
     if (!isLoggedIn) return;
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => {
-      fetch("/api/user/pantry", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pantry: items }),
-      }).catch(() => {});
+      api.put("/user/pantry", { pantry: items }).catch(() => {});
     }, 800);
   }, [isLoggedIn]);
 
@@ -117,8 +107,8 @@ export default function PantryPage() {
     async function loadPantry() {
       if (isLoggedIn) {
         try {
-          const res = await fetch("/api/user/pantry");
-          const data = await res.json() as { pantry: string[] };
+          const res = await api.get<{ pantry: string[] }>("/user/pantry");
+          const data = res.data;
           const items = data.pantry.length > 0 ? data.pantry : DEFAULT_PANTRY;
           setOwned(items);
           fetchMatches(items);
@@ -355,24 +345,5 @@ export default function PantryPage() {
         </div>
       </div>
     </>
-  );
-}
-
-function MobileTabBar({ active }: { active: "home" | "pantry" | "mix" | "bars" }) {
-  return (
-    <div style={{ position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 430, paddingBottom: 28, paddingTop: 10, background: "linear-gradient(180deg,rgba(21,17,13,0) 0%,rgba(21,17,13,0.92) 30%,rgba(21,17,13,1) 60%)", display: "flex", justifyContent: "space-around", borderTop: "0.5px solid rgba(255,246,232,0.08)" }}>
-      {TABS.map((t) => {
-        const isActive = t.id === active;
-        const c = isActive ? "#B88752" : "rgba(245,239,230,0.38)";
-        return (
-          <Link key={t.id} href={t.href} style={{ textDecoration: "none" }}>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, padding: "6px 12px" }}>
-              <GlassGlyph type={t.glass} size={22} color={c} strokeWidth={1.4} />
-              <span style={{ fontSize: 10, color: c, fontWeight: 500, fontFamily: '"Pretendard Variable","Pretendard",sans-serif' }}>{t.label}</span>
-            </div>
-          </Link>
-        );
-      })}
-    </div>
   );
 }

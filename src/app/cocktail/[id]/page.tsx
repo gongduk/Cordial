@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import api from "@/shared/lib/api";
 import { useRouter, useParams } from "next/navigation";
 import { GlassSilhouette } from "@/shared/ui/GlassSilhouette";
 import { WebNav } from "@/shared/ui/WebNav";
@@ -165,12 +166,8 @@ export default function CocktailDetailPage() {
 
     async function loadDetail(id: string) {
       try {
-        const res = await fetch(`/api/cocktails/${id}`);
-        if (!res.ok) {
-          console.error("[loadDetail] HTTP error:", res.status, await res.text());
-          return null;
-        }
-        const data = await res.json() as ApiCocktailDetail;
+        const res = await api.get<ApiCocktailDetail>(`/cocktails/${id}`);
+        const data = res.data;
         if (data.ingredients) {
           setIngredients(data.ingredients.map(ci => ({
             name: ci.ingredient.name,

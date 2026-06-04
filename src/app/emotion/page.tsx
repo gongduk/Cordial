@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import api from "@/shared/lib/api";
 import { useRouter } from "next/navigation";
 import { WebNav } from "@/shared/ui/WebNav";
 
@@ -282,7 +284,6 @@ export default function EmotionPage() {
   const [q3Other, setQ3Other] = useState("");
   const [q4Text, setQ4Text] = useState("");
   const [drinkingCapacity, setDrinkingCapacity] = useState<Capacity | null>(null);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   function buildEmotionText(): string {
@@ -294,29 +295,21 @@ export default function EmotionPage() {
     return [`오늘 기분의 톤: ${moodLabel} (${q1Value}/100).`, scene, tastes, freeText].filter(Boolean).join(" ");
   }
 
-  async function submit() {
-    setError(null);
-    setLoading(true);
-    try {
-      const res = await fetch("/api/ai/analyze-emotion", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: buildEmotionText() }),
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        setError(data?.error || "감정 분석에 실패했습니다.");
-        return;
-      }
-      const emotionVector = await res.json();
+  const analyzeMutation = useMutation({
+    mutationFn: (text: string) => api.post<Record<string, number>>("/ai/analyze-emotion", { text }).then(r => r.data),
+    onSuccess: (emotionVector) => {
       sessionStorage.setItem("emotionVector", JSON.stringify(emotionVector));
       sessionStorage.setItem("drinkingCapacity", drinkingCapacity ?? "MEDIUM");
       router.push("/recommend");
-    } catch {
-      setError("네트워크 오류가 발생했습니다.");
-    } finally {
-      setLoading(false);
-    }
+    },
+    onError: () => setError("감정 분석에 실패했습니다."),
+  });
+
+  const loading = analyzeMutation.isPending;
+
+  function submit() {
+    setError(null);
+    analyzeMutation.mutate(buildEmotionText());
   }
 
   function validate(): string | null {
