@@ -59,6 +59,7 @@ export default function BarsPage() {
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [manualArea, setManualArea] = useState("");
   const [results, setResults] = useState<RecommendedBar[]>([]);
+  const [locating, setLocating] = useState(false);
 
   const recommendMutation = useMutation({
     mutationFn: async ({ lat, lng, s }: { lat: number; lng: number; s: BarSurvey }) => {
@@ -87,16 +88,19 @@ export default function BarsPage() {
   });
 
   function requestLocation() {
+    if (locating) return;
     if (!navigator.geolocation) {
       setStep("survey");
       return;
     }
+    setLocating(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setLocating(false);
         setStep("survey");
       },
-      () => setStep("survey")
+      () => { setLocating(false); setStep("survey"); }
     );
   }
 
@@ -227,19 +231,19 @@ export default function BarsPage() {
               현재 위치를 기반으로 주변 칵테일 바를 추천해드려요.
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              <button onClick={requestLocation} style={{ padding: "14px 24px", borderRadius: 12, background: W.accent, border: "none", color: "#FCFBF9", fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: W.sans }}>
-                현재 위치 사용
+              <button onClick={requestLocation} disabled={locating} style={{ padding: "14px 24px", borderRadius: 12, background: W.accent, border: "none", color: "#FCFBF9", fontSize: 15, fontWeight: 600, cursor: locating ? "not-allowed" : "pointer", opacity: locating ? 0.7 : 1, fontFamily: W.sans }}>
+                {locating ? "위치 확인 중..." : "현재 위치 사용"}
               </button>
               <div style={{ display: "flex", gap: 8 }}>
                 <input
                   placeholder="지역 직접 입력 (예: 해운대, 강남)"
                   value={manualArea}
                   onChange={(e) => setManualArea(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && manualArea && geocodeMutation.mutate(manualArea)}
+                  onKeyDown={(e) => e.key === "Enter" && manualArea && !geocodeMutation.isPending && geocodeMutation.mutate(manualArea)}
                   style={{ flex: 1, padding: "12px 16px", borderRadius: 10, border: `1px solid ${W.borderStrong}`, fontSize: 14, fontFamily: W.sans, outline: "none", background: W.surface }}
                 />
-                <button onClick={() => manualArea && geocodeMutation.mutate(manualArea)} style={{ padding: "12px 18px", borderRadius: 10, background: W.accentTint, border: `1px solid ${W.borderStrong}`, color: W.accent, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: W.sans }}>
-                  검색
+                <button onClick={() => manualArea && !geocodeMutation.isPending && geocodeMutation.mutate(manualArea)} disabled={geocodeMutation.isPending || !manualArea} style={{ padding: "12px 18px", borderRadius: 10, background: W.accentTint, border: `1px solid ${W.borderStrong}`, color: W.accent, fontSize: 14, fontWeight: 600, cursor: geocodeMutation.isPending ? "not-allowed" : "pointer", opacity: geocodeMutation.isPending ? 0.6 : 1, fontFamily: W.sans }}>
+                  {geocodeMutation.isPending ? "..." : "검색"}
                 </button>
               </div>
             </div>
@@ -305,19 +309,19 @@ export default function BarsPage() {
             <>
               <p style={{ color: T.darkTextMuted, fontSize: 14, lineHeight: 1.7, marginBottom: 24 }}>현재 위치를 기반으로 주변 칵테일 바를 추천해드려요.</p>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                <button onClick={requestLocation} style={{ padding: "14px", borderRadius: 12, background: T.accent, border: "none", color: T.darkBg, fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: T.sans }}>
-                  현재 위치 사용
+                <button onClick={requestLocation} disabled={locating} style={{ padding: "14px", borderRadius: 12, background: T.accent, border: "none", color: T.darkBg, fontSize: 15, fontWeight: 600, cursor: locating ? "not-allowed" : "pointer", opacity: locating ? 0.7 : 1, fontFamily: T.sans }}>
+                  {locating ? "위치 확인 중..." : "현재 위치 사용"}
                 </button>
                 <div style={{ display: "flex", gap: 8 }}>
                   <input
                     placeholder="지역 직접 입력"
                     value={manualArea}
                     onChange={(e) => setManualArea(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && manualArea && geocodeMutation.mutate(manualArea)}
+                    onKeyDown={(e) => e.key === "Enter" && manualArea && !geocodeMutation.isPending && geocodeMutation.mutate(manualArea)}
                     style={{ flex: 1, padding: "12px 14px", borderRadius: 10, border: `1px solid ${T.darkBorderStrong}`, fontSize: 14, fontFamily: T.sans, outline: "none", background: T.darkSurface, color: T.darkText }}
                   />
-                  <button onClick={() => manualArea && geocodeMutation.mutate(manualArea)} style={{ padding: "12px 14px", borderRadius: 10, background: T.accentTint, border: `1px solid ${T.darkBorderStrong}`, color: T.accent, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
-                    검색
+                  <button onClick={() => manualArea && !geocodeMutation.isPending && geocodeMutation.mutate(manualArea)} disabled={geocodeMutation.isPending || !manualArea} style={{ padding: "12px 14px", borderRadius: 10, background: T.accentTint, border: `1px solid ${T.darkBorderStrong}`, color: T.accent, fontSize: 14, fontWeight: 600, cursor: geocodeMutation.isPending ? "not-allowed" : "pointer", opacity: geocodeMutation.isPending ? 0.6 : 1 }}>
+                    {geocodeMutation.isPending ? "..." : "검색"}
                   </button>
                 </div>
               </div>
