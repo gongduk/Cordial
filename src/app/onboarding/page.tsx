@@ -91,9 +91,10 @@ export default function OnboardingPage() {
               return (
                 <button
                   key={value}
-                  onClick={() => { setSelected(value); setError(null); }}
+                  onClick={() => { if (loading) return; setSelected(value); setError(null); }}
+                  disabled={loading}
                   style={{
-                    padding: "18px 24px", borderRadius: 14, textAlign: "left", cursor: "pointer",
+                    padding: "18px 24px", borderRadius: 14, textAlign: "left", cursor: loading ? "not-allowed" : "pointer",
                     background: sel ? W.text : W.surface,
                     color: sel ? W.bg : W.text,
                     border: sel ? "none" : `0.5px solid ${W.borderStrong}`,

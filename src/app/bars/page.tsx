@@ -374,10 +374,10 @@ export default function BarsPage() {
     <>
       <div className="cordial-web" style={{ background: W.bg, minHeight: "100vh", color: W.text, fontFamily: W.sans }}>
         <WebNav active="/bars" />
-        <WebContent />
+        {WebContent()}
       </div>
       <div className="cordial-mob">
-        <MobileContent />
+        {MobileContent()}
       </div>
     </>
   );
