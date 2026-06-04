@@ -13,3 +13,4 @@ backend/.env
 backend/.env.*
 !backend/.env.example
 .playwright-mcp/
+screenshots
