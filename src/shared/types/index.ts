@@ -56,9 +56,33 @@ export interface BarData {
   address: string;
   area: string | null;
   moodTags: string[];
+  purposeTags: string[];
   signature: string | null;
   imageUrl: string | null;
   description: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  rating: number | null;
+  priceLevel: number | null;
+  placeId: string | null;
+}
+
+export type BarMood = "조용한" | "활기찬" | "로맨틱" | "힙한" | "클래식";
+export type BarPurpose = "혼술" | "데이트" | "친구모임" | "비즈니스";
+export type BarBudget = "3만원 이하" | "3~5만원" | "5만원 이상";
+export type CocktailStyle = "달콤한" | "신" | "쓴" | "강한" | "가벼운";
+
+export interface BarSurvey {
+  mood: BarMood;
+  cocktailStyle: CocktailStyle;
+  purpose: BarPurpose;
+  budget: BarBudget;
+}
+
+export interface RecommendedBar extends BarData {
+  score: number;
+  distanceKm: number;
+  matchReasons: string[];
 }
 
 export type DrinkingCapacity = "LOW" | "MEDIUM" | "HIGH";
