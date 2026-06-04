@@ -25,6 +25,7 @@ export async function GET(req: NextRequest) {
       bitterPref: true,
       strongPref: true,
       freshPref: true,
+      onboardedAt: true,
     },
   });
 

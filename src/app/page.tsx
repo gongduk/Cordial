@@ -156,12 +156,11 @@ export default function LandingPage() {
           <div style={{ maxWidth: 760, margin: "0 auto", textAlign: "center" }}>
             <div style={{ fontFamily: W.mono, fontSize: 11, letterSpacing: 1.8, color: W.accent, marginBottom: 24, textTransform: "uppercase" }}>OUR PHILOSOPHY</div>
             <p style={{ margin: 0, fontSize: 28, fontWeight: 500, lineHeight: 1.45, letterSpacing: -0.5, color: W.text }}>
-              &ldquo;좋은 바텐더는 칵테일을 만들기 전에<br />
-              손님을 먼저 읽습니다. Cordial은 그 한 호흡을<br />
-              모두에게 건네고 싶었어요.&rdquo;
+              오늘이 어떤 날이었든 — 그 하루를 담은<br />
+              한 잔이 있어요. Cordial이 찾아드릴게요.
             </p>
             <div style={{ marginTop: 28, fontSize: 13, color: W.textMuted, letterSpacing: -0.1 }}>
-              — 이도현, Founder &amp; Head Bartender
+              — Cordial
             </div>
           </div>
         </section>

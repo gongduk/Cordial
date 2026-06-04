@@ -91,6 +91,8 @@ export default function MixPage() {
   function updateField(id: number, field: "amount" | "abv", value: string) {
     const num = parseFloat(value);
     if (isNaN(num) || num < 0) return;
+    if (field === "abv" && num > 100) return;
+    if (field === "amount" && num > 1000) return;
     setIngs((prev) => prev.map((i) => i.id === id ? { ...i, [field]: num } : i));
   }
 

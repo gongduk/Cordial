@@ -105,7 +105,7 @@ export default function BarsPage() {
     if (!s.mood || !s.cocktailStyle || !s.purpose || !s.budget) return;
     setStep("loading");
 
-    const coords = location ?? { lat: 35.1694, lng: 129.1357 }; // 벡스코 기본값
+    const coords = location ?? { lat: 37.4979, lng: 127.0276 }; // 강남역 기본값
     recommendMutation.mutate({ lat: coords.lat, lng: coords.lng, s });
   }
 

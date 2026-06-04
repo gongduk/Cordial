@@ -85,4 +85,4 @@ export interface RecommendedBar extends BarData {
   matchReasons: string[];
 }
 
-export type DrinkingCapacity = "LOW" | "MEDIUM" | "HIGH";
+export type DrinkingCapacity = "VERY_LOW" | "LOW" | "MEDIUM" | "HIGH" | "VERY_HIGH";

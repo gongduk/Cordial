@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
 import api from "@/shared/lib/api";
 import { useRouter } from "next/navigation";
 import { WebNav } from "@/shared/ui/WebNav";
@@ -35,15 +36,17 @@ const T = {
 const Q2_OPTIONS = ["비 오는 창가", "늦은 저녁의 부엌", "도시의 야경", "조용한 서재"] as const;
 const Q3_CHIPS = ["산뜻한 시트러스", "깊은 단맛", "약간의 쓴맛", "허브향", "드라이한 끝맛", "플로럴"] as const;
 const Q4_HINTS = ["평온", "약간 들뜸", "아련함", "여유롭게"] as const;
-const CAPACITY_OPTIONS = [
-  { value: "LOW" as const, label: "가볍게", sub: "한두 잔이면 충분해요" },
-  { value: "MEDIUM" as const, label: "적당히", sub: "보통 마시는 편이에요" },
-  { value: "HIGH" as const, label: "오늘은 좀", sub: "충분히 즐기고 싶어요" },
+const CAPACITY_OPTIONS: { value: Capacity; label: string; sub: string }[] = [
+  { value: "VERY_LOW",  label: "거의 못 마셔요", sub: "소주 1~2잔이면 충분해요 · 쉽게 취하는 편" },
+  { value: "LOW",       label: "가볍게 한 잔",   sub: "소주 반 병 정도 · 조금씩 천천히 즐겨요" },
+  { value: "MEDIUM",    label: "적당히 즐겨요",  sub: "소주 1병 내외 · 보통 정도예요" },
+  { value: "HIGH",      label: "꽤 마시는 편",   sub: "소주 1~2병 · 잘 마시는 편이에요" },
+  { value: "VERY_HIGH", label: "주량이 강해요",  sub: "소주 2병 이상 · 웬만해선 안 취해요" },
 ];
 
 type Q2Option = (typeof Q2_OPTIONS)[number];
 type Q3Chip = (typeof Q3_CHIPS)[number];
-type Capacity = "LOW" | "MEDIUM" | "HIGH";
+type Capacity = "VERY_LOW" | "LOW" | "MEDIUM" | "HIGH" | "VERY_HIGH";
 
 interface StepContentProps {
   theme: "dark" | "light";
@@ -276,6 +279,13 @@ function StepContent({
 
 export default function EmotionPage() {
   const router = useRouter();
+  const { status } = useSession();
+  const isLoggedIn = status === "authenticated";
+  const [drinkingCapacity, setDrinkingCapacity] = useState<Capacity | null>(() => {
+    if (typeof window === "undefined") return null;
+    return (sessionStorage.getItem("drinkingCapacity") as Capacity | null);
+  });
+  const totalSteps = isLoggedIn || drinkingCapacity !== null ? 4 : 5;
   const [step, setStep] = useState(1);
   const [q1Value, setQ1Value] = useState(35);
   const [q2Selected, setQ2Selected] = useState<Q2Option | null>(null);
@@ -283,7 +293,6 @@ export default function EmotionPage() {
   const [q3Selected, setQ3Selected] = useState<Set<Q3Chip>>(new Set());
   const [q3Other, setQ3Other] = useState("");
   const [q4Text, setQ4Text] = useState("");
-  const [drinkingCapacity, setDrinkingCapacity] = useState<Capacity | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   function buildEmotionText(): string {
@@ -299,7 +308,10 @@ export default function EmotionPage() {
     mutationFn: (text: string) => api.post<Record<string, number>>("/ai/analyze-emotion", { text }).then(r => r.data),
     onSuccess: (emotionVector) => {
       sessionStorage.setItem("emotionVector", JSON.stringify(emotionVector));
-      sessionStorage.setItem("drinkingCapacity", drinkingCapacity ?? "MEDIUM");
+      // 비로그인 유저만 drinkingCapacity를 sessionStorage에 저장해서 recommend API로 전달
+      if (!isLoggedIn) {
+        sessionStorage.setItem("drinkingCapacity", drinkingCapacity ?? "MEDIUM");
+      }
       router.push("/recommend");
     },
     onError: () => setError("감정 분석에 실패했습니다."),
@@ -315,7 +327,7 @@ export default function EmotionPage() {
   function validate(): string | null {
     if (step === 2 && !q2Selected && !q2Other.trim()) return "풍경을 선택하거나 직접 입력해주세요.";
     if (step === 3 && q3Selected.size === 0 && !q3Other.trim()) return "맛을 하나 이상 선택하거나 직접 입력해주세요.";
-    if (step === 5 && !drinkingCapacity) return "주량을 선택해주세요.";
+    if (!isLoggedIn && step === 5 && !drinkingCapacity) return "주량을 선택해주세요.";
     return null;
   }
 
@@ -323,7 +335,7 @@ export default function EmotionPage() {
     const msg = validate();
     if (msg) { setError(msg); return; }
     setError(null);
-    if (step < 5) setStep(s => s + 1); else submit();
+    if (step < totalSteps) setStep(s => s + 1); else submit();
   }
   function prev() { setError(null); if (step > 1) setStep(s => s - 1); else router.back(); }
   function toggleQ3(chip: Q3Chip) {
@@ -331,8 +343,8 @@ export default function EmotionPage() {
     setQ3Selected(prev => { const n = new Set(prev); n.has(chip) ? n.delete(chip) : n.add(chip); return n; });
   }
 
-  const ctaLabel = loading ? "분석 중..." : step < 5 ? "다음" : "오늘의 한 잔 찾기";
-  const progressWidth = `${(step / 5) * 100}%`;
+  const ctaLabel = loading ? "분석 중..." : step < totalSteps ? "다음" : "오늘의 한 잔 찾기";
+  const progressWidth = `${(step / totalSteps) * 100}%`;
 
   const stepProps: Omit<StepContentProps, "theme"> = {
     step, q1Value, setQ1Value,
@@ -350,7 +362,7 @@ export default function EmotionPage() {
         <WebNav active="/emotion" />
         <div style={{ maxWidth: 640, margin: "0 auto", padding: "56px 40px" }}>
           <div style={{ display: "flex", gap: 8, marginBottom: 48 }}>
-            {[1, 2, 3, 4, 5].map(n => (
+            {Array.from({ length: totalSteps }, (_, i) => i + 1).map(n => (
               <div key={n} style={{ flex: 1, height: 3, borderRadius: 2, background: n <= step ? W.accent : W.border, transition: "background 0.3s" }} />
             ))}
           </div>
@@ -383,7 +395,7 @@ export default function EmotionPage() {
               </svg>
             </button>
             <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.6, textTransform: "uppercase", color: T.darkTextMuted }}>
-              {String(step).padStart(2, "0")} / 05
+              {String(step).padStart(2, "0")} / {String(totalSteps).padStart(2, "0")}
             </div>
             {step === 4 ? (
               <button onClick={next} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, color: T.darkTextMuted, fontFamily: T.sans }}>건너뛰기</button>

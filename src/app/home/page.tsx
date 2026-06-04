@@ -1,8 +1,16 @@
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { GlassSilhouette, GlassGlyph } from "@/shared/ui/GlassSilhouette";
+import type { GlassType } from "@/shared/ui/GlassSilhouette";
 import { CordialLogo } from "@/shared/ui/CordialLogo";
 import { WebNav } from "@/shared/ui/WebNav";
 import { MobileTabBar } from "@/shared/ui/MobileTabBar";
+import api from "@/shared/lib/api";
 
 const W = {
   accent: "#B88752",
@@ -28,18 +36,45 @@ const T = {
   mono: '"JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace',
 } as const;
 
+interface RecentRec { id: string; cocktailName: string; glassType: string | null; createdAt: string; }
+
+function mapGlass(g: string | null): GlassType {
+  if (!g) return "coupe";
+  const s = g.toLowerCase();
+  if (s.includes("martini") || s.includes("gimlet")) return "martini";
+  if (s.includes("rock") || s.includes("old") || s.includes("lowball")) return "rocks";
+  if (s.includes("highball") || s.includes("collins")) return "highball";
+  return "coupe";
+}
+
+function fmtDate(iso: string) {
+  const d = new Date(iso);
+  return `${d.getMonth() + 1}월 ${d.getDate()}일`;
+}
+
 const SECONDARY_ITEMS = [
   { num: "02", name: "내 술로 만들기", glass: "rocks" as const, desc: "가진 재료로 만들 수 있는 칵테일", href: "/pantry" },
   { num: "03", name: "모의 제조", glass: "highball" as const, desc: "재료를 조합해 맛·도수·향 분석", href: "/mix" },
   { num: "04", name: "바 찾기", glass: "coupe" as const, desc: "분위기와 칵테일로 주변 바 매칭", href: "/bars" },
 ] as const;
 
-const RECENT = [
-  { name: "Whiskey Sour", date: "5월 5일 · 차분함", glass: "rocks" as const },
-  { name: "Aviation", date: "5월 2일 · 그리움", glass: "coupe" as const },
-] as const;
-
 export default function UserHomePage() {
+  const router = useRouter();
+  const { status } = useSession();
+
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    api.get<{ onboardedAt: string | null }>("/user/profile").then(res => {
+      if (res.data.onboardedAt === null) router.replace("/onboarding");
+    }).catch(() => {});
+  }, [status, router]);
+
+  const { data: recentRecs = [] } = useQuery<RecentRec[]>({
+    queryKey: ["recent-recs"],
+    queryFn: () => api.get<RecentRec[]>("/user/recommendations").then(r => r.data),
+    enabled: status === "authenticated",
+  });
+
   return (
     <>
       {/* ── WEB ── */}
@@ -100,22 +135,26 @@ export default function UserHomePage() {
           </div>
 
           {/* Recent */}
-          <div style={{ fontFamily: W.mono, fontSize: 10, letterSpacing: 1.6, color: W.textFaint, textTransform: "uppercase", marginBottom: 18 }}>RECENT</div>
-          <div style={{ display: "flex", gap: 12 }}>
-            {RECENT.map(r => (
-              <div key={r.name} style={{
-                background: W.surface, border: `0.5px solid ${W.border}`,
-                borderRadius: 12, padding: "16px 22px",
-                display: "flex", alignItems: "center", gap: 14,
-              }}>
-                <GlassGlyph type={r.glass} size={22} color={W.accent} />
-                <div>
-                  <div style={{ fontSize: 14, fontWeight: 500, letterSpacing: -0.2 }}>{r.name}</div>
-                  <div style={{ fontSize: 11, color: W.textFaint, marginTop: 2 }}>{r.date}</div>
-                </div>
+          {recentRecs.length > 0 && (
+            <>
+              <div style={{ fontFamily: W.mono, fontSize: 10, letterSpacing: 1.6, color: W.textFaint, textTransform: "uppercase", marginBottom: 18 }}>RECENT</div>
+              <div style={{ display: "flex", gap: 12 }}>
+                {recentRecs.slice(0, 3).map(r => (
+                  <div key={r.id} style={{
+                    background: W.surface, border: `0.5px solid ${W.border}`,
+                    borderRadius: 12, padding: "16px 22px",
+                    display: "flex", alignItems: "center", gap: 14,
+                  }}>
+                    <GlassGlyph type={mapGlass(r.glassType)} size={22} color={W.accent} />
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 500, letterSpacing: -0.2 }}>{r.cocktailName}</div>
+                      <div style={{ fontSize: 11, color: W.textFaint, marginTop: 2 }}>{fmtDate(r.createdAt)}</div>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -186,20 +225,22 @@ export default function UserHomePage() {
             ))}
           </div>
 
-          <div style={{ padding: "32px 20px 20px" }}>
-            <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.6, color: T.darkTextFaint, textTransform: "uppercase", marginBottom: 14 }}>RECENT</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {RECENT.map(r => (
-                <div key={r.name} style={{ display: "flex", alignItems: "center", gap: 14, padding: "4px 0" }}>
-                  <GlassGlyph type={r.glass} size={22} color={T.darkTextMuted} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 14, fontWeight: 500, letterSpacing: -0.2, color: T.darkText }}>{r.name}</div>
-                    <div style={{ fontSize: 11, color: T.darkTextFaint, marginTop: 2 }}>{r.date}</div>
+          {recentRecs.length > 0 && (
+            <div style={{ padding: "32px 20px 20px" }}>
+              <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.6, color: T.darkTextFaint, textTransform: "uppercase", marginBottom: 14 }}>RECENT</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {recentRecs.slice(0, 3).map(r => (
+                  <div key={r.id} style={{ display: "flex", alignItems: "center", gap: 14, padding: "4px 0" }}>
+                    <GlassGlyph type={mapGlass(r.glassType)} size={22} color={T.darkTextMuted} />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 14, fontWeight: 500, letterSpacing: -0.2, color: T.darkText }}>{r.cocktailName}</div>
+                      <div style={{ fontSize: 11, color: T.darkTextFaint, marginTop: 2 }}>{fmtDate(r.createdAt)}</div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           <MobileTabBar active="home" />
         </div>
