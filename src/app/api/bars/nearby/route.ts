@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
         const data = {
           name: place.name,
           address: place.vicinity,
-          area: place.vicinity.split(" ").slice(0, 2).join(" "),
+          area: place.vicinity.split(",")[0]?.trim() ?? place.vicinity,
           latitude: place.geometry.location.lat,
           longitude: place.geometry.location.lng,
           placeId: place.place_id,

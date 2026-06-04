@@ -168,7 +168,7 @@ export async function recommendCocktails({
           jitter;
       } else {
         const volumeFit = volumeFitScore(effectiveCapacity, c.strength);
-        score = (0.4 * emotionSim + 0.1 * popularity + 0.1 * volumeFit) / 0.6 + jitter;
+        score = 0.4 * emotionSim + 0.1 * popularity + 0.1 * volumeFit + jitter;
       }
 
       if (recentIds.has(c.id)) score *= 0.3;

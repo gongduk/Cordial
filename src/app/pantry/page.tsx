@@ -248,8 +248,19 @@ export default function PantryPage() {
                   {result?.creative && (
                     <div style={{ marginTop: 28, padding: "16px 20px", background: W.surface, borderRadius: 14, border: `0.5px solid ${W.borderStrong}` }}>
                       <div style={{ fontFamily: W.mono, fontSize: 9, letterSpacing: 1.4, color: W.accent, marginBottom: 8, textTransform: "uppercase" }}>AI CREATIVE</div>
-                      <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 6 }}>{result.creative.name}</div>
-                      <p style={{ margin: 0, fontSize: 13, color: W.textMuted, lineHeight: 1.6 }}>{result.creative.aiDescription}</p>
+                      <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>{result.creative.name}</div>
+                      <p style={{ margin: "0 0 12px", fontSize: 13, color: W.textMuted, lineHeight: 1.6 }}>{result.creative.description}</p>
+                      <p style={{ margin: "0 0 12px", fontSize: 13, color: W.text, lineHeight: 1.65, background: `${W.accent}0D`, borderLeft: `2px solid ${W.accent}`, padding: "8px 12px", borderRadius: "0 6px 6px 0" }}>{result.creative.aiDescription}</p>
+                      <div style={{ display: "flex", gap: 6 }}>
+                        {(["sweetness","sourness","bitterness","strength","freshness"] as const).map(k => (
+                          <div key={k} style={{ flex: 1, textAlign: "center" }}>
+                            <div style={{ fontSize: 9, fontFamily: W.mono, color: W.textFaint, letterSpacing: 0.8, marginBottom: 4 }}>{k.slice(0,4).toUpperCase()}</div>
+                            <div style={{ height: 3, borderRadius: 2, background: W.border }}>
+                              <div style={{ height: "100%", borderRadius: 2, background: W.accent, width: `${result.creative![k] * 100}%` }} />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </>
@@ -332,10 +343,21 @@ export default function PantryPage() {
               )}
 
               {result?.creative && (
-                <div style={{ marginTop: 24, padding: "16px 18px", borderLeft: `2px solid ${T.accent}` }}>
+                <div style={{ marginTop: 24, padding: "16px 18px", background: T.darkSurface, borderRadius: 14, border: `0.5px solid ${T.darkBorderStrong}` }}>
                   <div style={{ fontFamily: T.mono, fontSize: 9, letterSpacing: 1.4, color: T.accent, marginBottom: 8, textTransform: "uppercase" }}>AI CREATIVE</div>
-                  <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 6 }}>{result.creative.name}</div>
-                  <p style={{ margin: 0, fontSize: 13, color: T.darkTextMuted, lineHeight: 1.6 }}>{result.creative.aiDescription}</p>
+                  <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>{result.creative.name}</div>
+                  <p style={{ margin: "0 0 10px", fontSize: 12, color: T.darkTextMuted, lineHeight: 1.6 }}>{result.creative.description}</p>
+                  <p style={{ margin: "0 0 12px", fontSize: 13, color: T.darkText, lineHeight: 1.65, borderLeft: `2px solid ${T.accent}`, paddingLeft: 10 }}>{result.creative.aiDescription}</p>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    {(["sweetness","sourness","bitterness","strength","freshness"] as const).map(k => (
+                      <div key={k} style={{ flex: 1, textAlign: "center" }}>
+                        <div style={{ fontSize: 9, fontFamily: T.mono, color: T.darkTextFaint, letterSpacing: 0.8, marginBottom: 4 }}>{k.slice(0,4).toUpperCase()}</div>
+                        <div style={{ height: 3, borderRadius: 2, background: T.darkBorder }}>
+                          <div style={{ height: "100%", borderRadius: 2, background: T.accent, width: `${result.creative![k] * 100}%` }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
