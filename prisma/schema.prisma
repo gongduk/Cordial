@@ -54,6 +54,7 @@ model User {
   strongPref       Float            @default(0.5)
   freshPref        Float            @default(0.5)
   pantry           String[]         @default([])
+  onboardedAt      DateTime?
   accounts         Account[]
   sessions         Session[]
   emotionLogs      EmotionLog[]
@@ -159,7 +160,9 @@ model Bar {
 }
 
 enum DrinkingCapacity {
+  VERY_LOW
   LOW
   MEDIUM
   HIGH
+  VERY_HIGH
 }

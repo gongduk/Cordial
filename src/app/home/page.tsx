@@ -1,8 +1,14 @@
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { GlassSilhouette, GlassGlyph } from "@/shared/ui/GlassSilhouette";
 import { CordialLogo } from "@/shared/ui/CordialLogo";
 import { WebNav } from "@/shared/ui/WebNav";
 import { MobileTabBar } from "@/shared/ui/MobileTabBar";
+import api from "@/shared/lib/api";
 
 const W = {
   accent: "#B88752",
@@ -40,6 +46,16 @@ const RECENT = [
 ] as const;
 
 export default function UserHomePage() {
+  const router = useRouter();
+  const { status } = useSession();
+
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    api.get<{ onboardedAt: string | null }>("/user/profile").then(res => {
+      if (res.data.onboardedAt === null) router.replace("/onboarding");
+    }).catch(() => {});
+  }, [status, router]);
+
   return (
     <>
       {/* ── WEB ── */}

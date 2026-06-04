@@ -29,9 +29,11 @@ function euclideanSim(a: CocktailVector, b: CocktailVector): number {
 }
 
 function volumeFitScore(capacity: string, strength: number): number {
-  if (capacity === "LOW") return strength < 0.4 ? 1 : strength < 0.6 ? 0.5 : 0.1;
-  if (capacity === "HIGH") return strength > 0.6 ? 1 : strength > 0.4 ? 0.6 : 0.3;
-  return 1 - Math.abs(strength - 0.5);
+  if (capacity === "VERY_LOW") return strength < 0.25 ? 1 : strength < 0.45 ? 0.5 : 0.1;
+  if (capacity === "LOW")      return strength < 0.4  ? 1 : strength < 0.6  ? 0.5 : 0.1;
+  if (capacity === "HIGH")     return strength > 0.6  ? 1 : strength > 0.4  ? 0.6 : 0.3;
+  if (capacity === "VERY_HIGH") return strength > 0.75 ? 1 : strength > 0.5 ? 0.6 : 0.3;
+  return 1 - Math.abs(strength - 0.5); // MEDIUM
 }
 
 async function generateDescription(name: string, emotion: EmotionVector): Promise<string> {
@@ -72,7 +74,7 @@ export async function recommendCocktails({
           where: { userId },
           include: { cocktail: true },
           orderBy: { createdAt: "desc" },
-          take: 10,
+          take: 20,
         })
       : [],
   ]);
@@ -108,22 +110,27 @@ export async function recommendCocktails({
       }
     : null;
 
-  const pastAvgVector: CocktailVector | null =
-    pastRecs.length > 0
-      ? (() => {
-          const avg = (key: keyof CocktailVector) =>
-            pastRecs.reduce((s, r) => s + r.cocktail[key], 0) / pastRecs.length;
-          return {
-            sweetness: avg("sweetness"),
-            sourness: avg("sourness"),
-            bitterness: avg("bitterness"),
-            strength: avg("strength"),
-            freshness: avg("freshness"),
-          };
-        })()
-      : null;
+  const avgVector = (recs: typeof pastRecs): CocktailVector => {
+    const avg = (key: keyof CocktailVector) =>
+      recs.reduce((s, r) => s + r.cocktail[key], 0) / recs.length;
+    return {
+      sweetness: avg("sweetness"),
+      sourness: avg("sourness"),
+      bitterness: avg("bitterness"),
+      strength: avg("strength"),
+      freshness: avg("freshness"),
+    };
+  };
 
-  const recentIds = new Set(pastRecs.slice(0, 5).map(r => r.cocktail.id));
+  const recentFive = pastRecs.slice(0, 5);
+  const olderRecs = pastRecs.slice(5); // 6번째 이후 기록: 장기 취향 신호
+
+  // 단기 novelty: 최근 5개와 다른 칵테일 우선
+  const recentVector: CocktailVector | null = recentFive.length > 0 ? avgVector(recentFive) : null;
+  // 장기 취향: 오래된 추천 기록으로 선호 패턴 추출 (3개 이상일 때만 반영)
+  const historyVector: CocktailVector | null = olderRecs.length >= 3 ? avgVector(olderRecs) : null;
+
+  const recentIds = new Set(recentFive.map(r => r.cocktail.id));
   const effectiveCapacity = drinkingCapacity ?? user?.drinkingCapacity ?? "MEDIUM";
 
   const ranked = cocktails
@@ -142,12 +149,19 @@ export async function recommendCocktails({
 
       let score: number;
       if (user && userPrefVector) {
-        const tasteSim = euclideanSim(userPrefVector, cv);
         const volumeFit = volumeFitScore(effectiveCapacity, c.strength);
-        const pastNovelty = pastAvgVector ? 1 - euclideanSim(pastAvgVector, cv) : 0.5;
+        const pastNovelty = recentVector ? 1 - euclideanSim(recentVector, cv) : 0.5;
+
+        // 장기 추천 기록과 유사할수록 점수 차감 (새로운 칵테일 발견 유도)
+        // 기록 10개 이상: 최대 10% 페널티
+        const histWeight = historyVector ? Math.min(olderRecs.length / 10, 1) * 0.1 : 0;
+        const histSim = historyVector ? euclideanSim(historyVector, cv) : 0;
+        const tasteSim = 0.2 * euclideanSim(userPrefVector, cv);
+
         score =
           0.4 * emotionSim +
-          0.2 * tasteSim +
+          tasteSim -
+          histWeight * histSim +   // 과거와 비슷할수록 점수 차감
           0.15 * volumeFit +
           0.15 * pastNovelty +
           0.1 * popularity +
