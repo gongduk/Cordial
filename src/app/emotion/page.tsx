@@ -281,7 +281,11 @@ export default function EmotionPage() {
   const router = useRouter();
   const { status } = useSession();
   const isLoggedIn = status === "authenticated";
-  const totalSteps = isLoggedIn ? 4 : 5;
+  const [drinkingCapacity, setDrinkingCapacity] = useState<Capacity | null>(() => {
+    if (typeof window === "undefined") return null;
+    return (sessionStorage.getItem("drinkingCapacity") as Capacity | null);
+  });
+  const totalSteps = isLoggedIn || drinkingCapacity !== null ? 4 : 5;
   const [step, setStep] = useState(1);
   const [q1Value, setQ1Value] = useState(35);
   const [q2Selected, setQ2Selected] = useState<Q2Option | null>(null);
@@ -289,7 +293,6 @@ export default function EmotionPage() {
   const [q3Selected, setQ3Selected] = useState<Set<Q3Chip>>(new Set());
   const [q3Other, setQ3Other] = useState("");
   const [q4Text, setQ4Text] = useState("");
-  const [drinkingCapacity, setDrinkingCapacity] = useState<Capacity | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   function buildEmotionText(): string {
