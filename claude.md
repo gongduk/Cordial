@@ -12,7 +12,7 @@ B2C AI 칵테일 추천 앱. 감정 기반 추천, 보유 재료 매칭, 모의 
 - **Styling**: Tailwind CSS (인라인 style 병용)
 - **DB**: PostgreSQL (Supabase) + Prisma 7 ORM
 - **Auth**: NextAuth v4 (Google, GitHub, credentials + PrismaAdapter)
-- **AI**: Anthropic Claude API (`claude-sonnet-4-20250514`)
+- **AI**: Google Gemini API (`gemini-2.0-flash`)
 - **FastAPI**: 바 데이터 수집 파이프라인 (`backend/`)
 
 ## 디렉토리 구조 (FSD)
@@ -34,11 +34,11 @@ src/
 │       ├── ai/analyze-emotion/  # 감정 텍스트 → EmotionVector
 │       ├── ai/recommend/        # EmotionVector → 칵테일 추천 3개
 │       ├── ai/pantry-recommend/ # 보유 재료 → exact/almost/creative 섹션
-│       ├── ai/mix-analyze/      # 재료+제조법 → ABV + Claude 맛분석
+│       ├── ai/mix-analyze/      # 재료+제조법 → ABV + Gemini 맛분석
 │       ├── bars/                # 바 목록 (area/mood 필터)
 │       └── user/profile/        # GET/PATCH 유저 취향 프로필
 ├── server/
-│   └── ai/                   # Claude API 호출 (server-only)
+│   └── ai/                   # Gemini API 호출 (server-only)
 │       ├── analyzeEmotion.ts
 │       ├── recommendCocktails.ts
 │       ├── pantryRecommend.ts
@@ -109,6 +109,9 @@ POST /api/ai/recommend           # EmotionVector → 칵테일 추천
 POST /api/ai/pantry-recommend    # 보유 재료 → 칵테일 매칭
 POST /api/ai/mix-analyze         # 재료+제조법 → ABV + 맛/향 분석
 GET  /api/bars                   # 바 목록 (area, mood 쿼리 파라미터)
+POST /api/bars/nearby            # 위치(lat,lng) → Google Maps 주변 바 조회 + DB 캐시
+POST /api/bars/recommend         # 위치 + 설문(BarSurvey) → TOP 5 추천
+GET  /api/bars/geocode           # 지역명 → 좌표 변환 (Google Geocoding)
 GET  /api/user/profile           # 유저 취향 프로필 조회
 PATCH /api/user/profile          # 유저 취향 프로필 수정
 ```
@@ -127,14 +130,15 @@ GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 GITHUB_CLIENT_ID=
 GITHUB_CLIENT_SECRET=
-ANTHROPIC_API_KEY=
+GEMINI_API_KEY=
+GOOGLE_MAPS_API_KEY=    # 바 추천 기능
 NAVER_CLIENT_ID=        # FastAPI 전용
 NAVER_CLIENT_SECRET=    # FastAPI 전용
 ```
 
 ## 개발 컨벤션
 
-- Claude API 호출은 반드시 `src/server/ai/` 하위에서만
+- Gemini API 호출은 반드시 `src/server/ai/` 하위에서만
 - `any` 금지, `unknown` + 타입가드 사용
 - 타입은 `interface` 우선, 유니온/조건부는 `type`
 - 컴포넌트: PascalCase `.tsx` / 훅: `use`로 시작 `.ts`
@@ -148,6 +152,7 @@ npm run dev             # 개발 서버
 npx prisma generate     # Prisma 클라이언트 재생성
 npx prisma migrate dev  # DB 마이그레이션
 npm run db:seed         # IBA 칵테일 20개 + 재료 30개 시드
+npm run db:seed-bars    # 벡스코 주변 바 8개 시드 (시연용)
 
 # FastAPI 바 파이프라인
 cd backend && uvicorn main:app --reload
