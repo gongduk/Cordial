@@ -10,6 +10,14 @@ import { WebNav } from "@/shared/ui/WebNav";
 import { MobileTabBar } from "@/shared/ui/MobileTabBar";
 import type { DrinkingCapacity } from "@/shared/types";
 
+interface SavedCocktail {
+  id: string;
+  name: string;
+  abv: number;
+  method: string | null;
+  description: string | null;
+}
+
 const W = {
   accent: "#B88752",
   bg: "#FCFBF9",
@@ -48,9 +56,11 @@ interface Profile {
 }
 
 const CAPACITY_OPTIONS: { value: DrinkingCapacity; label: string; sub: string }[] = [
-  { value: "LOW", label: "가볍게", sub: "1~2잔" },
-  { value: "MEDIUM", label: "적당히", sub: "2~4잔" },
-  { value: "HIGH", label: "오늘은 좀", sub: "4잔 이상" },
+  { value: "VERY_LOW", label: "거의 못 마셔요", sub: "소주 1~2잔 · 쉽게 취하는 편" },
+  { value: "LOW",      label: "가볍게 한 잔",   sub: "소주 반 병 정도 · 천천히 즐겨요" },
+  { value: "MEDIUM",   label: "적당히 즐겨요",  sub: "소주 1병 내외 · 보통 정도예요" },
+  { value: "HIGH",     label: "꽤 마시는 편",   sub: "소주 1~2병 · 잘 마시는 편이에요" },
+  { value: "VERY_HIGH",label: "주량이 강해요",  sub: "소주 2병 이상 · 웬만해선 안 취해요" },
 ];
 
 const FLAVOR_KEYS: { key: keyof Omit<Profile, "name" | "email" | "drinkingCapacity">; label: string }[] = [
@@ -77,6 +87,12 @@ export default function MyPage() {
     enabled: status === "authenticated",
     onSuccess: (data: Profile) => setProfile(data),
   } as Parameters<typeof useQuery>[0]);
+
+  const { data: savedCocktails = [] } = useQuery<SavedCocktail[]>({
+    queryKey: ["user-cocktails"],
+    queryFn: () => api.get<SavedCocktail[]>("/user/cocktails").then(r => r.data),
+    enabled: status === "authenticated",
+  });
 
   const saveMutation = useMutation({
     mutationFn: (data: Omit<Profile, "name" | "email">) => api.patch("/user/profile", data),
@@ -120,18 +136,18 @@ export default function MyPage() {
 
             <section style={{ marginBottom: 40 }}>
               <div style={{ fontFamily: W.mono, fontSize: 10, letterSpacing: 1.4, color: W.textMuted, marginBottom: 16, textTransform: "uppercase" }}>주량</div>
-              <div style={{ display: "flex", gap: 10 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {CAPACITY_OPTIONS.map(opt => {
                   const active = profile.drinkingCapacity === opt.value;
                   return (
                     <button key={opt.value} onClick={() => setProfile(p => p ? { ...p, drinkingCapacity: opt.value } : p)} style={{
-                      flex: 1, padding: "14px 12px", borderRadius: 12,
+                      padding: "14px 20px", borderRadius: 12, textAlign: "left",
                       border: `1px solid ${active ? W.accent : W.borderStrong}`,
                       background: active ? `${W.accent}14` : W.surface,
-                      cursor: "pointer", textAlign: "center",
+                      cursor: "pointer",
                     }}>
                       <div style={{ fontSize: 14, fontWeight: 600, color: active ? W.accent : W.text, letterSpacing: -0.2, fontFamily: W.sans }}>{opt.label}</div>
-                      <div style={{ fontSize: 11, color: W.textFaint, marginTop: 2, fontFamily: W.mono }}>{opt.sub}</div>
+                      <div style={{ fontSize: 11, color: W.textFaint, marginTop: 2, fontFamily: W.sans }}>{opt.sub}</div>
                     </button>
                   );
                 })}
@@ -157,6 +173,27 @@ export default function MyPage() {
                 })}
               </div>
             </section>
+
+            {savedCocktails.length > 0 && (
+              <section style={{ marginBottom: 40 }}>
+                <div style={{ fontFamily: W.mono, fontSize: 10, letterSpacing: 1.4, color: W.textMuted, marginBottom: 16, textTransform: "uppercase" }}>나의 레시피</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {savedCocktails.map(c => (
+                    <Link key={c.id} href={`/cocktail/${c.id}`} style={{ textDecoration: "none" }}>
+                      <div style={{ padding: "14px 18px", borderRadius: 12, background: W.surface, border: `0.5px solid ${W.borderStrong}`, display: "flex", alignItems: "center", gap: 12 }}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: W.text, letterSpacing: -0.2 }}>{c.name}</div>
+                          <div style={{ fontSize: 11, color: W.textFaint, marginTop: 2, fontFamily: W.mono }}>
+                            ABV {c.abv}%{c.method ? ` · ${c.method}` : ""}
+                          </div>
+                        </div>
+                        <svg width="12" height="12" viewBox="0 0 20 20" fill="none"><path d="M8 4l6 6-6 6" stroke={W.textFaint} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
 
             <button onClick={handleSave} disabled={saving} style={{
               width: "100%", height: 52, borderRadius: 12,
@@ -202,18 +239,18 @@ export default function MyPage() {
               {/* Drinking capacity */}
               <div style={{ marginBottom: 32 }}>
                 <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.4, color: T.darkTextMuted, marginBottom: 14, textTransform: "uppercase" }}>주량</div>
-                <div style={{ display: "flex", gap: 8 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   {CAPACITY_OPTIONS.map(opt => {
                     const active = profile.drinkingCapacity === opt.value;
                     return (
                       <button key={opt.value} onClick={() => setProfile(p => p ? { ...p, drinkingCapacity: opt.value } : p)} style={{
-                        flex: 1, padding: "12px 8px", borderRadius: 12,
+                        padding: "12px 16px", borderRadius: 12, textAlign: "left",
                         border: `0.5px solid ${active ? T.accent : T.darkBorderStrong}`,
                         background: active ? `${T.accent}22` : T.darkSurface,
-                        cursor: "pointer", textAlign: "center",
+                        cursor: "pointer",
                       }}>
                         <div style={{ fontSize: 13, fontWeight: 600, color: active ? T.accent : T.darkText }}>{opt.label}</div>
-                        <div style={{ fontSize: 11, color: T.darkTextFaint, marginTop: 2, fontFamily: T.mono }}>{opt.sub}</div>
+                        <div style={{ fontSize: 11, color: T.darkTextFaint, marginTop: 2, fontFamily: T.sans }}>{opt.sub}</div>
                       </button>
                     );
                   })}
@@ -240,6 +277,28 @@ export default function MyPage() {
                   })}
                 </div>
               </div>
+
+              {/* Saved recipes */}
+              {savedCocktails.length > 0 && (
+                <div style={{ marginBottom: 32 }}>
+                  <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.4, color: T.darkTextMuted, marginBottom: 14, textTransform: "uppercase" }}>나의 레시피</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {savedCocktails.map(c => (
+                      <Link key={c.id} href={`/cocktail/${c.id}`} style={{ textDecoration: "none" }}>
+                        <div style={{ padding: "14px 16px", borderRadius: 12, background: T.darkSurface, border: `0.5px solid ${T.darkBorderStrong}`, display: "flex", alignItems: "center", gap: 12 }}>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: 14, fontWeight: 600, color: T.darkText }}>{c.name}</div>
+                            <div style={{ fontSize: 11, color: T.darkTextFaint, marginTop: 2, fontFamily: T.mono }}>
+                              ABV {c.abv}%{c.method ? ` · ${c.method}` : ""}
+                            </div>
+                          </div>
+                          <svg width="12" height="12" viewBox="0 0 20 20" fill="none"><path d="M8 4l6 6-6 6" stroke={T.darkTextFaint} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Save button */}
               <button onClick={handleSave} disabled={saving} style={{
