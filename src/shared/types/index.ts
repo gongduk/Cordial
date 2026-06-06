@@ -57,6 +57,7 @@ export interface BarData {
   area: string | null;
   moodTags: string[];
   purposeTags: string[];
+  cocktailStyles: string[];
   signature: string | null;
   imageUrl: string | null;
   description: string | null;
@@ -64,6 +65,7 @@ export interface BarData {
   longitude: number | null;
   rating: number | null;
   priceLevel: number | null;
+  reviewCount: number | null;
   placeId: string | null;
 }
 

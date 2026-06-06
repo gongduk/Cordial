@@ -80,6 +80,7 @@ export async function POST(req: NextRequest) {
           reviewCount: place.user_ratings_total ?? null,
           moodTags: analysis.moodTags,
           purposeTags: analysis.purposeTags,
+          cocktailStyles: analysis.cocktailStyles,
           signature: analysis.signature,
           description: analysis.description,
           analyzedAt: new Date(),
