@@ -1,0 +1,95 @@
+import os
+import httpx
+from typing import Optional
+
+GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY", "")
+NEARBY_RADIUS_M = 2000
+
+
+async def search_nearby_bars(lat: float, lng: float, radius: int = NEARBY_RADIUS_M) -> list[dict]:
+    """Google Maps Places Nearby Search — 주변 칵테일 바 검색"""
+    url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
+    params = {
+        "location": f"{lat},{lng}",
+        "radius": radius,
+        "type": "bar",
+        "keyword": "칵테일",
+        "language": "ko",
+        "key": GOOGLE_MAPS_API_KEY,
+    }
+    async with httpx.AsyncClient() as client:
+        res = await client.get(url, params=params, timeout=10)
+        res.raise_for_status()
+        return res.json().get("results", [])
+
+
+async def search_bars_by_text(query: str, count: int = 20) -> list[dict]:
+    """Google Maps Text Search — 지역명/키워드로 바 검색"""
+    url = "https://maps.googleapis.com/maps/api/place/textsearch/json"
+    params = {
+        "query": query,
+        "type": "bar",
+        "language": "ko",
+        "key": GOOGLE_MAPS_API_KEY,
+    }
+    async with httpx.AsyncClient() as client:
+        res = await client.get(url, params=params, timeout=10)
+        res.raise_for_status()
+        results = res.json().get("results", [])
+        return results[:count]
+
+
+async def get_place_details(place_id: str) -> dict:
+    """Google Maps Place Details — 리뷰, 사진, 전화번호 등 상세 정보"""
+    url = "https://maps.googleapis.com/maps/api/place/details/json"
+    params = {
+        "place_id": place_id,
+        "fields": "reviews,photos,formatted_phone_number,opening_hours,website",
+        "language": "ko",
+        "key": GOOGLE_MAPS_API_KEY,
+    }
+    async with httpx.AsyncClient() as client:
+        res = await client.get(url, params=params, timeout=10)
+        if not res.is_success:
+            return {}
+        return res.json().get("result", {})
+
+
+async def get_place_reviews(place_id: str) -> list[str]:
+    """Place Details에서 리뷰 텍스트만 추출"""
+    detail = await get_place_details(place_id)
+    reviews = detail.get("reviews", [])
+    return [r["text"] for r in reviews if r.get("text")]
+
+
+def get_photo_url(photo_reference: str, max_width: int = 600) -> str:
+    """Google Maps 사진 URL 생성"""
+    return (
+        f"https://maps.googleapis.com/maps/api/place/photo"
+        f"?maxwidth={max_width}&photo_reference={photo_reference}&key={GOOGLE_MAPS_API_KEY}"
+    )
+
+
+def extract_bar_base(place: dict) -> dict:
+    """Google Places 결과에서 기본 바 정보 추출"""
+    photos = place.get("photos", [])
+    image_url = get_photo_url(photos[0]["photo_reference"]) if photos else None
+
+    address = place.get("vicinity") or place.get("formatted_address", "")
+    area_parts = address.split(" ")
+    area = area_parts[1] if len(area_parts) > 1 else area_parts[0] if area_parts else None
+
+    geometry = place.get("geometry", {}).get("location", {})
+
+    return {
+        "name": place.get("name", ""),
+        "address": address,
+        "area": area,
+        "placeId": place.get("place_id"),
+        "latitude": geometry.get("lat"),
+        "longitude": geometry.get("lng"),
+        "rating": place.get("rating"),
+        "priceLevel": place.get("price_level"),
+        "reviewCount": place.get("user_ratings_total"),
+        "imageUrl": image_url,
+    }

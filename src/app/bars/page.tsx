@@ -323,7 +323,7 @@ export default function BarsPage() {
                 <Map
                   defaultCenter={mapCenter}
                   defaultZoom={14}
-                  mapId="DEMO_MAP_ID"
+                  mapId={process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID}
                   style={{ width: "100%", height: "100%" }}
                   gestureHandling="greedy"
                   onCameraChanged={() => {}}
@@ -533,7 +533,7 @@ export default function BarsPage() {
                 <Map
                   defaultCenter={mapCenter}
                   defaultZoom={14}
-                  mapId="DEMO_MAP_ID"
+                  mapId={process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID}
                   style={{ width: "100%", height: "100%" }}
                   gestureHandling="greedy"
                   disableDefaultUI

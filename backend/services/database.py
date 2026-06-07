@@ -1,30 +1,55 @@
 import os
-from supabase import create_client, Client
+import secrets
+import httpx
 
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
 
+HEADERS = {
+    "apikey": SUPABASE_KEY,
+    "Authorization": f"Bearer {SUPABASE_KEY}",
+    "Content-Type": "application/json",
+    "Prefer": "resolution=merge-duplicates,return=representation",
+}
 
-def get_client() -> Client:
-    return create_client(SUPABASE_URL, SUPABASE_KEY)
+
+def _gen_id() -> str:
+    return "c" + secrets.token_urlsafe(20).replace("-", "").replace("_", "")[:24]
 
 
 async def upsert_bar(bar_data: dict) -> dict:
-    """Supabase Bar 테이블에 upsert"""
-    client = get_client()
-    result = (
-        client.table("Bar")
-        .upsert(bar_data, on_conflict="name,address")
-        .execute()
-    )
-    return result.data[0] if result.data else {}
+    """Supabase REST API로 Bar upsert (placeId 기준)"""
+    data = {**bar_data}
+    if not data.get("id"):
+        data["id"] = _gen_id()
+
+    async with httpx.AsyncClient() as client:
+        res = await client.post(
+            f"{SUPABASE_URL}/rest/v1/Bar",
+            headers=HEADERS,
+            json=data,
+            params={"on_conflict": "placeId"},
+            timeout=10,
+        )
+        if not res.is_success:
+            print(f"[DB ERROR] status={res.status_code} body={res.text}")
+            res.raise_for_status()
+        result = res.json()
+        return result[0] if isinstance(result, list) and result else {}
 
 
 async def get_bars(area: str | None = None, mood: str | None = None) -> list[dict]:
-    """Supabase에서 바 목록 조회"""
-    client = get_client()
-    query = client.table("Bar").select("*")
+    """Supabase REST API로 바 목록 조회"""
+    params = {"order": "createdAt.desc", "limit": "50"}
     if area:
-        query = query.ilike("area", f"%{area}%")
-    result = query.order("created_at", desc=True).limit(20).execute()
-    return result.data or []
+        params["area"] = f"ilike.*{area}*"
+
+    async with httpx.AsyncClient() as client:
+        res = await client.get(
+            f"{SUPABASE_URL}/rest/v1/Bar",
+            headers=HEADERS,
+            params=params,
+            timeout=10,
+        )
+        res.raise_for_status()
+        return res.json() or []
