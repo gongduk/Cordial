@@ -505,7 +505,7 @@ export default function BarsPage() {
                 onClick={handleSubmit}
                 disabled={!allFilled || locState !== "ok"}
                 style={{
-                  padding: "14px", borderRadius: 12, border: "none",
+                  padding: "14px", borderRadius: 12, border: "none", width: "100%",
                   background: allFilled && locState === "ok" ? C.accent : C.darkSurface2,
                   color: allFilled && locState === "ok" ? C.darkBg : C.darkFaint,
                   fontSize: 15, fontWeight: 600,

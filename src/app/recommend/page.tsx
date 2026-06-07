@@ -106,6 +106,7 @@ export default function RecommendPage() {
 
     const t1 = setTimeout(() => setDoneCount(1), 600);
     const t2 = setTimeout(() => setDoneCount(2), 1200);
+    const t3 = setTimeout(() => setDoneCount(3), 1800);
 
     api.post<RecommendedCocktail[]>("/ai/recommend", { emotionVector, drinkingCapacity })
       .then(res => {
@@ -114,9 +115,9 @@ export default function RecommendPage() {
         sessionStorage.setItem("recommendCacheEv", ev);
       })
       .catch(e => setError((e as Error).message || "추천 실패"))
-      .finally(() => setLoading(false));
+      .finally(() => setTimeout(() => setLoading(false), 1900));
 
-    return () => { clearTimeout(t1); clearTimeout(t2); };
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, [router]);
 
   function toBar(val: number) { return Math.round(val * 5); }
