@@ -369,10 +369,11 @@ export default function EmotionPage() {
           <StepContent theme="light" {...stepProps} />
           <div style={{ marginTop: 40, display: "flex", gap: 12 }}>
             {step > 1 && (
-              <button onClick={prev} style={{
+              <button onClick={prev} disabled={loading} style={{
                 padding: "0 24px", height: 52, borderRadius: 12,
                 border: `0.5px solid ${W.borderStrong}`, background: "transparent",
-                fontSize: 14, color: W.textMuted, fontFamily: W.sans, cursor: "pointer",
+                fontSize: 14, color: W.textMuted, fontFamily: W.sans,
+                cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.4 : 1,
               }}>이전</button>
             )}
             <button onClick={next} disabled={loading} style={{

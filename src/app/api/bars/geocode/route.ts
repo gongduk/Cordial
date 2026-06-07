@@ -5,7 +5,8 @@ export async function GET(req: NextRequest) {
   if (!area) return NextResponse.json({ error: "area 파라미터가 필요합니다." }, { status: 400 });
 
   try {
-    const key = process.env.GOOGLE_MAPS_API_KEY!;
+    const key = process.env.GOOGLE_MAPS_API_KEY;
+    if (!key) return NextResponse.json({ error: "Google Maps API 키가 설정되지 않았습니다." }, { status: 503 });
     const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(area)}&language=ko&key=${key}`;
     const res = await fetch(url);
     const data = await res.json() as { results: { geometry: { location: { lat: number; lng: number } } }[] };

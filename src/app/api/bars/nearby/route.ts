@@ -21,7 +21,8 @@ interface GooglePlaceDetail {
 }
 
 async function fetchNearbyBars(lat: number, lng: number): Promise<GooglePlace[]> {
-  const key = process.env.GOOGLE_MAPS_API_KEY!;
+  const key = process.env.GOOGLE_MAPS_API_KEY;
+  if (!key) throw new Error("GOOGLE_MAPS_API_KEY not configured");
   const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=${NEARBY_RADIUS_M}&type=bar&keyword=칵테일&language=ko&key=${key}`;
   const res = await fetch(url);
   const data = await res.json() as { results: GooglePlace[] };
@@ -29,7 +30,7 @@ async function fetchNearbyBars(lat: number, lng: number): Promise<GooglePlace[]>
 }
 
 async function fetchPlaceReviews(placeId: string): Promise<string[]> {
-  const key = process.env.GOOGLE_MAPS_API_KEY!;
+  const key = process.env.GOOGLE_MAPS_API_KEY;
   const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=reviews&language=ko&key=${key}`;
   const res = await fetch(url);
   const data = await res.json() as { result: GooglePlaceDetail };
@@ -43,6 +44,10 @@ function isStale(analyzedAt: Date | null): boolean {
 }
 
 export async function POST(req: NextRequest) {
+  if (!process.env.GOOGLE_MAPS_API_KEY) {
+    return NextResponse.json({ error: "Google Maps API 키가 설정되지 않았습니다." }, { status: 503 });
+  }
+
   try {
     const { lat, lng } = await req.json() as { lat: number; lng: number };
 
@@ -75,6 +80,7 @@ export async function POST(req: NextRequest) {
           reviewCount: place.user_ratings_total ?? null,
           moodTags: analysis.moodTags,
           purposeTags: analysis.purposeTags,
+          cocktailStyles: analysis.cocktailStyles,
           signature: analysis.signature,
           description: analysis.description,
           analyzedAt: new Date(),

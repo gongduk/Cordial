@@ -295,7 +295,7 @@ export default function MixPage() {
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12 4 L6 10 L12 16" stroke={T.darkText} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </Link>
             <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.6, textTransform: "uppercase", color: T.darkTextMuted }}>MIX LAB</div>
-            <button onClick={() => { setIngs(INITIAL_INGS); setNotes(""); setResult(null); }} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, color: T.darkTextMuted, fontFamily: T.sans }}>초기화</button>
+            <button onClick={() => { setIngs(INITIAL_INGS); setNotes(""); setResult(null); }} disabled={loading} style={{ background: "none", border: "none", cursor: loading ? "not-allowed" : "pointer", fontSize: 13, color: T.darkTextMuted, fontFamily: T.sans, opacity: loading ? 0.4 : 1 }}>초기화</button>
           </div>
 
           <div style={{ padding: "8px 24px 24px" }}>

@@ -154,9 +154,10 @@ model Bar {
   rating       Float?
   priceLevel   Int?
   reviewCount  Int?
-  purposeTags  String[]
-  analyzedAt   DateTime?
-  createdAt    DateTime  @default(now())
+  purposeTags    String[]
+  cocktailStyles String[]  @default([])
+  analyzedAt     DateTime?
+  createdAt      DateTime  @default(now())
 }
 
 enum DrinkingCapacity {

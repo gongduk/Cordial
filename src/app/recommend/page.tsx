@@ -278,7 +278,7 @@ export default function RecommendPage() {
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12 4 L6 10 L12 16" stroke={T.darkText} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </button>
             <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.6, textTransform: "uppercase", color: T.darkTextMuted }}>{globalIndex + 1} / {list.length}</div>
-            <button style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, color: T.darkTextMuted, fontFamily: T.sans }}>저장</button>
+            <button onClick={() => goToDetail(c)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, color: T.accent, fontFamily: T.sans }}>레시피 보기</button>
           </div>
 
           <div style={{ padding: "8px 24px 0", flex: 1, display: "flex", flexDirection: "column" }}>

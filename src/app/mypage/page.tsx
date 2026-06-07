@@ -140,11 +140,11 @@ export default function MyPage() {
                 {CAPACITY_OPTIONS.map(opt => {
                   const active = profile.drinkingCapacity === opt.value;
                   return (
-                    <button key={opt.value} onClick={() => setProfile(p => p ? { ...p, drinkingCapacity: opt.value } : p)} style={{
+                    <button key={opt.value} onClick={() => { if (saving) return; setProfile(p => p ? { ...p, drinkingCapacity: opt.value } : p); }} disabled={saving} style={{
                       padding: "14px 20px", borderRadius: 12, textAlign: "left",
                       border: `1px solid ${active ? W.accent : W.borderStrong}`,
                       background: active ? `${W.accent}14` : W.surface,
-                      cursor: "pointer",
+                      cursor: saving ? "not-allowed" : "pointer",
                     }}>
                       <div style={{ fontSize: 14, fontWeight: 600, color: active ? W.accent : W.text, letterSpacing: -0.2, fontFamily: W.sans }}>{opt.label}</div>
                       <div style={{ fontSize: 11, color: W.textFaint, marginTop: 2, fontFamily: W.sans }}>{opt.sub}</div>
@@ -166,7 +166,8 @@ export default function MyPage() {
                         <span style={{ fontFamily: W.mono, fontSize: 11, color: W.textFaint }}>{Math.round(val * 10) / 10}</span>
                       </div>
                       <input type="range" min={0} max={1} step={0.05} value={val}
-                        onChange={e => setPref(key, parseFloat(e.target.value))}
+                        onChange={e => { if (!saving) setPref(key, parseFloat(e.target.value)); }}
+                        disabled={saving}
                         style={{ width: "100%", accentColor: W.accent }} />
                     </div>
                   );
@@ -243,11 +244,11 @@ export default function MyPage() {
                   {CAPACITY_OPTIONS.map(opt => {
                     const active = profile.drinkingCapacity === opt.value;
                     return (
-                      <button key={opt.value} onClick={() => setProfile(p => p ? { ...p, drinkingCapacity: opt.value } : p)} style={{
+                      <button key={opt.value} onClick={() => { if (saving) return; setProfile(p => p ? { ...p, drinkingCapacity: opt.value } : p); }} disabled={saving} style={{
                         padding: "12px 16px", borderRadius: 12, textAlign: "left",
                         border: `0.5px solid ${active ? T.accent : T.darkBorderStrong}`,
                         background: active ? `${T.accent}22` : T.darkSurface,
-                        cursor: "pointer",
+                        cursor: saving ? "not-allowed" : "pointer",
                       }}>
                         <div style={{ fontSize: 13, fontWeight: 600, color: active ? T.accent : T.darkText }}>{opt.label}</div>
                         <div style={{ fontSize: 11, color: T.darkTextFaint, marginTop: 2, fontFamily: T.sans }}>{opt.sub}</div>
@@ -270,7 +271,8 @@ export default function MyPage() {
                           <span style={{ fontFamily: T.mono, fontSize: 11, color: T.darkTextFaint }}>{Math.round(val * 10) / 10}</span>
                         </div>
                         <input type="range" min={0} max={1} step={0.05} value={val}
-                          onChange={e => setPref(key, parseFloat(e.target.value))}
+                          onChange={e => { if (!saving) setPref(key, parseFloat(e.target.value)); }}
+                          disabled={saving}
                           style={{ width: "100%", accentColor: T.accent }} />
                       </div>
                     );
