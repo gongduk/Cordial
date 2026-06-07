@@ -50,51 +50,53 @@ def infer_from_name(name: str, address: str) -> dict:
     def has(*words: str) -> bool:
         return any(w in n for w in words)
 
-    # moodTags
+    # moodTags (1~2개)
     if has("jazz", "vinyl", "재즈", "뮤직", "music", "클래식", "classic"):
-        mood = ["클래식"]
+        mood = ["클래식", "조용한"]
     elif has("rooftop", "루프탑", "party", "파티", "night", "나잇", "클럽"):
-        mood = ["활기찬"]
+        mood = ["활기찬", "힙한"]
     elif has("wine", "와인", "rose", "로즈", "로맨틱", "romantic"):
-        mood = ["로맨틱"]
+        mood = ["로맨틱", "조용한"]
     elif has("craft", "크래프트", "hip", "힙", "indie", "인디"):
-        mood = ["힙한"]
+        mood = ["힙한", "활기찬"]
     elif has("quiet", "조용", "숨은", "hidden", "speakeasy", "스피크이지"):
-        mood = ["조용한"]
+        mood = ["조용한", "클래식"]
     else:
-        # 이름 첫 글자 코드값으로 분산
         idx = ord(name[0]) % 5 if name else 0
-        mood = [["클래식", "활기찬", "힙한", "로맨틱", "조용한"][idx]]
+        pairs = [["클래식", "조용한"], ["활기찬", "힙한"], ["힙한", "활기찬"], ["로맨틱", "조용한"], ["조용한", "클래식"]]
+        mood = pairs[idx]
 
-    # purposeTags
+    # purposeTags (1~2개)
     if has("데이트", "date", "couple", "커플", "romantic", "wine", "와인"):
-        purpose = ["데이트"]
+        purpose = ["데이트", "혼술"]
     elif has("pub", "펍", "party", "파티", "friends", "친구", "group"):
-        purpose = ["친구모임"]
+        purpose = ["친구모임", "비즈니스"]
     elif has("business", "비즈니스", "lounge", "라운지", "hotel", "호텔"):
-        purpose = ["비즈니스"]
+        purpose = ["비즈니스", "데이트"]
     elif has("혼술", "solo", "혼자", "one"):
-        purpose = ["혼술"]
+        purpose = ["혼술", "친구모임"]
     else:
         idx = (ord(name[0]) + 1) % 4 if name else 0
-        purpose = [["혼술", "친구모임", "데이트", "비즈니스"][idx]]
+        pairs = [["혼술", "친구모임"], ["친구모임", "비즈니스"], ["데이트", "혼술"], ["비즈니스", "친구모임"]]
+        purpose = pairs[idx]
 
-    # cocktailStyles
+    # cocktailStyles (1~2개)
     if has("whisky", "whiskey", "위스키", "bourbon", "버번", "scotch"):
         styles = ["강한", "쓴"]
     elif has("sour", "사워", "citrus", "시트러스", "lime", "라임"):
-        styles = ["신"]
+        styles = ["신", "가벼운"]
     elif has("sweet", "달콤", "과일", "fruit", "berry", "베리"):
-        styles = ["달콤한"]
+        styles = ["달콤한", "가벼운"]
     elif has("negroni", "네그로니", "amaro", "bitter", "비터"):
-        styles = ["쓴"]
+        styles = ["쓴", "강한"]
     elif has("spritz", "스프리츠", "bubbly", "샴페인", "sparkling"):
-        styles = ["가벼운"]
+        styles = ["가벼운", "달콤한"]
     elif has("craft", "크래프트", "gin", "진"):
         styles = ["신", "강한"]
     else:
         idx = ord(name[0]) % 5 if name else 0
-        styles = [["달콤한", "신", "쓴", "강한", "가벼운"][idx]]
+        pairs = [["달콤한", "가벼운"], ["신", "가벼운"], ["쓴", "강한"], ["강한", "쓴"], ["가벼운", "달콤한"]]
+        styles = pairs[idx]
 
     return {
         "moodTags": mood,
