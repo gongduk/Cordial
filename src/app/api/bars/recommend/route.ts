@@ -136,8 +136,14 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // 반경 10km 바운딩박스로 DB 쿼리 범위 제한
+    const latDelta = 10 / 111;
+    const lngDelta = 10 / (111 * Math.cos((lat * Math.PI) / 180));
     const bars = await prisma.bar.findMany({
-      where: { latitude: { not: null }, longitude: { not: null } },
+      where: {
+        latitude: { gte: lat - latDelta, lte: lat + latDelta, not: null },
+        longitude: { gte: lng - lngDelta, lte: lng + lngDelta, not: null },
+      },
     });
 
     const scored = bars

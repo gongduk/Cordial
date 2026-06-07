@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 import api from "@/shared/lib/api";
 import Link from "next/link";
@@ -12,32 +12,7 @@ import { MobileTabBar } from "@/shared/ui/MobileTabBar";
 import type { GlassType } from "@/shared/ui/GlassSilhouette";
 import type { IngredientOption } from "@/shared/ui/IngredientSearch";
 import type { MixIngredient, MixMethod, MixAnalysisResult } from "@/shared/types";
-
-const W = {
-  accent: "#B88752",
-  bg: "#FCFBF9",
-  surface: "#FFFFFF",
-  border: "rgba(40,30,20,0.08)",
-  borderStrong: "rgba(40,30,20,0.16)",
-  text: "#1A1612",
-  textMuted: "rgba(26,22,18,0.62)",
-  textFaint: "rgba(26,22,18,0.38)",
-  sans: '"Pretendard Variable","Pretendard",-apple-system,BlinkMacSystemFont,sans-serif',
-  mono: '"JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace',
-} as const;
-
-const T = {
-  accent: "#B88752",
-  darkBg: "#15110D",
-  darkSurface: "#1C1814",
-  darkBorder: "rgba(255,246,232,0.08)",
-  darkBorderStrong: "rgba(255,246,232,0.14)",
-  darkText: "#F5EFE6",
-  darkTextMuted: "rgba(245,239,230,0.62)",
-  darkTextFaint: "rgba(245,239,230,0.38)",
-  sans: '"Pretendard Variable","Pretendard",-apple-system,BlinkMacSystemFont,sans-serif',
-  mono: '"JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace',
-} as const;
+import { W, T } from "@/shared/lib/theme";
 
 const METHODS: { id: MixMethod; label: string; labelEn: string }[] = [
   { id: "shaking", label: "셰이킹", labelEn: "Shaking" },
@@ -64,8 +39,6 @@ const PROFILE_LABELS: Record<(typeof PROFILE_KEYS)[number], string> = {
   freshness: "FRESH",
 };
 
-let nextId = 4;
-
 type SaveStatus = "idle" | "saving" | "saved" | "error";
 
 export default function MixPage() {
@@ -80,6 +53,7 @@ export default function MixPage() {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [savedId, setSavedId] = useState<string | null>(null);
   const [customName, setCustomName] = useState("나만의 칵테일");
+  const nextIdRef = useRef(INITIAL_INGS.length + 1);
 
   const totalVolume = ings.reduce((s, i) => s + i.amount, 0);
   const fillLevel = Math.min(totalVolume / 150, 1);
@@ -94,7 +68,7 @@ export default function MixPage() {
   }
 
   function addIng(item: IngredientOption | { name: string; abv: number; isCustom: true }) {
-    setIngs((prev) => [...prev, { id: nextId++, name: item.name, amount: 30, abv: item.abv }]);
+    setIngs((prev) => [...prev, { id: nextIdRef.current++, name: item.name, amount: 30, abv: item.abv }]);
     void saveIngredient(item.name, item.abv);
   }
 

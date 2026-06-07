@@ -3,7 +3,9 @@ import { prisma } from "@/shared/lib/prisma";
 import { expandSynonyms } from "@/shared/lib/ingredientSynonyms";
 import type { RecommendedCocktail } from "@/shared/types";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+const apiKey = process.env.GEMINI_API_KEY;
+if (!apiKey) throw new Error("GEMINI_API_KEY 환경변수가 설정되지 않았습니다.");
+const genAI = new GoogleGenerativeAI(apiKey);
 
 const CREATIVE_PROMPT = `당신은 창의적인 바텐더입니다. 주어진 재료로 만들 수 있는 독창적인 칵테일 레시피를 제안하세요.
 반드시 JSON 형식으로 반환하세요:

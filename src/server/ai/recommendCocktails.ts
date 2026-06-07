@@ -2,10 +2,14 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { prisma } from "@/shared/lib/prisma";
 import type { EmotionVector, CocktailVector, RecommendedCocktail } from "@/shared/types";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+const apiKey = process.env.GEMINI_API_KEY;
+if (!apiKey) throw new Error("GEMINI_API_KEY 환경변수가 설정되지 않았습니다.");
+const genAI = new GoogleGenerativeAI(apiKey);
 
-const DESCRIPTION_PROMPT = `당신은 감성적인 바텐더입니다. 고객의 감정 상태와 추천 칵테일을 바탕으로
-따뜻하고 시적인 추천 설명을 2~3문장으로 작성하세요. 한국어로 작성하세요.`;
+const DESCRIPTION_PROMPT = `당신은 감성적인 바텐더입니다. 고객의 감정 상태와 추천 칵테일 목록을 바탕으로
+각 칵테일에 대해 따뜻하고 시적인 추천 설명을 2~3문장으로 작성하세요. 한국어로 작성하세요.
+반드시 아래 JSON 배열 형식으로만 반환하세요 (다른 텍스트 없이):
+["설명1", "설명2", "설명3", ...]`;
 
 function emotionToVector(e: EmotionVector): CocktailVector {
   return {
@@ -36,18 +40,22 @@ function volumeFitScore(capacity: string, strength: number): number {
   return 1 - Math.abs(strength - 0.5); // MEDIUM
 }
 
-async function generateDescription(name: string, emotion: EmotionVector): Promise<string> {
+async function generateDescriptions(names: string[], emotion: EmotionVector): Promise<string[]> {
   try {
     const model = genAI.getGenerativeModel({
       model: "gemini-2.0-flash",
       systemInstruction: DESCRIPTION_PROMPT,
+      generationConfig: { responseMimeType: "application/json" },
     });
-    const result = await model.generateContent(
-      `감정: ${JSON.stringify(emotion)}\n칵테일: ${name}`
-    );
-    return result.response.text() || `${name}을(를) 추천드립니다.`;
+    const prompt = `감정: ${JSON.stringify(emotion)}\n칵테일 목록:\n${names.map((n, i) => `${i + 1}. ${n}`).join("\n")}`;
+    const result = await model.generateContent(prompt);
+    const parsed = JSON.parse(result.response.text()) as unknown;
+    if (Array.isArray(parsed) && parsed.length === names.length) {
+      return parsed.map((d, i) => (typeof d === "string" && d ? d : `${names[i]}을(를) 추천드립니다.`));
+    }
+    return names.map(n => `${n}을(를) 추천드립니다.`);
   } catch {
-    return `${name}을(를) 추천드립니다.`;
+    return names.map(n => `${n}을(를) 추천드립니다.`);
   }
 }
 
@@ -178,14 +186,10 @@ export async function recommendCocktails({
     .sort((a, b) => b.score - a.score)
     .slice(0, 9);
 
-  const results = await Promise.allSettled(
-    ranked.map(async (c) => {
-      const aiDescription = await generateDescription(c.name, emotionVector);
-      return { ...c, aiDescription } as RecommendedCocktail;
-    })
-  );
+  const descriptions = await generateDescriptions(ranked.map(c => c.name), emotionVector);
 
-  return results
-    .filter((r): r is PromiseFulfilledResult<RecommendedCocktail> => r.status === "fulfilled")
-    .map((r) => r.value);
+  return ranked.map((c, i) => ({
+    ...c,
+    aiDescription: descriptions[i] ?? `${c.name}을(를) 추천드립니다.`,
+  } as RecommendedCocktail));
 }

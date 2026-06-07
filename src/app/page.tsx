@@ -1,33 +1,7 @@
 import Link from "next/link";
 import { GlassSilhouette } from "@/shared/ui/GlassSilhouette";
 import { CordialLogo } from "@/shared/ui/CordialLogo";
-
-const W = {
-  accent: "#B88752",
-  bg: "#FCFBF9",
-  surface: "#FFFFFF",
-  surface2: "#F4F0EA",
-  border: "rgba(40, 30, 20, 0.08)",
-  borderStrong: "rgba(40, 30, 20, 0.16)",
-  text: "#1A1612",
-  textMuted: "rgba(26, 22, 18, 0.62)",
-  textFaint: "rgba(26, 22, 18, 0.38)",
-  sans: '"Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif',
-  mono: '"JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace',
-} as const;
-
-const T = {
-  accent: "#B88752",
-  darkBg: "#15110D",
-  darkSurface: "#1C1814",
-  darkBorder: "rgba(255,246,232,0.08)",
-  darkBorderStrong: "rgba(255,246,232,0.14)",
-  darkText: "#F5EFE6",
-  darkTextMuted: "rgba(245,239,230,0.62)",
-  darkTextFaint: "rgba(245,239,230,0.38)",
-  sans: '"Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif',
-  mono: '"JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace',
-} as const;
+import { W, T } from "@/shared/lib/theme";
 
 const NAV_ITEMS = [
   { id: "home", label: "홈", href: "/" },
@@ -152,7 +126,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section style={{ padding: "80px 56px", background: W.surface2, borderTop: `0.5px solid ${W.border}`, borderBottom: `0.5px solid ${W.border}` }}>
+        <section style={{ padding: "80px 56px", background: "#F4F0EA", borderTop: `0.5px solid ${W.border}`, borderBottom: `0.5px solid ${W.border}` }}>
           <div style={{ maxWidth: 760, margin: "0 auto", textAlign: "center" }}>
             <div style={{ fontFamily: W.mono, fontSize: 11, letterSpacing: 1.8, color: W.accent, marginBottom: 24, textTransform: "uppercase" }}>OUR PHILOSOPHY</div>
             <p style={{ margin: 0, fontSize: 28, fontWeight: 500, lineHeight: 1.45, letterSpacing: -0.5, color: W.text }}>
