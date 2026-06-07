@@ -61,6 +61,7 @@ model User {
   recommendations  Recommendation[]
   customCocktails  Cocktail[]       @relation("UserCustomCocktails")
   refreshTokens    RefreshToken[]
+  mixIngredients   UserIngredient[]
   createdAt        DateTime         @default(now())
 }
 
@@ -158,6 +159,17 @@ model Bar {
   cocktailStyles String[]  @default([])
   analyzedAt     DateTime?
   createdAt      DateTime  @default(now())
+}
+
+model UserIngredient {
+  id     String   @id @default(cuid())
+  userId String
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name   String
+  abv    Float    @default(0)
+  usedAt DateTime @updatedAt
+
+  @@unique([userId, name])
 }
 
 enum DrinkingCapacity {

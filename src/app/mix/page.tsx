@@ -84,8 +84,18 @@ export default function MixPage() {
   const totalVolume = ings.reduce((s, i) => s + i.amount, 0);
   const fillLevel = Math.min(totalVolume / 150, 1);
 
+  async function saveIngredient(name: string, abv: number) {
+    if (!isLoggedIn) return;
+    await fetch("/api/user/mix-ingredients", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, abv }),
+    }).catch(() => {});
+  }
+
   function addIng(item: IngredientOption | { name: string; abv: number; isCustom: true }) {
     setIngs((prev) => [...prev, { id: nextId++, name: item.name, amount: 30, abv: item.abv }]);
+    void saveIngredient(item.name, item.abv);
   }
 
   function updateField(id: number, field: "amount" | "abv", value: string) {
@@ -234,7 +244,7 @@ export default function MixPage() {
 
             <div>
               <div style={{ fontFamily: W.mono, fontSize: 10, letterSpacing: 1.6, color: W.textFaint, marginBottom: 16, textTransform: "uppercase" }}>INGREDIENTS · {ings.length}</div>
-              {ings.map((ing) => <IngRow key={ing.id} ing={ing} onUpdate={updateField} onRemove={removeIng} />)}
+              {ings.map((ing) => <IngRow key={ing.id} ing={ing} onUpdate={updateField} onRemove={removeIng} onAbvCommit={saveIngredient} />)}
               {showSearchWeb ? (
                 <div style={{ padding: "12px 0", borderBottom: `0.5px solid ${W.border}` }}>
                   <IngredientSearch
@@ -321,7 +331,7 @@ export default function MixPage() {
 
           <div style={{ padding: "0 24px" }}>
             <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.6, color: T.darkTextFaint, marginBottom: 12, textTransform: "uppercase" }}>INGREDIENTS · {ings.length}</div>
-            {ings.map((ing) => <IngRow key={ing.id} ing={ing} dark onUpdate={updateField} onRemove={removeIng} />)}
+            {ings.map((ing) => <IngRow key={ing.id} ing={ing} dark onUpdate={updateField} onRemove={removeIng} onAbvCommit={saveIngredient} />)}
             {showSearchMob ? (
               <div style={{ padding: "12px 0", borderBottom: `0.5px solid ${T.darkBorder}` }}>
                 <IngredientSearch
@@ -410,9 +420,10 @@ interface IngRowProps {
   dark?: boolean;
   onUpdate: (id: number, field: "amount" | "abv", value: string) => void;
   onRemove: (id: number) => void;
+  onAbvCommit: (name: string, abv: number) => void;
 }
 
-function IngRow({ ing, dark, onUpdate, onRemove }: IngRowProps) {
+function IngRow({ ing, dark, onUpdate, onRemove, onAbvCommit }: IngRowProps) {
   const [amountStr, setAmountStr] = useState(String(ing.amount));
   const [abvStr, setAbvStr] = useState(String(ing.abv));
 
@@ -441,7 +452,10 @@ function IngRow({ ing, dark, onUpdate, onRemove }: IngRowProps) {
           type="number" min="0" max="100" step="1"
           value={abvStr}
           onChange={(e) => { setAbvStr(e.target.value); onUpdate(ing.id, "abv", e.target.value); }}
-          onBlur={() => { if (abvStr === "" || isNaN(parseFloat(abvStr))) setAbvStr(String(ing.abv)); }}
+          onBlur={() => {
+            if (abvStr === "" || isNaN(parseFloat(abvStr))) { setAbvStr(String(ing.abv)); return; }
+            onAbvCommit(ing.name, parseFloat(abvStr));
+          }}
           style={{ width: 42, background: "transparent", border: "none", borderBottom: `0.5px solid ${dark ? T.darkBorderStrong : W.borderStrong}`, outline: "none", fontSize: 12, color: dark ? T.darkTextMuted : W.textMuted, fontFamily: mono, textAlign: "right", padding: "2px 0" }}
         />
         <span style={{ fontSize: 11, color: dark ? T.darkTextFaint : W.textFaint, fontFamily: mono }}>%</span>
