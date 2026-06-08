@@ -190,15 +190,13 @@ export async function recommendCocktails({
 
       const emotionSim = euclideanSim(targetVector, cv);
       const popularity = c.popularity;
-      const jitter = (Math.random() - 0.5) * 0.15;
+      const jitter = (Math.random() - 0.5) * 0.30;
 
       let score: number;
       if (user && userPrefVector) {
         const volumeFit = volumeFitScore(effectiveCapacity, c.strength);
         const pastNovelty = recentVector ? 1 - euclideanSim(recentVector, cv) : 0.5;
 
-        // 장기 추천 기록과 유사할수록 점수 차감 (새로운 칵테일 발견 유도)
-        // 기록 10개 이상: 최대 10% 페널티
         const histWeight = historyVector ? Math.min(olderRecs.length / 10, 1) * 0.1 : 0;
         const histSim = historyVector ? euclideanSim(historyVector, cv) : 0;
         const tasteSim = 0.2 * euclideanSim(userPrefVector, cv);
@@ -206,7 +204,7 @@ export async function recommendCocktails({
         score =
           0.4 * emotionSim +
           tasteSim -
-          histWeight * histSim +   // 과거와 비슷할수록 점수 차감
+          histWeight * histSim +
           0.15 * volumeFit +
           0.15 * pastNovelty +
           0.1 * popularity +
@@ -220,12 +218,28 @@ export async function recommendCocktails({
 
       return { ...c, score };
     })
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 9);
+    .sort((a, b) => b.score - a.score);
 
-  const descriptions = await generateDescriptions(ranked.map(c => c.name), emotionVector);
+  // 상위 후보풀에서 가중치 기반 랜덤 샘플링 — 매 요청마다 다른 결과 보장
+  const POOL_SIZE = Math.min(12, ranked.length);
+  const pool = ranked.slice(0, POOL_SIZE);
+  const selected: typeof pool = [];
+  const remaining = [...pool];
 
-  return ranked.map((c, i) => ({
+  while (selected.length < 9 && remaining.length > 0) {
+    const totalWeight = remaining.reduce((s, c) => s + Math.max(c.score, 0.01), 0);
+    let rand = Math.random() * totalWeight;
+    let picked = 0;
+    for (let i = 0; i < remaining.length; i++) {
+      rand -= Math.max(remaining[i].score, 0.01);
+      if (rand <= 0) { picked = i; break; }
+    }
+    selected.push(...remaining.splice(picked, 1));
+  }
+
+  const descriptions = await generateDescriptions(selected.map(c => c.name), emotionVector);
+
+  return selected.map((c, i) => ({
     ...c,
     aiDescription: descriptions[i] ?? fallbackDesc(c.name),
   } as RecommendedCocktail));
