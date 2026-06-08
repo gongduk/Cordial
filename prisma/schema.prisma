@@ -97,6 +97,7 @@ model Cocktail {
   category        String?
   glassType       String?
   method          String?
+  recipeSteps     Json?
   sweetness       Float                @default(0)
   sourness        Float                @default(0)
   bitterness      Float                @default(0)

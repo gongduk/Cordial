@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import api from "@/shared/lib/api";
 import { useRouter, useParams } from "next/navigation";
 import { GlassSilhouette } from "@/shared/ui/GlassSilhouette";
@@ -153,6 +153,21 @@ export default function CocktailDetailPage() {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [isCustom, setIsCustom] = useState(false);
+  const [aiSteps, setAiSteps] = useState<string[] | null>(null);
+  const [stepsLoading, setStepsLoading] = useState(false);
+
+  const loadAiSteps = useCallback(async (id: string) => {
+    if (!id || id === "creative") return;
+    setStepsLoading(true);
+    try {
+      const res = await api.get<{ steps: string[] }>(`/cocktails/${id}/recipe-steps`);
+      if (res.data.steps?.length > 0) setAiSteps(res.data.steps);
+    } catch {
+      // fallback to static steps
+    } finally {
+      setStepsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     const sel = typeof window !== "undefined" ? sessionStorage.getItem("selectedCocktail") : null;
@@ -207,6 +222,7 @@ export default function CocktailDetailPage() {
           setCocktail(c);
           if (c.id && c.id !== "creative") {
             await loadDetail(c.id);
+            void loadAiSteps(c.id);
           }
           setLoading(false);
           return;
@@ -233,6 +249,7 @@ export default function CocktailDetailPage() {
             aiDescription: "",
             score: 0,
           });
+          void loadAiSteps(targetId);
         } else {
           router.back();
         }
@@ -280,7 +297,7 @@ export default function CocktailDetailPage() {
     ["FRESH", toBarValue(cocktail.freshness)],
   ] as const;
 
-  const methodSteps = buildMethodSteps(method, ingredients, cocktail.glassType);
+  const methodSteps = aiSteps ?? buildMethodSteps(method, ingredients, cocktail.glassType);
 
   return (
     <>
@@ -350,8 +367,12 @@ export default function CocktailDetailPage() {
                 ))}
               </div>
 
-              <div style={{ fontFamily: W.mono, fontSize: 10, letterSpacing: 1.6, color: W.textFaint, marginBottom: 16, textTransform: "uppercase" }}>
-                METHOD — {method ? method.toUpperCase() : "SHAKING"}
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+                <div style={{ fontFamily: W.mono, fontSize: 10, letterSpacing: 1.6, color: W.textFaint, textTransform: "uppercase" }}>
+                  METHOD — {method ? method.toUpperCase() : "SHAKING"}
+                </div>
+                {stepsLoading && <div style={{ fontFamily: W.mono, fontSize: 9, color: W.accent, letterSpacing: 1, opacity: 0.7 }}>AI 생성 중...</div>}
+                {!stepsLoading && aiSteps && <div style={{ fontFamily: W.mono, fontSize: 9, color: W.accent, letterSpacing: 1 }}>AI</div>}
               </div>
               {methodSteps.map((step, i) => (
                 <div key={i} style={{ display: "flex", gap: 18, padding: "12px 0", borderBottom: `0.5px solid ${W.border}` }}>
@@ -428,8 +449,12 @@ export default function CocktailDetailPage() {
           </div>
 
           <div style={{ padding: "8px 24px 24px" }}>
-            <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.6, color: T.darkTextFaint, marginBottom: 16, textTransform: "uppercase" }}>
-              METHOD — {method ? method.toUpperCase() : "SHAKING"}
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+              <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.6, color: T.darkTextFaint, textTransform: "uppercase" }}>
+                METHOD — {method ? method.toUpperCase() : "SHAKING"}
+              </div>
+              {stepsLoading && <div style={{ fontFamily: T.mono, fontSize: 9, color: T.accent, letterSpacing: 1, opacity: 0.7 }}>AI 생성 중...</div>}
+              {!stepsLoading && aiSteps && <div style={{ fontFamily: T.mono, fontSize: 9, color: T.accent, letterSpacing: 1 }}>AI</div>}
             </div>
             {methodSteps.map((step, i) => (
               <div key={i} style={{ display: "flex", gap: 16, padding: "10px 0", borderBottom: `0.5px solid ${T.darkBorder}` }}>
