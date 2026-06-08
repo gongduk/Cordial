@@ -45,6 +45,7 @@ const handler = NextAuth({
   ],
   session: { strategy: "jwt" },
   secret: process.env.NEXTAUTH_SECRET,
+  // @ts-expect-error trustHost exists at runtime but missing from v4 types
   trustHost: true,
   pages: {
     signIn: "/login",

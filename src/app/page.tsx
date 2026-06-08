@@ -1,15 +1,10 @@
 import Link from "next/link";
 import { GlassSilhouette } from "@/shared/ui/GlassSilhouette";
 import { CordialLogo } from "@/shared/ui/CordialLogo";
+import { WebNav } from "@/shared/ui/WebNav";
+import { LandingMobileHeader } from "@/shared/ui/LandingMobileHeader";
 import { W, T } from "@/shared/lib/theme";
 
-const NAV_ITEMS = [
-  { id: "home", label: "홈", href: "/" },
-  { id: "mood", label: "칵테일 추천", href: "/emotion" },
-  { id: "pantry", label: "내 술장", href: "/pantry" },
-  { id: "mix", label: "모의 제조", href: "/mix" },
-  { id: "bars", label: "바", href: "/bars" },
-] as const;
 
 const FEATURES = [
   { num: "01", glass: "martini" as const, name: "칵테일 추천", desc: "4가지 질문에 답하면 감정에 맞는 칵테일과 추천 이유를 받을 수 있어요.", fill: 0.65, href: "/emotion" },
@@ -23,34 +18,7 @@ export default function LandingPage() {
     <>
       {/* ── WEB ── */}
       <div className="cordial-web" style={{ background: W.bg, color: W.text, fontFamily: W.sans, minHeight: "100vh" }}>
-        <nav style={{
-          padding: "20px 56px",
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          borderBottom: `0.5px solid ${W.border}`,
-          background: W.bg,
-          position: "sticky", top: 0, zIndex: 10,
-        }}>
-          <CordialLogo size={15} color={W.text} tracking={2} />
-          <div style={{ display: "flex", gap: 32 }}>
-            {NAV_ITEMS.map(({ id, label, href }) => (
-              <Link key={id} href={href} style={{
-                fontSize: 13, fontWeight: id === "home" ? 600 : 500,
-                color: id === "home" ? W.text : W.textMuted,
-                letterSpacing: -0.1, textDecoration: "none",
-                paddingBottom: 4,
-                borderBottom: id === "home" ? `1.5px solid ${W.accent}` : "1.5px solid transparent",
-              }}>{label}</Link>
-            ))}
-          </div>
-          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-            <Link href="/emotion" style={{
-              padding: "8px 18px", borderRadius: 8,
-              background: W.text, color: W.bg,
-              fontSize: 13, fontWeight: 600, letterSpacing: -0.1, textDecoration: "none",
-              fontFamily: W.sans,
-            }}>시작하기</Link>
-          </div>
-        </nav>
+        <WebNav active="/" />
 
         <section style={{
           padding: "100px 56px 80px",
@@ -152,10 +120,7 @@ export default function LandingPage() {
       <div className="cordial-mob">
         <div style={{ width: "100%", minHeight: "100vh", background: T.darkBg, color: T.darkText, fontFamily: T.sans, maxWidth: 430, margin: "0 auto" }}>
           {/* Header */}
-          <div style={{ padding: "52px 24px 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <CordialLogo size={14} color={T.accent} tracking={2} />
-            <Link href="/login" style={{ fontSize: 12, color: T.darkTextMuted, textDecoration: "none", fontFamily: T.sans }}>로그인</Link>
-          </div>
+          <LandingMobileHeader />
 
           {/* Hero */}
           <div style={{ padding: "40px 24px 32px" }}>
