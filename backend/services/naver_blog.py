@@ -1,0 +1,113 @@
+import os
+import re
+import asyncio
+import httpx
+from bs4 import BeautifulSoup
+
+NAVER_CLIENT_ID = os.getenv("NAVER_CLIENT_ID", "")
+NAVER_CLIENT_SECRET = os.getenv("NAVER_CLIENT_SECRET", "")
+NAVER_BLOG_URL = "https://openapi.naver.com/v1/search/blog.json"
+
+_TAG_RE = re.compile(r"<[^>]+>")
+_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/124.0.0.0 Safari/537.36"
+    ),
+    "Accept-Language": "ko-KR,ko;q=0.9",
+}
+
+
+def _strip_html(text: str) -> str:
+    return _TAG_RE.sub("", text).strip()
+
+
+def _parse_blog_content(html: str) -> str:
+    """네이버 블로그 HTML에서 본문 텍스트 추출 (신/구 에디터 모두 지원)"""
+    soup = BeautifulSoup(html, "html.parser")
+
+    # 신 에디터 (Smart Editor ONE)
+    container = soup.select_one("div.se-main-container")
+    if container:
+        texts = [p.get_text(" ", strip=True) for p in container.select(".se-text-paragraph")]
+        content = " ".join(t for t in texts if t)
+        if content:
+            return content[:1500]
+
+    # 구 에디터
+    old = soup.select_one("div#postViewArea") or soup.select_one("div.post-view")
+    if old:
+        return old.get_text(" ", strip=True)[:1500]
+
+    # iframe 내부 (구형 네이버 블로그)
+    frame = soup.select_one("iframe#mainFrame")
+    if frame and frame.get("src"):
+        return ""  # iframe은 별도 요청 필요 — 스니펫으로 fallback
+
+    return soup.get_text(" ", strip=True)[:1500]
+
+
+async def _fetch_blog_content(url: str, client: httpx.AsyncClient) -> str:
+    """블로그 URL에서 본문 전체 크롤링"""
+    try:
+        # 네이버 블로그 → 모바일 URL로 변환 (iframe 없이 본문 직접 접근)
+        mobile_url = re.sub(
+            r"https?://blog\.naver\.com/([^/]+)/(\d+)",
+            r"https://m.blog.naver.com/\1/\2",
+            url,
+        )
+        target = mobile_url if "m.blog.naver.com" in mobile_url else url
+        res = await client.get(target, headers=_HEADERS, timeout=8, follow_redirects=True)
+        if res.status_code != 200:
+            return ""
+        return _parse_blog_content(res.text)
+    except Exception:
+        return ""
+
+
+async def search_naver_blog_reviews(bar_name: str, area: str, count: int = 5) -> list[str]:
+    """네이버 블로그 본문 전체 크롤링 (Naver Search API → URL 수집 → BeautifulSoup 파싱)"""
+    if not NAVER_CLIENT_ID or not NAVER_CLIENT_SECRET:
+        return []
+
+    query = f"{bar_name} {area} 칵테일 후기"
+    try:
+        async with httpx.AsyncClient() as client:
+            # 1. Search API로 블로그 URL 수집
+            res = await client.get(
+                NAVER_BLOG_URL,
+                params={"query": query, "display": count, "sort": "sim"},
+                headers={
+                    "X-Naver-Client-Id": NAVER_CLIENT_ID,
+                    "X-Naver-Client-Secret": NAVER_CLIENT_SECRET,
+                },
+                timeout=10,
+            )
+            res.raise_for_status()
+            items = res.json().get("items", [])
+
+            if not items:
+                return []
+
+            # 2. 각 블로그 본문 병렬 크롤링
+            tasks = [_fetch_blog_content(item["link"], client) for item in items]
+            contents = await asyncio.gather(*tasks, return_exceptions=True)
+
+            results = []
+            for i, content in enumerate(contents):
+                if isinstance(content, Exception) or not content:
+                    # 본문 크롤링 실패 시 스니펫으로 fallback
+                    title = _strip_html(items[i].get("title", ""))
+                    desc = _strip_html(items[i].get("description", ""))
+                    fallback = f"{title}: {desc}".strip(": ")
+                    if fallback:
+                        results.append(fallback)
+                else:
+                    results.append(content)
+
+            return results
+
+    except Exception as e:
+        print(f"[Naver Blog] 실패: {bar_name} ({e})")
+        return []

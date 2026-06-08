@@ -20,6 +20,43 @@ function emotionToMoodScores(avg: { joy: number; sadness: number; stress: number
   };
 }
 
+// 시그니처 칵테일 이름 → 스타일 힌트 (Gemini cocktailStyles 보완용)
+const SIGNATURE_STYLE_HINTS: Record<string, string> = {
+  네그로니: "쓴", negroni: "쓴",
+  마티니: "강한", martini: "강한",
+  올드패션드: "강한", "old fashioned": "강한",
+  맨해튼: "강한", manhattan: "강한",
+  위스키사워: "신", "whiskey sour": "신",
+  다이키리: "신", daiquiri: "신",
+  마가리타: "신", margarita: "신",
+  사이드카: "신", sidecar: "신",
+  모히토: "가벼운", mojito: "가벼운",
+  진토닉: "가벼운", "gin tonic": "가벼운", "gin & tonic": "가벼운",
+  아페롤스프리츠: "달콤한", "aperol spritz": "달콤한", 스프리츠: "달콤한",
+  코스모폴리탄: "달콤한", cosmopolitan: "달콤한",
+  피나콜라다: "달콤한", "pina colada": "달콤한",
+  에스프레소마티니: "쓴", "espresso martini": "쓴",
+  블러디메리: "강한", "bloody mary": "강한",
+};
+
+function inferSignatureStyle(signature: string | null | undefined): string | null {
+  if (!signature) return null;
+  const lower = signature.toLowerCase();
+  for (const [key, style] of Object.entries(SIGNATURE_STYLE_HINTS)) {
+    if (lower.includes(key)) return style;
+  }
+  return null;
+}
+
+// 분위기 유사도 — 완전 다른 분위기라도 약간의 점수 부여
+const MOOD_SIMILARITY: Record<string, Record<string, number>> = {
+  조용한: { 클래식: 0.5, 로맨틱: 0.4, 힙한: 0.1, 활기찬: 0 },
+  활기찬: { 힙한: 0.6, 로맨틱: 0.2, 클래식: 0.1, 조용한: 0 },
+  로맨틱: { 조용한: 0.4, 클래식: 0.3, 힙한: 0.2, 활기찬: 0.1 },
+  힙한: { 활기찬: 0.6, 로맨틱: 0.2, 조용한: 0.1, 클래식: 0.1 },
+  클래식: { 조용한: 0.5, 로맨틱: 0.3, 힙한: 0.1, 활기찬: 0.1 },
+};
+
 function calcDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R = 6371;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -37,6 +74,7 @@ function scoreBar(
     moodTags: string[];
     purposeTags: string[];
     cocktailStyles: string[];
+    signature: string | null;
     priceLevel: number | null;
     rating: number | null;
     reviewCount: number | null;
@@ -55,13 +93,22 @@ function scoreBar(
   const budgetOk = bar.priceLevel == null || budgetLevels.includes(bar.priceLevel);
   if (!budgetOk) return { score: 0, matchReasons: [] };
 
-  // 분위기 매칭 30%
-  const moodMatch = bar.moodTags.includes(survey.mood) ? 1 : 0;
-  if (moodMatch) matchReasons.push(`${survey.mood} 분위기`);
+  // 분위기 매칭 30% — 완전 일치 1.0, 유사 분위기 부분 점수
+  const exactMoodMatch = bar.moodTags.includes(survey.mood);
+  const similarMoodScore = exactMoodMatch
+    ? 1
+    : Math.max(...bar.moodTags.map(t => MOOD_SIMILARITY[survey.mood]?.[t] ?? 0));
+  const moodMatch = exactMoodMatch ? 1 : similarMoodScore * 0.5;
+  if (exactMoodMatch) matchReasons.push(`${survey.mood} 분위기`);
+  else if (similarMoodScore > 0.3) matchReasons.push(`${survey.mood}와 유사한 분위기`);
 
-  // 칵테일 스타일 직접 매칭 25%
-  const styleMatch = bar.cocktailStyles.includes(survey.cocktailStyle) ? 1 : 0;
-  if (styleMatch) matchReasons.push(`${survey.cocktailStyle} 칵테일`);
+  // 칵테일 스타일 매칭 25% — cocktailStyles + 시그니처 칵테일 맛 힌트 중 높은 값
+  const directStyleMatch = bar.cocktailStyles.includes(survey.cocktailStyle) ? 1 : 0;
+  const sigStyle = inferSignatureStyle(bar.signature);
+  const sigStyleMatch = sigStyle === survey.cocktailStyle ? 0.8 : 0;
+  const styleMatch = Math.max(directStyleMatch, sigStyleMatch);
+  if (directStyleMatch) matchReasons.push(`${survey.cocktailStyle} 칵테일`);
+  else if (sigStyleMatch && bar.signature) matchReasons.push(`시그니처 '${bar.signature}' — ${survey.cocktailStyle} 스타일`);
 
   // 방문 목적 20%
   const purposeMatch = bar.purposeTags.includes(survey.purpose) ? 1 : 0;
