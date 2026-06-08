@@ -36,7 +36,7 @@ function josa(word: string, withBatchim: string, withoutBatchim: string): string
   return withoutBatchim;
 }
 
-function buildMethodSteps(method: string | null, ingredients: IngredientItem[]): string[] {
+function buildMethodSteps(method: string | null, ingredients: IngredientItem[], glassType?: string | null): string[] {
   const m = (method ?? "shaking") as MixMethod;
   const ingList = ingredients
     .filter(i => i.amount && i.amount !== "적당량")
@@ -68,6 +68,16 @@ function buildMethodSteps(method: string | null, ingredients: IngredientItem[]):
         garnishStep,
       ];
     case "build":
+      // 플루트/쿠프 잔 스파클링 칵테일은 얼음 없이 빌드
+      if (glassType === "flute") {
+        return [
+          "잔을 미리 냉장고에서 차갑게 칠링해요.",
+          `재료를 순서대로 넣어요: ${ingList}.`,
+          "바 스푼으로 아주 가볍게 1~2회만 스터해요.",
+          garnishStep,
+          "빨대 없이 바로 서빙해요.",
+        ];
+      }
       return [
         "잔에 큰 얼음을 가득 채워요.",
         `도수가 높은 술부터 순서대로 넣어요: ${ingList}.`,
@@ -270,7 +280,7 @@ export default function CocktailDetailPage() {
     ["FRESH", toBarValue(cocktail.freshness)],
   ] as const;
 
-  const methodSteps = buildMethodSteps(method, ingredients);
+  const methodSteps = buildMethodSteps(method, ingredients, cocktail.glassType);
 
   return (
     <>
