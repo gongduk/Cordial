@@ -4,6 +4,8 @@ from pydantic import BaseModel
 from services.google_maps import search_nearby_bars, search_bars_by_text, get_place_reviews, extract_bar_base
 from services.gemini import analyze_bar
 from services.database import upsert_bar, get_bars
+from services.naver_blog import search_naver_blog_reviews
+from services.instagram import search_instagram_posts
 
 router = APIRouter(prefix="/bars", tags=["bars"])
 
@@ -26,14 +28,27 @@ class BarListQuery(BaseModel):
 
 
 async def process_place(place: dict) -> dict | None:
-    """단일 Google Places 결과 처리: 리뷰 수집 + Gemini 분석 → DB 저장"""
+    """단일 Google Places 결과 처리: 구글 리뷰 + 블로그 + 인스타 병렬 수집 → Gemini 분석 → DB 저장"""
     base = extract_bar_base(place)
     if not base["name"] or not base["address"]:
         return None
 
     place_id = base.get("placeId")
-    reviews = await get_place_reviews(place_id) if place_id else []
-    analysis = await analyze_bar(base["name"], base["address"], reviews)
+    area = base.get("area", "")
+
+    async def _no_reviews() -> list[str]:
+        return []
+
+    google_reviews, blog_snippets, insta_captions = await asyncio.gather(
+        get_place_reviews(place_id) if place_id else _no_reviews(),
+        search_naver_blog_reviews(base["name"], area),
+        search_instagram_posts(base["name"], area),
+    )
+
+    analysis = await analyze_bar(
+        base["name"], base["address"],
+        google_reviews, blog_snippets, insta_captions,
+    )
 
     bar_data = {
         **base,

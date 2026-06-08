@@ -116,9 +116,15 @@ export default function BarsPage() {
 
   useEffect(() => { requestLocation(); }, [requestLocation]);
 
+  // 위치 확인되는 순간 파이프라인을 백그라운드에서 선제 실행
+  useEffect(() => {
+    if (location) {
+      api.post("/bars/nearby", { lat: location.lat, lng: location.lng }).catch(() => {});
+    }
+  }, [location]);
+
   const recommendMutation = useMutation({
     mutationFn: async ({ lat, lng, s }: { lat: number; lng: number; s: BarSurvey }) => {
-      await api.post("/bars/nearby", { lat, lng });
       const res = await api.post<RecommendedBar[]>("/bars/recommend", { lat, lng, survey: s });
       return res.data;
     },

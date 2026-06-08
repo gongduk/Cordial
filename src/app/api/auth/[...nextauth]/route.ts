@@ -2,6 +2,8 @@ import NextAuth from "next-auth/next";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import GitHubProvider from "next-auth/providers/github";
+import NaverProvider from "next-auth/providers/naver";
+import KakaoProvider from "next-auth/providers/kakao";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/shared/lib/prisma";
@@ -16,6 +18,14 @@ const handler = NextAuth({
     GitHubProvider({
       clientId: process.env.GITHUB_CLIENT_ID!,
       clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+    }),
+    NaverProvider({
+      clientId: process.env.NAVER_CLIENT_ID!,
+      clientSecret: process.env.NAVER_CLIENT_SECRET!,
+    }),
+    KakaoProvider({
+      clientId: process.env.KAKAO_CLIENT_ID!,
+      clientSecret: process.env.KAKAO_CLIENT_SECRET!,
     }),
     CredentialsProvider({
       name: "Credentials",
