@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import api from "@/shared/lib/api";
 import { useRouter } from "next/navigation";
 import { WebNav } from "@/shared/ui/WebNav";
+import { GlassSilhouette } from "@/shared/ui/GlassSilhouette";
 import { W, T } from "@/shared/lib/theme";
 
 const Q2_OPTIONS = ["비 오는 창가", "늦은 저녁의 부엌", "도시의 야경", "조용한 서재"] as const;
@@ -334,6 +335,34 @@ export default function EmotionPage() {
     drinkingCapacity, setDrinkingCapacity,
     error, setError,
   };
+
+  if (loading) {
+    return (
+      <>
+        <div className="cordial-web" style={{ background: W.bg, minHeight: "100vh", color: W.text, fontFamily: W.sans, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 40 }}>
+          <WebNav active="/emotion" />
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 40 }}>
+            <GlassSilhouette type="rocks" size={160} stroke={W.accent} liquid={W.accent} fillLevel={0.55} strokeWidth={1.3} />
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontFamily: W.mono, fontSize: 11, letterSpacing: 2, color: W.accent, marginBottom: 16, textTransform: "uppercase" }}>ANALYZING</div>
+              <h2 style={{ fontSize: 24, fontWeight: 500, letterSpacing: -0.4, lineHeight: 1.5, margin: "0 0 10px", color: W.text }}>오늘의 감정을 분석하고 있어요.</h2>
+              <p style={{ fontSize: 13, color: W.textMuted, margin: 0 }}>딱 맞는 칵테일을 찾고 있습니다...</p>
+            </div>
+          </div>
+        </div>
+        <div className="cordial-mob">
+          <div style={{ width: "100%", minHeight: "100vh", background: T.darkBg, color: T.darkText, fontFamily: T.sans, maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 40, padding: "0 40px" }}>
+            <GlassSilhouette type="rocks" size={140} stroke={T.accent} liquid={T.accent} fillLevel={0.55} strokeWidth={1.3} />
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 2, color: T.accent, marginBottom: 16, textTransform: "uppercase" }}>ANALYZING</div>
+              <h2 style={{ fontSize: 22, fontWeight: 500, letterSpacing: -0.4, lineHeight: 1.5, margin: "0 0 10px" }}>오늘의 감정을 분석하고 있어요.</h2>
+              <p style={{ fontSize: 13, color: T.darkTextMuted, margin: 0 }}>딱 맞는 칵테일을 찾고 있습니다...</p>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
