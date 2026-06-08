@@ -11,6 +11,8 @@ import { MobileTabBar } from "@/shared/ui/MobileTabBar";
 import type { GlassType } from "@/shared/ui/GlassSilhouette";
 import { W, T } from "@/shared/lib/theme";
 
+const toTitleCase = (s: string) => s.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+
 interface CocktailItem {
   id: string;
   name: string;
@@ -144,7 +146,7 @@ export default function CocktailsPage() {
                       {c.isCustom && <span style={{ background: W.accent, color: W.bg, fontSize: 8, padding: "1px 5px", borderRadius: 3, letterSpacing: 0.6 }}>MY</span>}
                     </div>
                     <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: -0.3, lineHeight: 1.2 }}>{c.name}</div>
-                    {c.nameEn && <div style={{ fontSize: 11, color: W.textFaint, marginTop: 2 }}>{c.nameEn}</div>}
+                    {c.nameEn && <div style={{ fontSize: 11, color: W.textFaint, marginTop: 2 }}>{toTitleCase(c.nameEn)}</div>}
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <span style={{ fontFamily: W.mono, fontSize: 11, color: W.textMuted }}>ABV {Math.round(c.abv)}%</span>
@@ -240,7 +242,7 @@ export default function CocktailsPage() {
                       {c.isCustom ? "CUSTOM" : (c.category ?? "Classic")}
                     </div>
                     <div style={{ fontSize: 15, fontWeight: 600, letterSpacing: -0.3, color: T.darkText, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.name}</div>
-                    {c.nameEn && <div style={{ fontSize: 11, color: T.darkTextFaint, marginTop: 2 }}>{c.nameEn}</div>}
+                    {c.nameEn && <div style={{ fontSize: 11, color: T.darkTextFaint, marginTop: 2 }}>{toTitleCase(c.nameEn)}</div>}
                   </div>
                   <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
                     <span style={{ fontFamily: T.mono, fontSize: 11, color: T.darkTextMuted }}>{Math.round(c.abv)}%</span>

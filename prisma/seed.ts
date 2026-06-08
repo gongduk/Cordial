@@ -433,7 +433,7 @@ async function main() {
     const cocktail = await prisma.cocktail.create({
       data: {
         name:       koName,
-        nameEn:     c.name.charAt(0) + c.name.slice(1).toLowerCase().replace(/\b\w/g, l => l.toUpperCase()),
+        nameEn:     c.name.toLowerCase().replace(/\b\w/g, l => l.toUpperCase()),
         description: `${mapCategory(c.type)} — IBA 공식 레시피`,
         category:   mapCategory(c.type),
         glassType:  glass,
