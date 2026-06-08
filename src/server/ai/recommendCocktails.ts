@@ -6,10 +6,16 @@ const apiKey = process.env.GEMINI_API_KEY;
 if (!apiKey) throw new Error("GEMINI_API_KEY 환경변수가 설정되지 않았습니다.");
 const genAI = new GoogleGenerativeAI(apiKey);
 
-const DESCRIPTION_PROMPT = `당신은 감성적인 바텐더입니다. 고객의 감정 상태와 추천 칵테일 목록을 바탕으로
-각 칵테일에 대해 따뜻하고 시적인 추천 설명을 2~3문장으로 작성하세요. 한국어로 작성하세요.
-반드시 아래 JSON 배열 형식으로만 반환하세요 (다른 텍스트 없이):
-["설명1", "설명2", "설명3", ...]`;
+const DESCRIPTION_PROMPT = `당신은 감성적인 한국어 바텐더입니다.
+고객의 감정 상태와 추천 칵테일 목록을 받아, 각 칵테일에 대해 따뜻하고 시적인 추천 이유를 2~3문장으로 작성하세요.
+
+규칙:
+- 반드시 한국어로 작성
+- 감정과 칵테일의 어울림을 구체적으로 표현 (맛, 향, 분위기 언급)
+- 자연스럽고 따뜻한 말투
+- "을(를)", "이(가)" 같은 이중 조사 절대 사용 금지 — 문맥에 맞는 단일 조사만 사용
+- 입력 칵테일 개수와 정확히 동일한 개수의 설명을 반환
+- 반드시 JSON 배열로만 반환: ["설명1", "설명2", ...]`;
 
 function emotionToVector(e: EmotionVector): CocktailVector {
   return {
@@ -40,6 +46,21 @@ function volumeFitScore(capacity: string, strength: number): number {
   return 1 - Math.abs(strength - 0.5); // MEDIUM
 }
 
+// 한국어 받침 여부에 따라 조사 선택
+function josa(word: string, withBatchim: string, withoutBatchim: string): string {
+  if (!word) return withoutBatchim;
+  const code = word.charCodeAt(word.length - 1);
+  if (code >= 0xAC00 && code <= 0xD7A3) {
+    return (code - 0xAC00) % 28 === 0 ? withoutBatchim : withBatchim;
+  }
+  return withoutBatchim;
+}
+
+function fallbackDesc(name: string): string {
+  const eul = josa(name, "을", "를");
+  return `오늘 기분에 ${name}${eul} 추천드려요. 이 한 잔이 오늘을 조금 더 특별하게 만들어 줄 거예요.`;
+}
+
 async function generateDescriptions(names: string[], emotion: EmotionVector): Promise<string[]> {
   try {
     const model = genAI.getGenerativeModel({
@@ -47,15 +68,31 @@ async function generateDescriptions(names: string[], emotion: EmotionVector): Pr
       systemInstruction: DESCRIPTION_PROMPT,
       generationConfig: { responseMimeType: "application/json" },
     });
-    const prompt = `감정: ${JSON.stringify(emotion)}\n칵테일 목록:\n${names.map((n, i) => `${i + 1}. ${n}`).join("\n")}`;
+    const emotionSummary = [
+      emotion.joy > 0.6 ? "기쁨" : emotion.sadness > 0.6 ? "우울함" : "",
+      emotion.stress > 0.6 ? "스트레스" : "",
+      emotion.fatigue > 0.6 ? "피로" : "",
+      emotion.excitement > 0.6 ? "설렘" : "",
+    ].filter(Boolean).join(", ") || "평온함";
+
+    const prompt = `고객 감정: ${emotionSummary} (세부: ${JSON.stringify(emotion)})\n\n추천 칵테일 목록 (${names.length}개):\n${names.map((n, i) => `${i + 1}. ${n}`).join("\n")}\n\n위 ${names.length}개 칵테일 각각에 대해 2~3문장 추천 설명을 JSON 배열로 반환하세요.`;
     const result = await model.generateContent(prompt);
-    const parsed = JSON.parse(result.response.text()) as unknown;
-    if (Array.isArray(parsed) && parsed.length === names.length) {
-      return parsed.map((d, i) => (typeof d === "string" && d ? d : `${names[i]}을(를) 추천드립니다.`));
+    const text = result.response.text().trim();
+
+    // JSON 배열 추출 시도 (마크다운 코드블록 제거)
+    const clean = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
+    const parsed = JSON.parse(clean) as unknown;
+
+    if (Array.isArray(parsed)) {
+      // 길이가 다를 경우 부족한 부분은 fallback으로 채움
+      return names.map((n, i) => {
+        const d = parsed[i];
+        return typeof d === "string" && d.trim() ? d.trim() : fallbackDesc(n);
+      });
     }
-    return names.map(n => `${n}을(를) 추천드립니다.`);
+    return names.map(fallbackDesc);
   } catch {
-    return names.map(n => `${n}을(를) 추천드립니다.`);
+    return names.map(fallbackDesc);
   }
 }
 
@@ -190,6 +227,6 @@ export async function recommendCocktails({
 
   return ranked.map((c, i) => ({
     ...c,
-    aiDescription: descriptions[i] ?? `${c.name}을(를) 추천드립니다.`,
+    aiDescription: descriptions[i] ?? fallbackDesc(c.name),
   } as RecommendedCocktail));
 }
