@@ -36,8 +36,8 @@ export function IngredientSearch({ dark, onSelect, placeholder = "재료 검색.
     setLoading(true);
     try {
       const res = await fetch(`/api/ingredients/search?q=${encodeURIComponent(q)}`);
-      const data = await res.json() as IngredientOption[];
-      setOptions(data);
+      const raw = await res.json() as unknown;
+      setOptions(Array.isArray(raw) ? (raw as IngredientOption[]) : []);
     } catch {
       setOptions([]);
     } finally {

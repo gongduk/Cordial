@@ -7,32 +7,7 @@ import { GlassSilhouette } from "@/shared/ui/GlassSilhouette";
 import { WebNav } from "@/shared/ui/WebNav";
 import type { GlassType } from "@/shared/ui/GlassSilhouette";
 import type { RecommendedCocktail } from "@/shared/types";
-
-const W = {
-  accent: "#B88752",
-  bg: "#FCFBF9",
-  surface: "#FFFFFF",
-  border: "rgba(40,30,20,0.08)",
-  borderStrong: "rgba(40,30,20,0.16)",
-  text: "#1A1612",
-  textMuted: "rgba(26,22,18,0.62)",
-  textFaint: "rgba(26,22,18,0.38)",
-  sans: '"Pretendard Variable","Pretendard",-apple-system,BlinkMacSystemFont,sans-serif',
-  mono: '"JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace',
-} as const;
-
-const T = {
-  accent: "#B88752",
-  darkBg: "#15110D",
-  darkSurface: "#1C1814",
-  darkBorder: "rgba(255,246,232,0.08)",
-  darkBorderStrong: "rgba(255,246,232,0.14)",
-  darkText: "#F5EFE6",
-  darkTextMuted: "rgba(245,239,230,0.62)",
-  darkTextFaint: "rgba(245,239,230,0.38)",
-  sans: '"Pretendard Variable","Pretendard",-apple-system,BlinkMacSystemFont,sans-serif',
-  mono: '"JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace',
-} as const;
+import { W, T } from "@/shared/lib/theme";
 
 const GLASS_ORDER: GlassType[] = ["rocks", "coupe", "martini"];
 
@@ -83,7 +58,10 @@ export default function RecommendPage() {
     // Use cached results if emotionVector hasn't changed (prevents re-fetch on back navigation)
     const cachedEv = sessionStorage.getItem("recommendCacheEv");
     const cachedList = sessionStorage.getItem("recommendCache");
-    if (cachedList && cachedEv === ev) {
+    const cachedTs = sessionStorage.getItem("recommendCacheTs");
+    const cacheAge = cachedTs ? Date.now() - parseInt(cachedTs) : Infinity;
+    const cacheValid = cachedList && cachedEv === ev && cacheAge < 30 * 60 * 1000;
+    if (cacheValid) {
       try {
         setList(JSON.parse(cachedList) as RecommendedCocktail[]);
         setDoneCount(3);
@@ -92,6 +70,7 @@ export default function RecommendPage() {
       } catch {
         sessionStorage.removeItem("recommendCache");
         sessionStorage.removeItem("recommendCacheEv");
+        sessionStorage.removeItem("recommendCacheTs");
       }
     }
 
@@ -106,17 +85,19 @@ export default function RecommendPage() {
 
     const t1 = setTimeout(() => setDoneCount(1), 600);
     const t2 = setTimeout(() => setDoneCount(2), 1200);
+    const t3 = setTimeout(() => setDoneCount(3), 1800);
 
     api.post<RecommendedCocktail[]>("/ai/recommend", { emotionVector, drinkingCapacity })
       .then(res => {
         setList(res.data);
         sessionStorage.setItem("recommendCache", JSON.stringify(res.data));
         sessionStorage.setItem("recommendCacheEv", ev);
+        sessionStorage.setItem("recommendCacheTs", String(Date.now()));
       })
       .catch(e => setError((e as Error).message || "추천 실패"))
-      .finally(() => setLoading(false));
+      .finally(() => setTimeout(() => setLoading(false), 1900));
 
-    return () => { clearTimeout(t1); clearTimeout(t2); };
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, [router]);
 
   function toBar(val: number) { return Math.round(val * 5); }

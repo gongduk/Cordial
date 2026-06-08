@@ -85,6 +85,8 @@ model EmotionLog {
   excitement      Float    @default(0)
   rawText         String?  @db.Text
   createdAt       DateTime @default(now())
+
+  @@index([userId, createdAt])
 }
 
 model Cocktail {
@@ -138,6 +140,8 @@ model Recommendation {
   emotionLogId String?
   liked        Boolean?
   createdAt    DateTime @default(now())
+
+  @@index([userId, createdAt])
 }
 
 model Bar {
@@ -159,6 +163,8 @@ model Bar {
   cocktailStyles String[]  @default([])
   analyzedAt     DateTime?
   createdAt      DateTime  @default(now())
+
+  @@index([latitude, longitude])
 }
 
 model UserIngredient {

@@ -4,13 +4,24 @@ import { recommendCocktails } from "@/server/ai/recommendCocktails";
 import { prisma } from "@/shared/lib/prisma";
 import type { EmotionVector } from "@/shared/types";
 
+function isValidEmotionVector(v: unknown): v is EmotionVector {
+  if (typeof v !== "object" || v === null) return false;
+  const keys: (keyof EmotionVector)[] = ["joy", "sadness", "stress", "fatigue", "excitement"];
+  return keys.every(k =>
+    k in v &&
+    typeof (v as Record<string, unknown>)[k] === "number" &&
+    (v as Record<string, number>)[k] >= 0 &&
+    (v as Record<string, number>)[k] <= 1
+  );
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json() as { emotionVector: EmotionVector; drinkingCapacity?: string };
+    const body = await req.json() as { emotionVector: unknown; drinkingCapacity?: string };
     const { emotionVector, drinkingCapacity: capacityFromBody } = body;
 
-    if (!emotionVector) {
-      return NextResponse.json({ error: "emotionVector는 필수입니다." }, { status: 400 });
+    if (!isValidEmotionVector(emotionVector)) {
+      return NextResponse.json({ error: "유효하지 않은 emotionVector입니다." }, { status: 400 });
     }
 
     const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });

@@ -9,6 +9,7 @@ import api from "@/shared/lib/api";
 import { WebNav } from "@/shared/ui/WebNav";
 import { MobileTabBar } from "@/shared/ui/MobileTabBar";
 import type { DrinkingCapacity } from "@/shared/types";
+import { W, T } from "@/shared/lib/theme";
 
 interface SavedCocktail {
   id: string;
@@ -17,32 +18,6 @@ interface SavedCocktail {
   method: string | null;
   description: string | null;
 }
-
-const W = {
-  accent: "#B88752",
-  bg: "#FCFBF9",
-  surface: "#FFFFFF",
-  border: "rgba(40,30,20,0.08)",
-  borderStrong: "rgba(40,30,20,0.16)",
-  text: "#1A1612",
-  textMuted: "rgba(26,22,18,0.62)",
-  textFaint: "rgba(26,22,18,0.38)",
-  sans: '"Pretendard Variable","Pretendard",-apple-system,BlinkMacSystemFont,sans-serif',
-  mono: '"JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace',
-} as const;
-
-const T = {
-  accent: "#B88752",
-  darkBg: "#15110D",
-  darkSurface: "#1C1814",
-  darkBorder: "rgba(255,246,232,0.08)",
-  darkBorderStrong: "rgba(255,246,232,0.14)",
-  darkText: "#F5EFE6",
-  darkTextMuted: "rgba(245,239,230,0.62)",
-  darkTextFaint: "rgba(245,239,230,0.38)",
-  sans: '"Pretendard Variable","Pretendard",-apple-system,BlinkMacSystemFont,sans-serif',
-  mono: '"JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace',
-} as const;
 
 interface Profile {
   name: string | null;
@@ -81,12 +56,15 @@ export default function MyPage() {
     if (status === "unauthenticated") router.replace("/login");
   }, [status, router]);
 
-  const { isLoading: loading } = useQuery({
+  const { isLoading: loading, data: profileData } = useQuery({
     queryKey: ["profile"],
     queryFn: () => api.get<Profile>("/user/profile").then(r => r.data),
     enabled: status === "authenticated",
-    onSuccess: (data: Profile) => setProfile(data),
-  } as Parameters<typeof useQuery>[0]);
+  });
+
+  useEffect(() => {
+    if (profileData) setProfile(prev => prev ?? profileData);
+  }, [profileData]);
 
   const { data: savedCocktails = [] } = useQuery<SavedCocktail[]>({
     queryKey: ["user-cocktails"],
