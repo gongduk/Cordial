@@ -112,6 +112,16 @@ function buildMethodSteps(method: string | null, ingredients: IngredientItem[], 
   }
 }
 
+const CAT_KO: Record<string, string> = {
+  "All Day Cocktail":      "올 데이",
+  "Before Dinner Cocktail": "식전주",
+  "After Dinner Cocktail":  "식후주",
+  "Longdrink":              "롱드링크",
+  "Sparkling Cocktail":     "스파클링",
+  "Hot Drink":              "핫 드링크",
+};
+const catKo = (cat: string | null | undefined) => (cat && CAT_KO[cat]) ? CAT_KO[cat] : (cat ?? "클래식");
+
 function toBarValue(val: number) { return Math.round(val * 5); }
 
 function pickGlass(name: string): GlassType {
@@ -319,7 +329,7 @@ export default function CocktailDetailPage() {
               )}
               <div style={{ textAlign: "center" }}>
                 <div style={{ fontFamily: W.mono, fontSize: 10, letterSpacing: 1.4, color: W.accent, marginBottom: 8, textTransform: "uppercase", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                  {isCustom ? "CUSTOM" : (cocktail.category ?? "Classic")}
+                  {isCustom ? "CUSTOM" : catKo(cocktail.category)}
                   {isCustom && <span style={{ background: W.accent, color: W.bg, fontSize: 9, padding: "2px 6px", borderRadius: 4, letterSpacing: 0.8 }}>MY RECIPE</span>}
                 </div>
                 <h1 style={{ fontSize: 30, fontWeight: 600, letterSpacing: -0.6, margin: "0 0 10px", lineHeight: 1.1 }}>{cocktail.name}</h1>
@@ -401,7 +411,7 @@ export default function CocktailDetailPage() {
               <GlassSilhouette type={glassType} size={120} stroke={T.accent} liquid={T.accent} fillLevel={0.78} garnish strokeWidth={1.2} />
             )}
             <div style={{ flex: 1 }}>
-              <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.4, color: T.accent, marginBottom: 8 }}>{cocktail.category ?? "CLASSIC"}</div>
+              <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.4, color: T.accent, marginBottom: 8 }}>{catKo(cocktail.category).toUpperCase()}</div>
               <h1 style={{ fontSize: 26, fontWeight: 600, letterSpacing: -0.6, margin: 0, lineHeight: 1.1 }}>{cocktail.name}</h1>
               {cocktail.description && (
                 <div style={{ fontSize: 12, color: T.darkTextMuted, letterSpacing: -0.1, marginTop: 4, lineHeight: 1.5 }}>{cocktail.description}</div>
