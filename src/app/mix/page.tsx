@@ -155,6 +155,36 @@ export default function MixPage() {
     );
   }
 
+  if (loading) {
+    return (
+      <>
+        {/* ── WEB LOADING ── */}
+        <div className="cordial-web" style={{ background: W.bg, minHeight: "100vh", color: W.text, fontFamily: W.sans, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 40 }}>
+          <WebNav active="/mix" />
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 40 }}>
+            <GlassSilhouette type="coupe" size={160} stroke={W.accent} liquid={W.accent} fillLevel={fillLevel} strokeWidth={1.2} />
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontFamily: W.mono, fontSize: 11, letterSpacing: 2, color: W.accent, marginBottom: 16, textTransform: "uppercase" }}>ANALYZING</div>
+              <h2 style={{ fontSize: 24, fontWeight: 500, letterSpacing: -0.4, lineHeight: 1.5, margin: "0 0 10px", color: W.text }}>AI가 레시피를 분석하고 있어요.</h2>
+              <p style={{ fontSize: 13, color: W.textMuted, margin: 0 }}>맛 프로파일과 향을 계산 중입니다...</p>
+            </div>
+          </div>
+        </div>
+        {/* ── MOBILE LOADING ── */}
+        <div className="cordial-mob">
+          <div style={{ width: "100%", minHeight: "100vh", background: T.darkBg, color: T.darkText, fontFamily: T.sans, maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 40, padding: "0 40px" }}>
+            <GlassSilhouette type="coupe" size={140} stroke={T.accent} liquid={T.accent} fillLevel={fillLevel} strokeWidth={1.2} />
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 2, color: T.accent, marginBottom: 16, textTransform: "uppercase" }}>ANALYZING</div>
+              <h2 style={{ fontSize: 22, fontWeight: 500, letterSpacing: -0.4, lineHeight: 1.5, margin: "0 0 10px" }}>AI가 레시피를 분석하고 있어요.</h2>
+              <p style={{ fontSize: 13, color: T.darkTextMuted, margin: 0 }}>맛 프로파일과 향을 계산 중입니다...</p>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
       {/* ── WEB ── */}
