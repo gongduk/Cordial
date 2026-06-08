@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import api from "@/shared/lib/api";
@@ -256,11 +256,16 @@ export default function EmotionPage() {
   const router = useRouter();
   const { status } = useSession();
   const isLoggedIn = status === "authenticated";
-  const [drinkingCapacity, setDrinkingCapacity] = useState<Capacity | null>(() => {
-    if (typeof window === "undefined") return null;
-    return (sessionStorage.getItem("drinkingCapacity") as Capacity | null);
-  });
-  const totalSteps = isLoggedIn || drinkingCapacity !== null ? 4 : 5;
+  const [drinkingCapacity, setDrinkingCapacity] = useState<Capacity | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const stored = sessionStorage.getItem("drinkingCapacity") as Capacity | null;
+    if (stored) setDrinkingCapacity(stored);
+  }, []);
+
+  const totalSteps = mounted ? (isLoggedIn || drinkingCapacity !== null ? 4 : 5) : 5;
   const [step, setStep] = useState(1);
   const [q1Value, setQ1Value] = useState(35);
   const [q2Selected, setQ2Selected] = useState<Q2Option | null>(null);
