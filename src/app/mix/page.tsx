@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/shared/lib/api";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
@@ -44,6 +44,7 @@ type SaveStatus = "idle" | "saving" | "saved" | "error";
 export default function MixPage() {
   const { status: authStatus } = useSession();
   const isLoggedIn = authStatus === "authenticated";
+  const queryClient = useQueryClient();
   const [ings, setIngs] = useState(INITIAL_INGS);
   const [method, setMethod] = useState<MixMethod>("shaking");
   const [notes, setNotes] = useState("");
@@ -108,7 +109,7 @@ export default function MixPage() {
       }).then(r => r.data);
     },
     onMutate: () => setSaveStatus("saving"),
-    onSuccess: (data) => { setSavedId(data.id); setSaveStatus("saved"); },
+    onSuccess: (data) => { setSavedId(data.id); setSaveStatus("saved"); void queryClient.invalidateQueries({ queryKey: ["cocktails"] }); },
     onError: () => setSaveStatus("error"),
   });
 

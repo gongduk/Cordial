@@ -56,12 +56,15 @@ export default function MyPage() {
     if (status === "unauthenticated") router.replace("/login");
   }, [status, router]);
 
-  const { isLoading: loading } = useQuery({
+  const { isLoading: loading, data: profileData } = useQuery({
     queryKey: ["profile"],
     queryFn: () => api.get<Profile>("/user/profile").then(r => r.data),
     enabled: status === "authenticated",
-    onSuccess: (data: Profile) => setProfile(data),
-  } as Parameters<typeof useQuery>[0]);
+  });
+
+  useEffect(() => {
+    if (profileData) setProfile(prev => prev ?? profileData);
+  }, [profileData]);
 
   const { data: savedCocktails = [] } = useQuery<SavedCocktail[]>({
     queryKey: ["user-cocktails"],

@@ -13,6 +13,7 @@ backend/.env
 backend/.env.*
 !backend/.env.example
 .playwright-mcp/
-screenshotsbackend/__pycache__/
+screenshots/
+backend/__pycache__/
 backend/routers/__pycache__/
 backend/services/__pycache__/
