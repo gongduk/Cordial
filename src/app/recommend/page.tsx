@@ -81,24 +81,6 @@ export default function RecommendPage() {
     const ev = typeof window !== "undefined" ? sessionStorage.getItem("emotionVector") : null;
     if (!ev) { router.replace("/emotion"); return; }
 
-    const cachedEv = sessionStorage.getItem("recommendCacheEv");
-    const cachedList = sessionStorage.getItem("recommendCache");
-    const cachedTs = sessionStorage.getItem("recommendCacheTs");
-    const cacheAge = cachedTs ? Date.now() - parseInt(cachedTs) : Infinity;
-    const cacheValid = cachedList && cachedEv === ev && cacheAge < 30 * 60 * 1000;
-    if (cacheValid) {
-      try {
-        setList(JSON.parse(cachedList) as RecommendedCocktail[]);
-        setDoneCount(3);
-        setLoading(false);
-        return;
-      } catch {
-        sessionStorage.removeItem("recommendCache");
-        sessionStorage.removeItem("recommendCacheEv");
-        sessionStorage.removeItem("recommendCacheTs");
-      }
-    }
-
     let emotionVector: Record<string, number>;
     try {
       emotionVector = JSON.parse(ev) as Record<string, number>;
@@ -113,12 +95,7 @@ export default function RecommendPage() {
     const t3 = setTimeout(() => setDoneCount(3), 1800);
 
     api.post<RecommendedCocktail[]>("/ai/recommend", { emotionVector, drinkingCapacity })
-      .then(res => {
-        setList(res.data);
-        sessionStorage.setItem("recommendCache", JSON.stringify(res.data));
-        sessionStorage.setItem("recommendCacheEv", ev);
-        sessionStorage.setItem("recommendCacheTs", String(Date.now()));
-      })
+      .then(res => { setList(res.data); })
       .catch(e => setError((e as Error).message || "추천 실패"))
       .finally(() => setTimeout(() => setLoading(false), 1900));
 
