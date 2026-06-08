@@ -13,6 +13,16 @@ import { W, T } from "@/shared/lib/theme";
 
 const toTitleCase = (s: string) => s.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
 
+const CAT_KO: Record<string, string> = {
+  "All Day Cocktail":      "올 데이",
+  "Before Dinner Cocktail": "식전주",
+  "After Dinner Cocktail":  "식후주",
+  "Longdrink":              "롱드링크",
+  "Sparkling Cocktail":     "스파클링",
+  "Hot Drink":              "핫 드링크",
+};
+const catKo = (cat: string | null) => (cat && CAT_KO[cat]) ? CAT_KO[cat] : (cat ?? "클래식");
+
 interface CocktailItem {
   id: string;
   name: string;
@@ -53,7 +63,7 @@ export default function CocktailsPage() {
   const filtered = useMemo(() => {
     let items = cocktails;
     if (categoryFilter === "커스텀") items = items.filter(c => c.isCustom);
-    else if (categoryFilter !== "전체") items = items.filter(c => c.category === categoryFilter);
+    else if (categoryFilter !== "전체") items = items.filter(c => catKo(c.category) === categoryFilter);
     if (query.trim()) {
       const q = query.trim().toLowerCase();
       items = items.filter(c => c.name.toLowerCase().includes(q) || (c.nameEn ?? "").toLowerCase().includes(q));
@@ -67,8 +77,8 @@ export default function CocktailsPage() {
   }
 
   const categories = useMemo(() => {
-    const cats = new Set(cocktails.map(c => c.category ?? "").filter(Boolean));
-    return ["전체", ...(cocktails.some(c => c.isCustom) ? ["커스텀"] : []), ...Array.from(cats).filter(c => c !== "커스텀")];
+    const cats = new Set(cocktails.map(c => catKo(c.category)).filter(Boolean));
+    return ["전체", ...(cocktails.some(c => c.isCustom) ? ["커스텀"] : []), ...Array.from(cats)];
   }, [cocktails]);
 
   return (
@@ -141,7 +151,7 @@ export default function CocktailsPage() {
                   <div>
                     <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
                       <div style={{ fontFamily: W.mono, fontSize: 9, letterSpacing: 1.2, color: W.accent, textTransform: "uppercase" }}>
-                        {c.isCustom ? "CUSTOM" : (c.category ?? "Classic")}
+                        {c.isCustom ? "CUSTOM" : catKo(c.category).toUpperCase()}
                       </div>
                       {c.isCustom && <span style={{ background: W.accent, color: W.bg, fontSize: 8, padding: "1px 5px", borderRadius: 3, letterSpacing: 0.6 }}>MY</span>}
                     </div>
@@ -239,7 +249,7 @@ export default function CocktailsPage() {
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontFamily: T.mono, fontSize: 9, color: T.accent, letterSpacing: 1.2, marginBottom: 3, textTransform: "uppercase" }}>
-                      {c.isCustom ? "CUSTOM" : (c.category ?? "Classic")}
+                      {c.isCustom ? "CUSTOM" : catKo(c.category).toUpperCase()}
                     </div>
                     <div style={{ fontSize: 15, fontWeight: 600, letterSpacing: -0.3, color: T.darkText, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.name}</div>
                     {c.nameEn && <div style={{ fontSize: 11, color: T.darkTextFaint, marginTop: 2 }}>{toTitleCase(c.nameEn)}</div>}
