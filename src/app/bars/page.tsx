@@ -100,6 +100,7 @@ export default function BarsPage() {
   const [activeIdx, setActiveIdx] = useState(0);
   const [infoOpen, setInfoOpen] = useState<string | null>(null);
   const [mapTarget, setMapTarget] = useState<{ lat: number; lng: number } | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const requestLocation = useCallback(() => {
     setLocState("pending");
@@ -133,7 +134,10 @@ export default function BarsPage() {
       setActiveIdx(0);
       setStep("result");
     },
-    onError: () => alert("추천 중 오류가 발생했어요. 다시 시도해주세요."),
+    onError: () => {
+      setStep("survey");
+      setSubmitError("추천 중 오류가 발생했어요. 다시 시도해주세요.");
+    },
   });
 
   function handleSubmit() {
@@ -237,6 +241,9 @@ export default function BarsPage() {
         >
           {locState === "pending" ? "위치 확인 중..." : locState === "denied" ? "위치 권한 필요" : "주변 바 추천받기"}
         </button>
+        {submitError && (
+          <p style={{ fontSize: 13, color: "#D32F2F", textAlign: "center", margin: "4px 0 0", fontFamily: C.sans }}>{submitError}</p>
+        )}
       </div>
     );
   }
@@ -521,6 +528,9 @@ export default function BarsPage() {
               >
                 {locState === "pending" ? "위치 확인 중..." : locState === "denied" ? "위치 권한 필요" : "주변 바 추천받기"}
               </button>
+              {submitError && (
+                <p style={{ fontSize: 13, color: "#EF9A9A", textAlign: "center", margin: "4px 0 0", fontFamily: C.sans }}>{submitError}</p>
+              )}
             </div>
           </div>
         )}

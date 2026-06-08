@@ -54,6 +54,7 @@ export default function MixPage() {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [savedId, setSavedId] = useState<string | null>(null);
   const [customName, setCustomName] = useState("나만의 칵테일");
+  const [analyzeError, setAnalyzeError] = useState<string | null>(null);
   const nextIdRef = useRef(INITIAL_INGS.length + 1);
 
   const totalVolume = ings.reduce((s, i) => s + i.amount, 0);
@@ -88,8 +89,8 @@ export default function MixPage() {
   const analyzeMutation = useMutation({
     mutationFn: () =>
       api.post<MixAnalysisResult>("/ai/mix-analyze", { ingredients: ings, method, notes }).then(r => r.data),
-    onSuccess: (data) => { setResult(data); setCustomName(data.name); setSaveStatus("idle"); setSavedId(null); },
-    onError: () => alert("분석 중 오류가 발생했습니다."),
+    onSuccess: (data) => { setResult(data); setCustomName(data.name); setSaveStatus("idle"); setSavedId(null); setAnalyzeError(null); },
+    onError: () => setAnalyzeError("분석 중 오류가 발생했습니다. 다시 시도해주세요."),
   });
 
   const loading = analyzeMutation.isPending;
@@ -267,6 +268,7 @@ export default function MixPage() {
               }}>
                 {loading ? "분석 중..." : "AI 분석하기"}
               </button>
+              {analyzeError && <p style={{ fontSize: 12, color: "#D32F2F", margin: "8px 0 0", textAlign: "center", fontFamily: W.sans }}>{analyzeError}</p>}
             </div>
           </div>
         </div>
@@ -381,6 +383,7 @@ export default function MixPage() {
             }}>
               {loading ? "분석 중..." : "AI 분석하기"}
             </button>
+            {analyzeError && <p style={{ fontSize: 12, color: "#EF9A9A", margin: "8px 0 0", textAlign: "center", fontFamily: T.sans }}>{analyzeError}</p>}
           </div>
 
           <MobileTabBar active="mix" />

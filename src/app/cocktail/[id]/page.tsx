@@ -27,6 +27,15 @@ function formatAmount(amount: string | null): string {
   return amount;
 }
 
+function josa(word: string, withBatchim: string, withoutBatchim: string): string {
+  if (!word) return withoutBatchim;
+  const code = word.charCodeAt(word.length - 1);
+  if (code >= 0xAC00 && code <= 0xD7A3) {
+    return (code - 0xAC00) % 28 === 0 ? withoutBatchim : withBatchim;
+  }
+  return withoutBatchim;
+}
+
 function buildMethodSteps(method: string | null, ingredients: IngredientItem[]): string[] {
   const m = (method ?? "shaking") as MixMethod;
   const ingList = ingredients
@@ -44,7 +53,7 @@ function buildMethodSteps(method: string | null, ingredients: IngredientItem[]):
   switch (m) {
     case "shaking":
       return [
-        `셰이커에 ${ingList}을(를) 넣어요.`,
+        `셰이커에 ${ingList}${josa(ingList, "을", "를")} 넣어요.`,
         "얼음 없이 10초간 드라이 셰이크해요.",
         "큰 얼음을 채우고 다시 15초 세게 셰이크해요.",
         "차갑게 칠링한 잔에 더블 스트레이너로 걸러 따라요.",
@@ -53,7 +62,7 @@ function buildMethodSteps(method: string | null, ingredients: IngredientItem[]):
     case "stirring":
       return [
         "믹싱 글라스에 큰 얼음을 채워요.",
-        `${ingList}을(를) 순서대로 투입해요.`,
+        `${ingList}${josa(ingList, "을", "를")} 순서대로 투입해요.`,
         "바 스푼으로 30초간 부드럽게 스터해요.",
         "칠링한 잔에 스트레이너로 걸러 따라요.",
         garnishStep,
@@ -68,7 +77,7 @@ function buildMethodSteps(method: string | null, ingredients: IngredientItem[]):
       ];
     case "blending":
       return [
-        `블렌더에 ${ingList}과(와) 얼음 한 컵을 넣어요.`,
+        `블렌더에 ${ingList}${josa(ingList, "과", "와")} 얼음 한 컵을 넣어요.`,
         "고속으로 20~30초 블렌드해요.",
         "부드러운 질감이 될 때까지 필요하면 반복해요.",
         "차가운 잔에 천천히 따라요.",
@@ -77,7 +86,7 @@ function buildMethodSteps(method: string | null, ingredients: IngredientItem[]):
     case "neat":
       return [
         "잔을 미리 냉동실에서 칠링해요.",
-        `${ingList}을(를) 계량해요.`,
+        `${ingList}${josa(ingList, "을", "를")} 계량해요.`,
         "칠링된 잔에 바로 따라요.",
         "얼음 없이 그대로 즐겨요.",
         garnishStep,

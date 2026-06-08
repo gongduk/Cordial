@@ -72,6 +72,10 @@ export default function RecommendPage() {
 
   const dragStart = useRef<number | null>(null);
   const touchStart = useRef<number>(0);
+  const listRef = useRef(list);
+  const batchRef = useRef(batch);
+  listRef.current = list;
+  batchRef.current = batch;
 
   useEffect(() => {
     const ev = typeof window !== "undefined" ? sessionStorage.getItem("emotionVector") : null;
@@ -121,15 +125,16 @@ export default function RecommendPage() {
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, [router]);
 
-  // Keyboard navigation
+  // Keyboard navigation — refs prevent stale closure without re-adding listener every render
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key === "ArrowRight") advance(1);
-      if (e.key === "ArrowLeft") advance(-1);
+      const cb = listRef.current.slice(batchRef.current * 3, batchRef.current * 3 + 3);
+      if (e.key === "ArrowRight") setInnerIndex(i => Math.min(i + 1, cb.length - 1));
+      if (e.key === "ArrowLeft") setInnerIndex(i => Math.max(i - 1, 0));
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  });
+  }, []);
 
   function toBar(val: number) { return Math.round(val * 5); }
 
