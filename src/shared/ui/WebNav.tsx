@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { CordialLogo } from "./CordialLogo";
 
 const ITEMS = [
@@ -54,23 +54,11 @@ export function WebNav({ active }: { active?: string }) {
           })}
         </div>
         {status === "loading" ? null : session ? (
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <Link href="/mypage" style={{ textDecoration: "none" }}>
-              <span style={{ fontSize: 12, color: muted, fontFamily: sans, letterSpacing: -0.1 }}>
-                {session.user?.name ?? session.user?.email}님
-              </span>
-            </Link>
-            <button
-              onClick={() => signOut({ callbackUrl: "/" })}
-              style={{
-                padding: "7px 16px", borderRadius: 7,
-                border: "0.5px solid rgba(40,30,20,0.18)",
-                fontSize: 12, fontWeight: 500, color: text,
-                fontFamily: sans, letterSpacing: -0.1,
-                background: "none", cursor: "pointer",
-              }}
-            >로그아웃</button>
-          </div>
+          <Link href="/mypage" style={{ textDecoration: "none" }}>
+            <span style={{ fontSize: 12, color: muted, fontFamily: sans, letterSpacing: -0.1 }}>
+              {session.user?.name ?? session.user?.email}님
+            </span>
+          </Link>
         ) : (
           <Link href="/login" style={{ textDecoration: "none" }}>
             <div style={{

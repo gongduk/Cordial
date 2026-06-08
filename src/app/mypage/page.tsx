@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import Link from "next/link";
@@ -183,6 +183,14 @@ export default function MyPage() {
             }}>
               {saving ? "저장 중..." : saved ? "저장됨" : "저장하기"}
             </button>
+
+            <button onClick={() => signOut({ callbackUrl: "/" })} style={{
+              width: "100%", marginTop: 12, background: "none", border: "none",
+              fontSize: 13, color: W.textFaint, fontFamily: W.sans,
+              cursor: "pointer", letterSpacing: -0.1, padding: "10px 0",
+            }}>
+              로그아웃
+            </button>
           </div>
         )}
       </div>
@@ -289,6 +297,14 @@ export default function MyPage() {
                 opacity: saving ? 0.7 : 1, transition: "background 0.3s",
               }}>
                 {saving ? "저장 중..." : saved ? "저장됨" : "저장하기"}
+              </button>
+
+              <button onClick={() => signOut({ callbackUrl: "/" })} style={{
+                width: "100%", marginTop: 12, background: "none", border: "none",
+                fontSize: 13, color: T.darkTextFaint, fontFamily: T.sans,
+                cursor: "pointer", letterSpacing: -0.1, padding: "10px 0",
+              }}>
+                로그아웃
               </button>
             </div>
           )}
