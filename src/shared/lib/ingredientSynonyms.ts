@@ -80,7 +80,9 @@ export function expandSynonyms(name: string): string[] {
   const lower = name.toLowerCase().trim();
   const result = new Set<string>([lower]);
   for (const [key, vals] of Object.entries(SYNONYMS)) {
-    if (lower.includes(key) || key.includes(lower)) {
+    // exact match or the key contains the pantry term (e.g. "버번" is contained in key "버번 위스키")
+    // DO NOT use lower.includes(key) — it causes "드라이 베르무트" to inherit "베르무트" synonyms
+    if (lower === key || key.includes(lower)) {
       vals.forEach(v => result.add(v.toLowerCase()));
     }
   }
