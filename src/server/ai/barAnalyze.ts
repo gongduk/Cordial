@@ -129,7 +129,8 @@ export async function analyzeBar(
         : fallback.description,
       cocktailStyles: validStyles.length > 0 ? validStyles : fallback.cocktailStyles,
     };
-  } catch {
+  } catch (e) {
+    console.error("[barAnalyze] Gemini 분석 실패, fallback 사용:", (e as Error).message);
     return fallback;
   }
 }
