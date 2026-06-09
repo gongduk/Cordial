@@ -4,7 +4,7 @@ import { prisma } from "@/shared/lib/prisma";
 import { SYNONYMS } from "@/shared/lib/ingredientSynonyms";
 
 export async function GET(req: NextRequest) {
-  const q = req.nextUrl.searchParams.get("q")?.trim() ?? "";
+  const q = (req.nextUrl.searchParams.get("q")?.trim() ?? "").slice(0, 50);
 
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
   const userId = (token?.id ?? token?.sub) as string | undefined;
