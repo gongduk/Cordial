@@ -340,14 +340,11 @@ export default function EmotionPage() {
     return (
       <>
         <div className="cordial-web" style={{ background: W.bg, minHeight: "100vh", color: W.text, fontFamily: W.sans, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 40 }}>
-          <WebNav active="/emotion" />
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 40 }}>
-            <GlassSilhouette type="rocks" size={160} stroke={W.accent} liquid={W.accent} fillLevel={0.55} strokeWidth={1.3} />
-            <div style={{ textAlign: "center" }}>
-              <div style={{ fontFamily: W.mono, fontSize: 11, letterSpacing: 2, color: W.accent, marginBottom: 16, textTransform: "uppercase" }}>ANALYZING</div>
-              <h2 style={{ fontSize: 24, fontWeight: 500, letterSpacing: -0.4, lineHeight: 1.5, margin: "0 0 10px", color: W.text }}>오늘의 감정을 분석하고 있어요.</h2>
-              <p style={{ fontSize: 13, color: W.textMuted, margin: 0 }}>딱 맞는 칵테일을 찾고 있습니다...</p>
-            </div>
+          <GlassSilhouette type="rocks" size={160} stroke={W.accent} liquid={W.accent} fillLevel={0.55} strokeWidth={1.3} />
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontFamily: W.mono, fontSize: 11, letterSpacing: 2, color: W.accent, marginBottom: 16, textTransform: "uppercase" }}>ANALYZING</div>
+            <h2 style={{ fontSize: 24, fontWeight: 500, letterSpacing: -0.4, lineHeight: 1.5, margin: "0 0 10px", color: W.text }}>오늘의 감정을 분석하고 있어요.</h2>
+            <p style={{ fontSize: 13, color: W.textMuted, margin: 0 }}>딱 맞는 칵테일을 찾고 있습니다...</p>
           </div>
         </div>
         <div className="cordial-mob">
