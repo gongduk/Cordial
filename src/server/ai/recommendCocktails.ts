@@ -126,6 +126,14 @@ export async function recommendCocktails({
 
   if (cocktails.length === 0) return [];
 
+  // 같은 칵테일이 여러 번 추천된 경우 중복 제거 (최신 것 유지)
+  const seenIds = new Set<string>();
+  const uniquePastRecs = pastRecs.filter(r => {
+    if (seenIds.has(r.cocktail.id)) return false;
+    seenIds.add(r.cocktail.id);
+    return true;
+  });
+
   const keys: (keyof CocktailVector)[] = ["sweetness", "sourness", "bitterness", "strength", "freshness"];
 
   // Scale emotion-derived target to match actual cocktail vector distribution.
@@ -167,8 +175,8 @@ export async function recommendCocktails({
     };
   };
 
-  const recentFive = pastRecs.slice(0, 5);
-  const olderRecs = pastRecs.slice(5); // 6번째 이후 기록: 장기 취향 신호
+  const recentFive = uniquePastRecs.slice(0, 5);
+  const olderRecs = uniquePastRecs.slice(5); // 6번째 이후 기록: 장기 취향 신호
 
   // 단기 novelty: 최근 5개와 다른 칵테일 우선
   const recentVector: CocktailVector | null = recentFive.length > 0 ? avgVector(recentFive) : null;
