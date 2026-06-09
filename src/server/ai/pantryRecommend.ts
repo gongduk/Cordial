@@ -118,6 +118,10 @@ export async function pantryRecommend(ingredientNames: string[], userId?: string
 
       if (typeof parsed === "object" && parsed !== null && "name" in parsed) {
         const p = parsed as Record<string, unknown>;
+        const safeNum = (v: unknown, fb: number) => {
+          const n = Number(v);
+          return isFinite(n) ? Math.min(1, Math.max(0, n)) : fb;
+        };
         creative = {
           id: "creative",
           name: String(p.name ?? "창작 칵테일"),
@@ -126,11 +130,11 @@ export async function pantryRecommend(ingredientNames: string[], userId?: string
           glassType: null,
           abv: 0,
           imageUrl: null,
-          sweetness: Number(p.sweetness ?? 0.5),
-          sourness: Number(p.sourness ?? 0.3),
-          bitterness: Number(p.bitterness ?? 0.3),
-          strength: Number(p.strength ?? 0.4),
-          freshness: Number(p.freshness ?? 0.4),
+          sweetness: safeNum(p.sweetness, 0.5),
+          sourness: safeNum(p.sourness, 0.3),
+          bitterness: safeNum(p.bitterness, 0.3),
+          strength: safeNum(p.strength, 0.4),
+          freshness: safeNum(p.freshness, 0.4),
           popularity: 0,
           aiDescription: String(p.recipe ?? ""),
           score: 1,
