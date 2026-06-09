@@ -7,12 +7,17 @@ export async function GET(req: NextRequest) {
   const userId = (token?.id ?? token?.sub) as string | undefined;
   if (!userId) return NextResponse.json([]);
 
-  const ingredients = await prisma.userIngredient.findMany({
-    where: { userId },
-    orderBy: { usedAt: "desc" },
-    select: { name: true, abv: true },
-  });
-  return NextResponse.json(ingredients);
+  try {
+    const ingredients = await prisma.userIngredient.findMany({
+      where: { userId },
+      orderBy: { usedAt: "desc" },
+      select: { name: true, abv: true },
+    });
+    return NextResponse.json(ingredients);
+  } catch (error) {
+    console.error("[mix-ingredients GET]", error);
+    return NextResponse.json({ error: "재료 목록 조회 실패" }, { status: 500 });
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -20,15 +25,20 @@ export async function POST(req: NextRequest) {
   const userId = (token?.id ?? token?.sub) as string | undefined;
   if (!userId) return NextResponse.json({ ok: false }, { status: 401 });
 
-  const body = await req.json() as { name: string; abv: number };
-  const { name, abv } = body;
-  if (!name) return NextResponse.json({ error: "name required" }, { status: 400 });
+  try {
+    const body = await req.json() as { name: string; abv: number };
+    const { name, abv } = body;
+    if (!name || typeof name !== "string") return NextResponse.json({ error: "name required" }, { status: 400 });
+    const safeAbv = typeof abv === "number" && isFinite(abv) ? Math.min(100, Math.max(0, abv)) : 0;
 
-  await prisma.userIngredient.upsert({
-    where: { userId_name: { userId, name } },
-    create: { userId, name, abv: abv ?? 0 },
-    update: { abv: abv ?? 0 },
-  });
-
-  return NextResponse.json({ ok: true });
+    await prisma.userIngredient.upsert({
+      where: { userId_name: { userId, name } },
+      create: { userId, name, abv: safeAbv },
+      update: { abv: safeAbv },
+    });
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error("[mix-ingredients POST]", error);
+    return NextResponse.json({ error: "재료 저장 실패" }, { status: 500 });
+  }
 }
