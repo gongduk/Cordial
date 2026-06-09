@@ -160,7 +160,6 @@ export default function MixPage() {
       <>
         {/* ── WEB LOADING ── */}
         <div className="cordial-web" style={{ background: W.bg, minHeight: "100vh", color: W.text, fontFamily: W.sans, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 40 }}>
-          <WebNav active="/mix" />
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 40 }}>
             <GlassSilhouette type="coupe" size={160} stroke={W.accent} liquid={W.accent} fillLevel={fillLevel} strokeWidth={1.2} />
             <div style={{ textAlign: "center" }}>

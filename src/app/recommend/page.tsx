@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import api from "@/shared/lib/api";
 import { useRouter } from "next/navigation";
 import { GlassSilhouette } from "@/shared/ui/GlassSilhouette";
@@ -74,14 +74,12 @@ export default function RecommendPage() {
   const touchStart = useRef<number>(0);
   const listRef = useRef(list);
   const batchRef = useRef(batch);
+  const cacheRestored = useRef(false);
   listRef.current = list;
   batchRef.current = batch;
 
-  useEffect(() => {
-    const ev = typeof window !== "undefined" ? sessionStorage.getItem("emotionVector") : null;
-    if (!ev) { router.replace("/emotion"); return; }
-
-    // 칵테일 상세에서 뒤로가기한 경우 → 캐시된 결과 복원 (새 API 호출 없음)
+  // Runs before browser paint — overrides any stale Next.js router-cache state
+  useLayoutEffect(() => {
     const returnFlag = sessionStorage.getItem("recommendReturnFlag");
     const cachedList = sessionStorage.getItem("recommendCache");
     if (returnFlag && cachedList) {
@@ -90,11 +88,23 @@ export default function RecommendPage() {
         setList(JSON.parse(cachedList) as RecommendedCocktail[]);
         setDoneCount(3);
         setLoading(false);
+        cacheRestored.current = true;
         return;
       } catch {
         sessionStorage.removeItem("recommendCache");
       }
     }
+    // Reset to loading state in case router cache preserved stale results
+    setLoading(true);
+    setList([]);
+    setDoneCount(0);
+  }, []);
+
+  useEffect(() => {
+    if (cacheRestored.current) return;
+
+    const ev = typeof window !== "undefined" ? sessionStorage.getItem("emotionVector") : null;
+    if (!ev) { router.replace("/emotion"); return; }
 
     let emotionVector: Record<string, number>;
     try {
