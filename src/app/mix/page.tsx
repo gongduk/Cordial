@@ -14,7 +14,7 @@ import type { IngredientOption } from "@/shared/ui/IngredientSearch";
 import type { MixIngredient, MixMethod, MixAnalysisResult } from "@/shared/types";
 import { W, T } from "@/shared/lib/theme";
 
-const DILUTION: Record<string, number> = { shaking: 0.30, stirring: 0.225, build: 0.125, blending: 0.35, neat: 0, floating: 0 };
+const DILUTION: Record<string, number> = { shaking: 0.30, stirring: 0.225, build: 0.125, blending: 0.35, neat: 0, floating: 0.05 };
 
 const METHODS: { id: MixMethod; label: string; labelEn: string }[] = [
   { id: "shaking", label: "셰이킹", labelEn: "Shaking" },
@@ -209,6 +209,7 @@ export default function MixPage() {
                   <input
                     value={customName}
                     onChange={(e) => setCustomName(e.target.value)}
+                    maxLength={80}
                     style={{ fontSize: 20, fontWeight: 600, letterSpacing: -0.3, background: "transparent", border: "none", borderBottom: `1px solid ${W.borderStrong}`, outline: "none", color: W.text, fontFamily: W.sans, width: "100%", padding: "2px 0" }}
                   />
                 ) : (
@@ -292,7 +293,7 @@ export default function MixPage() {
                 <div style={{ background: W.surface, border: `0.5px solid ${W.borderStrong}`, borderRadius: 12, padding: "14px 16px" }}>
                   <textarea
                     value={notes} onChange={(e) => setNotes(e.target.value)}
-                    placeholder="레몬 필을 뿌린다." rows={3}
+                    placeholder="레몬 필을 뿌린다." rows={3} maxLength={500}
                     style={{ width: "100%", background: "transparent", border: "none", outline: "none", resize: "none", fontSize: 13, lineHeight: 1.7, color: W.text, fontFamily: W.sans }}
                   />
                 </div>
