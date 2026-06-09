@@ -81,6 +81,21 @@ export default function RecommendPage() {
     const ev = typeof window !== "undefined" ? sessionStorage.getItem("emotionVector") : null;
     if (!ev) { router.replace("/emotion"); return; }
 
+    // 칵테일 상세에서 뒤로가기한 경우 → 캐시된 결과 복원 (새 API 호출 없음)
+    const returnFlag = sessionStorage.getItem("recommendReturnFlag");
+    const cachedList = sessionStorage.getItem("recommendCache");
+    if (returnFlag && cachedList) {
+      sessionStorage.removeItem("recommendReturnFlag");
+      try {
+        setList(JSON.parse(cachedList) as RecommendedCocktail[]);
+        setDoneCount(3);
+        setLoading(false);
+        return;
+      } catch {
+        sessionStorage.removeItem("recommendCache");
+      }
+    }
+
     let emotionVector: Record<string, number>;
     try {
       emotionVector = JSON.parse(ev) as Record<string, number>;
@@ -95,7 +110,10 @@ export default function RecommendPage() {
     const t3 = setTimeout(() => setDoneCount(3), 1800);
 
     api.post<RecommendedCocktail[]>("/ai/recommend", { emotionVector, drinkingCapacity })
-      .then(res => { setList(res.data); })
+      .then(res => {
+        setList(res.data);
+        sessionStorage.setItem("recommendCache", JSON.stringify(res.data));
+      })
       .catch(e => setError((e as Error).message || "추천 실패"))
       .finally(() => setTimeout(() => setLoading(false), 1900));
 
@@ -118,6 +136,7 @@ export default function RecommendPage() {
   function goToDetail(c: RecommendedCocktail) {
     api.post("/user/taste-learn", { cocktailId: c.id }).catch(() => {});
     sessionStorage.setItem("selectedCocktail", JSON.stringify(c));
+    sessionStorage.setItem("recommendReturnFlag", "1");
     router.push(`/cocktail/${c.id}`);
   }
 
@@ -138,27 +157,21 @@ export default function RecommendPage() {
   if (loading) {
     return (
       <>
-        <div className="cordial-web" style={{ background: W.bg, minHeight: "100vh", fontFamily: W.sans }}>
-          <WebNav />
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "calc(100vh - 60px)", gap: 40 }}>
-            <GlassSilhouette type="martini" size={140} stroke={W.accent} liquid={W.accent} fillLevel={0.55} strokeWidth={1.3} />
-            <div style={{ textAlign: "center" }}>
-              <div style={{ fontFamily: W.mono, fontSize: 11, letterSpacing: 1.8, color: W.accent, marginBottom: 14, textTransform: "uppercase" }}>READING YOU</div>
-              <h2 style={{ fontSize: 24, fontWeight: 500, letterSpacing: -0.4, lineHeight: 1.45, margin: 0, color: W.text }}>오늘의 당신을<br />읽고 있어요.</h2>
-            </div>
+        <div className="cordial-web" style={{ background: W.bg, minHeight: "100vh", fontFamily: W.sans, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 40 }}>
+          <GlassSilhouette type="martini" size={140} stroke={W.accent} liquid={W.accent} fillLevel={0.55} strokeWidth={1.3} />
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontFamily: W.mono, fontSize: 11, letterSpacing: 1.8, color: W.accent, marginBottom: 14, textTransform: "uppercase" }}>READING YOU</div>
+            <h2 style={{ fontSize: 24, fontWeight: 500, letterSpacing: -0.4, lineHeight: 1.45, margin: 0, color: W.text }}>오늘의 당신을<br />읽고 있어요.</h2>
           </div>
         </div>
         <div className="cordial-mob">
-          <div style={{ width: "100%", minHeight: "100vh", background: T.darkBg, color: T.darkText, fontFamily: T.sans, maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column", overflow: "hidden" }}>
-            <div style={{ paddingTop: 62, paddingLeft: 20, paddingRight: 20, paddingBottom: 16 }} />
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 40, padding: "0 40px" }}>
-              <GlassSilhouette type="martini" size={140} stroke={T.accent} liquid={T.accent} fillLevel={0.55} strokeWidth={1.3} />
-              <div style={{ textAlign: "center" }}>
-                <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.8, color: T.accent, marginBottom: 16, textTransform: "uppercase" }}>READING YOU</div>
-                <h2 style={{ fontSize: 22, fontWeight: 500, letterSpacing: -0.4, lineHeight: 1.45, margin: 0 }}>오늘의 당신을<br />읽고 있어요.</h2>
-              </div>
-              <div style={{ width: "100%" }}><AnalyzingDots doneCount={doneCount} /></div>
+          <div style={{ width: "100%", minHeight: "100vh", background: T.darkBg, color: T.darkText, fontFamily: T.sans, maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 40, padding: "0 40px" }}>
+            <GlassSilhouette type="martini" size={140} stroke={T.accent} liquid={T.accent} fillLevel={0.55} strokeWidth={1.3} />
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.8, color: T.accent, marginBottom: 16, textTransform: "uppercase" }}>READING YOU</div>
+              <h2 style={{ fontSize: 22, fontWeight: 500, letterSpacing: -0.4, lineHeight: 1.45, margin: 0 }}>오늘의 당신을<br />읽고 있어요.</h2>
             </div>
+            <div style={{ width: "100%" }}><AnalyzingDots doneCount={doneCount} /></div>
           </div>
         </div>
       </>
