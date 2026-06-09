@@ -95,43 +95,48 @@ export async function runInlinePipeline(lat: number, lng: number): Promise<void>
   console.log(`[barsPipeline] Google Places 수집: ${places.length}개`);
 
   const targets = places.slice(0, 20);
-  await Promise.all(
-    targets.map(async (place) => {
-      try {
-        const existing = await prisma.bar.findUnique({ where: { placeId: place.place_id } });
-        if (existing && !isStale(existing.analyzedAt)) return;
+  // Gemini rate limit 방지: 5개씩 병렬 처리 후 2초 대기 (FastAPI와 동일 패턴)
+  for (let i = 0; i < targets.length; i += 5) {
+    const batch = targets.slice(i, i + 5);
+    await Promise.all(
+      batch.map(async (place) => {
+        try {
+          const existing = await prisma.bar.findUnique({ where: { placeId: place.place_id } });
+          if (existing && !isStale(existing.analyzedAt)) return;
 
-        const reviews = await fetchPlaceReviews(place.place_id);
-        const analysis = await analyzeBar(place.name, place.vicinity, reviews);
+          const reviews = await fetchPlaceReviews(place.place_id);
+          const analysis = await analyzeBar(place.name, place.vicinity, reviews);
 
-        const data = {
-          name: place.name,
-          address: place.vicinity,
-          area: place.vicinity.split(" ")[0]?.trim() ?? place.vicinity,
-          latitude: place.geometry.location.lat,
-          longitude: place.geometry.location.lng,
-          placeId: place.place_id,
-          rating: place.rating ?? null,
-          priceLevel: place.price_level ?? null,
-          reviewCount: place.user_ratings_total ?? null,
-          moodTags: analysis.moodTags,
-          purposeTags: analysis.purposeTags,
-          cocktailStyles: analysis.cocktailStyles,
-          signature: analysis.signature,
-          description: analysis.description,
-          analyzedAt: new Date(),
-        };
+          const data = {
+            name: place.name,
+            address: place.vicinity,
+            area: place.vicinity.split(" ")[0]?.trim() ?? place.vicinity,
+            latitude: place.geometry.location.lat,
+            longitude: place.geometry.location.lng,
+            placeId: place.place_id,
+            rating: place.rating ?? null,
+            priceLevel: place.price_level ?? null,
+            reviewCount: place.user_ratings_total ?? null,
+            moodTags: analysis.moodTags,
+            purposeTags: analysis.purposeTags,
+            cocktailStyles: analysis.cocktailStyles,
+            signature: analysis.signature,
+            description: analysis.description,
+            analyzedAt: new Date(),
+          };
 
-        await prisma.bar.upsert({
-          where: { placeId: place.place_id },
-          update: data,
-          create: data,
-        });
-      } catch (e) {
-        console.error(`[barsPipeline] ${place.name} 처리 실패:`, e);
-      }
-    }),
-  );
+          await prisma.bar.upsert({
+            where: { placeId: place.place_id },
+            update: data,
+            create: data,
+          });
+        } catch (e) {
+          console.error(`[barsPipeline] ${place.name} 처리 실패:`, e);
+        }
+      }),
+    );
+    if (i + 5 < targets.length) await new Promise((r) => setTimeout(r, 2000));
+  }
 }
 
 /** 필요 시 파이프라인 실행 (FastAPI 우선, 실패 시 인라인) */
