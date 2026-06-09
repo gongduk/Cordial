@@ -1,6 +1,6 @@
 import asyncio
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from services.google_maps import search_nearby_bars, search_bars_by_text, get_place_reviews, extract_bar_base
 from services.gemini import analyze_bar
 from services.database import upsert_bar, get_bars
@@ -11,15 +11,15 @@ router = APIRouter(prefix="/bars", tags=["bars"])
 
 
 class NearbyRequest(BaseModel):
-    lat: float
-    lng: float
-    radius: int = 2000
-    count: int = 20
+    lat: float = Field(..., ge=-90, le=90)
+    lng: float = Field(..., ge=-180, le=180)
+    radius: int = Field(default=2000, ge=100, le=10000)
+    count: int = Field(default=20, ge=1, le=40)
 
 
 class TextSearchRequest(BaseModel):
-    query: str          # 예: "해운대 칵테일바", "강남 스피크이지"
-    count: int = 20
+    query: str = Field(..., min_length=1, max_length=100)
+    count: int = Field(default=20, ge=1, le=40)
 
 
 class BarListQuery(BaseModel):
