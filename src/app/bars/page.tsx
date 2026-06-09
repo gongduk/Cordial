@@ -455,9 +455,10 @@ export default function BarsPage() {
 
         {step === "result" && results.length === 0 && (
           <div style={{ textAlign: "center", padding: "80px 0" }}>
-            <p style={{ color: C.muted, fontSize: 15 }}>조건에 맞는 바가 없어요.</p>
-            <button onClick={() => { setStep("survey"); setSurvey({}); }} style={{ marginTop: 16, padding: "10px 20px", borderRadius: 10, background: C.accent, border: "none", color: "#fff", cursor: "pointer", fontFamily: C.sans }}>
-              다시 검색
+            <p style={{ color: C.muted, fontSize: 15 }}>현재 위치 주변에서 바를 찾지 못했어요.</p>
+            <p style={{ color: C.faint, fontSize: 12, marginTop: 6 }}>GPS를 다시 확인하거나 잠시 후 재시도해주세요.</p>
+            <button onClick={() => { setStep("survey"); setSurvey({}); setPipelineReady(false); requestLocation(); }} style={{ marginTop: 16, padding: "10px 20px", borderRadius: 10, background: C.accent, border: "none", color: "#fff", cursor: "pointer", fontFamily: C.sans }}>
+              위치 재확인 후 다시 검색
             </button>
           </div>
         )}

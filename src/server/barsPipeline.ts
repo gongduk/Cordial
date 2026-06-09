@@ -3,7 +3,7 @@ import { analyzeBar } from "@/server/ai/barAnalyze";
 
 export const CACHE_TTL_DAYS = 7;
 export const NEARBY_RADIUS_M = 3000;
-export const MIN_BARS_THRESHOLD = 8;
+export const MIN_BARS_THRESHOLD = 3;
 
 interface GooglePlace {
   place_id: string;
@@ -147,7 +147,12 @@ export async function ensureFreshBars(lat: number, lng: number): Promise<void> {
         body: JSON.stringify({ lat, lng, radius: NEARBY_RADIUS_M, count: 40 }),
         signal: AbortSignal.timeout(50_000),
       });
-      if (res.ok) return;
+      if (res.ok) {
+        // FastAPI가 200을 반환해도 실제 DB 저장 여부 검증
+        const afterCount = await countFreshNearbyBarsInDB(lat, lng);
+        if (afterCount >= MIN_BARS_THRESHOLD) return;
+        console.warn("[barsPipeline] FastAPI 200 반환했지만 DB에 바 없음, 인라인 실행");
+      }
     } catch (e) {
       console.error("[barsPipeline] FastAPI 호출 실패, 인라인 실행:", e);
     }

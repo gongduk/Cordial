@@ -200,10 +200,10 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // 파이프라인 결과가 없으면 5km로 확장 (fallback)
+    // 3km에 바가 없으면 7km로 확장 (지방 도시·GPS 오차 대응)
     if (bars.length === 0) {
-      const fallbackDelta = 5 / 111;
-      const fallbackLngDelta = 5 / (111 * Math.cos((lat * Math.PI) / 180));
+      const fallbackDelta = 7 / 111;
+      const fallbackLngDelta = 7 / (111 * Math.cos((lat * Math.PI) / 180));
       bars = await prisma.bar.findMany({
         where: {
           latitude: { gte: lat - fallbackDelta, lte: lat + fallbackDelta },
