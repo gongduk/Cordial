@@ -10,6 +10,9 @@ export async function POST(req: NextRequest) {
     if (typeof text !== "string" || text.trim().length < 5) {
       return NextResponse.json({ error: "최소 5자 이상 입력해 주세요." }, { status: 400 });
     }
+    if (text.length > 2000) {
+      return NextResponse.json({ error: "텍스트가 너무 깁니다." }, { status: 400 });
+    }
 
     const emotion = await analyzeEmotion(text);
 
