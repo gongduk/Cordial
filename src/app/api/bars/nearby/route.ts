@@ -22,7 +22,12 @@ export async function POST(req: NextRequest) {
     const nearbyCount = await countFreshNearbyBarsInDB(lat, lng);
     console.log(`[bars/nearby] 신선한 DB 캐시: ${nearbyCount}개`);
 
-    await ensureFreshBars(lat, lng);
+    await Promise.race([
+      ensureFreshBars(lat, lng),
+      new Promise<void>((resolve) => setTimeout(resolve, 45_000)),
+    ]).catch((e: unknown) => {
+      console.error("[bars/nearby] ensureFreshBars 실패:", e);
+    });
 
     const latDelta = NEARBY_RADIUS_M / 111000;
     const cosLat = Math.cos((lat * Math.PI) / 180);

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
   const area = req.nextUrl.searchParams.get("area");
-  if (!area) return NextResponse.json({ error: "area 파라미터가 필요합니다." }, { status: 400 });
+  if (!area || area.length > 100) return NextResponse.json({ error: "area 파라미터가 필요합니다." }, { status: 400 });
 
   try {
     const key = process.env.GOOGLE_MAPS_API_KEY;
