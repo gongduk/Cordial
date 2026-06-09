@@ -32,10 +32,14 @@ export async function rotateRefreshToken(oldToken: string): Promise<{ accessToke
     return null;
   }
 
-  await prisma.refreshToken.delete({ where: { token: oldToken } });
-  const newRefresh = await generateRefreshToken(record.userId);
+  const newToken = crypto.randomBytes(40).toString("hex");
+  const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30);
+  const [, newRecord] = await prisma.$transaction([
+    prisma.refreshToken.delete({ where: { token: oldToken } }),
+    prisma.refreshToken.create({ data: { token: newToken, userId: record.userId, expiresAt } }),
+  ]);
   const accessToken = generateAccessToken(record.userId);
-  return { accessToken, refreshToken: newRefresh };
+  return { accessToken, refreshToken: newRecord.token };
 }
 
 export async function deleteRefreshToken(token: string): Promise<void> {
