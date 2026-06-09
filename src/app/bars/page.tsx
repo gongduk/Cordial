@@ -140,6 +140,10 @@ export default function BarsPage() {
       setResults(data);
       setActiveIdx(0);
       setStep("result");
+      // 첫 추천 결과의 1번 바 위치로 지도 포커싱
+      if (data[0]?.latitude && data[0]?.longitude) {
+        setMapTarget({ lat: data[0].latitude, lng: data[0].longitude });
+      }
     },
     onError: () => {
       setStep("survey");
