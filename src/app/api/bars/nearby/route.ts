@@ -12,9 +12,11 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { lat, lng } = (await req.json()) as { lat: number; lng: number };
-    if (!lat || !lng) {
-      return NextResponse.json({ error: "위치 정보가 필요합니다." }, { status: 400 });
+    const body = (await req.json()) as { lat: unknown; lng: unknown };
+    const lat = Number(body.lat);
+    const lng = Number(body.lng);
+    if (!isFinite(lat) || !isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      return NextResponse.json({ error: "유효한 위치 정보가 필요합니다." }, { status: 400 });
     }
 
     const nearbyCount = await countFreshNearbyBarsInDB(lat, lng);
@@ -23,7 +25,8 @@ export async function POST(req: NextRequest) {
     await ensureFreshBars(lat, lng);
 
     const latDelta = NEARBY_RADIUS_M / 111000;
-    const lngDelta = NEARBY_RADIUS_M / (111000 * Math.cos((lat * Math.PI) / 180));
+    const cosLat = Math.cos((lat * Math.PI) / 180);
+    const lngDelta = cosLat > 0.001 ? NEARBY_RADIUS_M / (111000 * cosLat) : NEARBY_RADIUS_M / 111000;
     const bars = await prisma.bar.findMany({
       where: {
         latitude: { gte: lat - latDelta, lte: lat + latDelta },

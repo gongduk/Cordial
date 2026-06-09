@@ -151,13 +151,12 @@ function scoreBar(
 
 export async function POST(req: NextRequest) {
   try {
-    const { lat, lng, survey } = await req.json() as {
-      lat: number;
-      lng: number;
-      survey: BarSurvey;
-    };
+    const body = await req.json() as { lat: unknown; lng: unknown; survey: BarSurvey };
+    const lat = Number(body.lat);
+    const lng = Number(body.lng);
+    const survey = body.survey;
 
-    if (!lat || !lng || !survey) {
+    if (!isFinite(lat) || !isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180 || !survey) {
       return NextResponse.json({ error: "위치와 설문 응답이 필요합니다." }, { status: 400 });
     }
 
