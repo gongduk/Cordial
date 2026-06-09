@@ -54,8 +54,16 @@ export async function PATCH(req: NextRequest) {
       name?: string;
     };
 
+    const validCapacities: DrinkingCapacity[] = ["VERY_LOW", "LOW", "MEDIUM", "HIGH", "VERY_HIGH"];
+    if (body.drinkingCapacity !== undefined && !validCapacities.includes(body.drinkingCapacity)) {
+      return NextResponse.json({ error: "유효하지 않은 주량 값입니다." }, { status: 400 });
+    }
+    if (body.name !== undefined && (typeof body.name !== "string" || body.name.length > 50)) {
+      return NextResponse.json({ error: "이름은 50자 이하이어야 합니다." }, { status: 400 });
+    }
+
     const clamp01 = (v: number | undefined) =>
-      v !== undefined && isFinite(v) ? Math.min(1, Math.max(0, v)) : undefined;
+      v !== undefined && typeof v === "number" && isFinite(v) ? Math.min(1, Math.max(0, v)) : undefined;
 
     const updated = await prisma.user.update({
       where: { id: userId },

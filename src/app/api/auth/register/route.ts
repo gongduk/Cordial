@@ -10,11 +10,17 @@ export async function POST(req: NextRequest) {
       name?: string;
     };
 
-    if (!email || !password) {
+    if (typeof email !== "string" || typeof password !== "string" || !email || !password) {
       return NextResponse.json({ error: "이메일과 비밀번호를 입력하세요." }, { status: 400 });
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return NextResponse.json({ error: "올바른 이메일 형식을 입력하세요." }, { status: 400 });
     }
     if (password.length < 8) {
       return NextResponse.json({ error: "비밀번호는 8자 이상이어야 합니다." }, { status: 400 });
+    }
+    if (name !== undefined && (typeof name !== "string" || name.length > 50)) {
+      return NextResponse.json({ error: "이름은 50자 이하이어야 합니다." }, { status: 400 });
     }
 
     const existing = await prisma.user.findUnique({ where: { email } });

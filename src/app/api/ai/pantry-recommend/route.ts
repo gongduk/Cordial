@@ -10,10 +10,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "ingredients 배열이 필요합니다." }, { status: 400 });
     }
 
+    const validIngredients = ingredients
+      .filter((item): item is string => typeof item === "string" && item.trim().length > 0)
+      .slice(0, 100);
+
     const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
     const userId = (token?.id ?? token?.sub) as string | undefined;
 
-    const result = await pantryRecommend(ingredients, userId);
+    const result = await pantryRecommend(validIngredients, userId);
     return NextResponse.json(result);
   } catch (error) {
     console.error("[pantry-recommend]", error);
