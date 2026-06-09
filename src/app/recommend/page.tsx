@@ -106,6 +106,7 @@ export default function RecommendPage() {
     const drinkingCapacity = sessionStorage.getItem("drinkingCapacity") ?? "MEDIUM";
 
     let cancelled = false;
+    const startTime = Date.now();
     const t1 = setTimeout(() => { if (!cancelled) setDoneCount(1); }, 600);
     const t2 = setTimeout(() => { if (!cancelled) setDoneCount(2); }, 1200);
     const t3 = setTimeout(() => { if (!cancelled) setDoneCount(3); }, 1800);
@@ -118,7 +119,9 @@ export default function RecommendPage() {
       })
       .catch(e => { if (!cancelled) setError((e as Error).message || "추천 실패"); })
       .finally(() => {
-        setTimeout(() => { if (!cancelled) setLoading(false); }, 1900);
+        const elapsed = Date.now() - startTime;
+        const remaining = Math.max(0, 1900 - elapsed);
+        setTimeout(() => { if (!cancelled) setLoading(false); }, remaining);
       });
 
     return () => {
