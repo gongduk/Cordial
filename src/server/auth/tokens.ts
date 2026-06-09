@@ -2,8 +2,9 @@ import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { prisma } from "@/shared/lib/prisma";
 
-const ACCESS_SECRET = process.env.ACCESS_TOKEN_SECRET;
-if (!ACCESS_SECRET) throw new Error("ACCESS_TOKEN_SECRET 환경변수가 설정되지 않았습니다.");
+const _accessSecret = process.env.ACCESS_TOKEN_SECRET;
+if (!_accessSecret) throw new Error("ACCESS_TOKEN_SECRET 환경변수가 설정되지 않았습니다.");
+const ACCESS_SECRET: string = _accessSecret;
 
 export function generateAccessToken(userId: string): string {
   return jwt.sign({ sub: userId }, ACCESS_SECRET, { expiresIn: "15m" });
