@@ -117,7 +117,7 @@ function scoreBar(
 
   // 거리 10%
   const distanceKm =
-    bar.latitude && bar.longitude
+    bar.latitude != null && bar.longitude != null
       ? calcDistance(userLat, userLng, bar.latitude, bar.longitude)
       : 999;
   const distanceScore = Math.max(0, 1 - distanceKm / 5);
@@ -215,7 +215,7 @@ export async function POST(req: NextRequest) {
       .map((bar) => {
         const { score, matchReasons } = scoreBar(bar, survey, lat, lng, emotionMoodScores);
         const distanceKm =
-          bar.latitude && bar.longitude
+          bar.latitude != null && bar.longitude != null
             ? calcDistance(lat, lng, bar.latitude, bar.longitude)
             : 999;
         return {
