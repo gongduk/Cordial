@@ -63,6 +63,10 @@ async function fetchPlaceReviews(placeId: string): Promise<string[]> {
   if (!key) return [];
   const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=reviews&language=ko&key=${key}`;
   const res = await fetch(url);
+  if (!res.ok) {
+    console.error(`[barsPipeline] Google Places Details HTTP ${res.status} for place ${placeId}`);
+    return [];
+  }
   const data = (await res.json()) as { result?: { reviews?: { text: string }[] } };
   return (data.result?.reviews ?? []).map((r) => r.text).filter(Boolean);
 }
