@@ -18,32 +18,37 @@ export async function POST(req: NextRequest) {
   }
   if (!cocktailId) return NextResponse.json({ ok: false });
 
-  const [user, cocktail] = await Promise.all([
-    prisma.user.findUnique({
+  try {
+    const [user, cocktail] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: { sweetPref: true, sourPref: true, bitterPref: true, strongPref: true, freshPref: true },
+      }),
+      prisma.cocktail.findUnique({
+        where: { id: cocktailId },
+        select: { sweetness: true, sourness: true, bitterness: true, strength: true, freshness: true },
+      }),
+    ]);
+
+    if (!user || !cocktail) return NextResponse.json({ ok: false });
+
+    const nudge = (cur: number, target: number) =>
+      Math.min(1, Math.max(0, cur * (1 - RATE) + target * RATE));
+
+    await prisma.user.update({
       where: { id: userId },
-      select: { sweetPref: true, sourPref: true, bitterPref: true, strongPref: true, freshPref: true },
-    }),
-    prisma.cocktail.findUnique({
-      where: { id: cocktailId },
-      select: { sweetness: true, sourness: true, bitterness: true, strength: true, freshness: true },
-    }),
-  ]);
+      data: {
+        sweetPref:  nudge(user.sweetPref,  cocktail.sweetness  ?? 0.5),
+        sourPref:   nudge(user.sourPref,   cocktail.sourness   ?? 0.5),
+        bitterPref: nudge(user.bitterPref, cocktail.bitterness ?? 0.5),
+        strongPref: nudge(user.strongPref, cocktail.strength   ?? 0.5),
+        freshPref:  nudge(user.freshPref,  cocktail.freshness  ?? 0.5),
+      },
+    });
 
-  if (!user || !cocktail) return NextResponse.json({ ok: false });
-
-  const nudge = (cur: number, target: number) =>
-    Math.min(1, Math.max(0, cur * (1 - RATE) + target * RATE));
-
-  await prisma.user.update({
-    where: { id: userId },
-    data: {
-      sweetPref:  nudge(user.sweetPref,  cocktail.sweetness  ?? 0.5),
-      sourPref:   nudge(user.sourPref,   cocktail.sourness   ?? 0.5),
-      bitterPref: nudge(user.bitterPref, cocktail.bitterness ?? 0.5),
-      strongPref: nudge(user.strongPref, cocktail.strength   ?? 0.5),
-      freshPref:  nudge(user.freshPref,  cocktail.freshness  ?? 0.5),
-    },
-  });
-
-  return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error("[taste-learn POST]", error);
+    return NextResponse.json({ ok: false });
+  }
 }
