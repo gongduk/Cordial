@@ -141,8 +141,9 @@ export default function BarsPage() {
       setActiveIdx(0);
       setStep("result");
       // 첫 추천 결과의 1번 바 위치로 지도 포커싱
-      if (data[0]?.latitude && data[0]?.longitude) {
-        setMapTarget({ lat: data[0].latitude, lng: data[0].longitude });
+      const firstWithCoords = data.find(b => b.latitude != null && b.longitude != null);
+      if (firstWithCoords?.latitude != null && firstWithCoords?.longitude != null) {
+        setMapTarget({ lat: firstWithCoords.latitude, lng: firstWithCoords.longitude });
       }
     },
     onError: () => {
@@ -170,7 +171,7 @@ export default function BarsPage() {
     setActiveIdx(idx);
     setInfoOpen(null);
     const bar = results[idx];
-    if (bar?.latitude && bar?.longitude) {
+    if (bar?.latitude != null && bar?.longitude != null) {
       setMapTarget({ lat: bar.latitude, lng: bar.longitude });
     }
   }
@@ -367,7 +368,7 @@ export default function BarsPage() {
                     </AdvancedMarker>
                   )}
                   {/* 바 마커 */}
-                  {results.map((b, i) => b.latitude && b.longitude && (
+                  {results.map((b, i) => b.latitude != null && b.longitude != null && (
                     <AdvancedMarker
                       key={b.id}
                       position={{ lat: b.latitude, lng: b.longitude }}
@@ -595,7 +596,7 @@ export default function BarsPage() {
                       <div style={{ width: 12, height: 12, borderRadius: "50%", background: "#4285F4", border: "2px solid #fff", boxShadow: "0 2px 6px rgba(66,133,244,0.5)" }} />
                     </AdvancedMarker>
                   )}
-                  {results.map((b, i) => b.latitude && b.longitude && (
+                  {results.map((b, i) => b.latitude != null && b.longitude != null && (
                     <AdvancedMarker key={b.id} position={{ lat: b.latitude, lng: b.longitude }} onClick={() => goTo(i)}>
                       <NumberPin num={i + 1} active={activeIdx === i} />
                     </AdvancedMarker>
