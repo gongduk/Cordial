@@ -187,7 +187,9 @@ export async function POST(req: NextRequest) {
     await Promise.race([
       ensureFreshBars(lat, lng),
       new Promise<void>((resolve) => setTimeout(resolve, 45_000)),
-    ]).catch(() => {});
+    ]).catch((e: unknown) => {
+      console.error("[bars/recommend] ensureFreshBars 실패:", e);
+    });
 
     // 파이프라인 수집 반경(3km)과 동일한 바운딩박스로 쿼리 — 다른 지역 캐시 오염 방지
     const delta = NEARBY_RADIUS_M / 111000;

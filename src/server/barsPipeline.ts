@@ -78,7 +78,8 @@ function isStale(analyzedAt: Date | null): boolean {
 
 export async function countFreshNearbyBarsInDB(lat: number, lng: number): Promise<number> {
   const latDelta = NEARBY_RADIUS_M / 111000;
-  const lngDelta = NEARBY_RADIUS_M / (111000 * Math.cos((lat * Math.PI) / 180));
+  const cosLat = Math.cos((lat * Math.PI) / 180);
+  const lngDelta = cosLat > 0.001 ? NEARBY_RADIUS_M / (111000 * cosLat) : NEARBY_RADIUS_M / 111000;
   const staleDate = new Date(Date.now() - CACHE_TTL_DAYS * 24 * 60 * 60 * 1000);
   return prisma.bar.count({
     where: {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useMutation } from "@tanstack/react-query";
@@ -30,10 +30,9 @@ export default function OnboardingPage() {
     onError: () => setError("저장 중 오류가 발생했습니다. 다시 시도해주세요."),
   });
 
-  if (status === "unauthenticated") {
-    router.replace("/login");
-    return null;
-  }
+  useEffect(() => {
+    if (status === "unauthenticated") router.replace("/login");
+  }, [status, router]);
 
   function handleConfirm() {
     if (!selected) { setError("주량을 선택해주세요."); return; }
@@ -41,6 +40,8 @@ export default function OnboardingPage() {
   }
 
   const loading = mutation.isPending;
+
+  if (status === "loading" || status === "unauthenticated") return null;
 
   return (
     <>
