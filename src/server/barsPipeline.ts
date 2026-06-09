@@ -2,8 +2,8 @@ import { prisma } from "@/shared/lib/prisma";
 import { analyzeBar } from "@/server/ai/barAnalyze";
 
 export const CACHE_TTL_DAYS = 7;
-export const NEARBY_RADIUS_M = 3000;
-export const MIN_BARS_THRESHOLD = 3;
+export const NEARBY_RADIUS_M = 5000;
+export const MIN_BARS_THRESHOLD = 5;
 
 interface GooglePlace {
   place_id: string;

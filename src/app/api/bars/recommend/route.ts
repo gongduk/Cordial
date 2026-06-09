@@ -203,7 +203,7 @@ export async function POST(req: NextRequest) {
       console.error("[bars/recommend] ensureFreshBars 실패:", e);
     });
 
-    // 파이프라인 수집 반경(3km)과 동일한 바운딩박스로 쿼리 — 다른 지역 캐시 오염 방지
+    // 파이프라인 수집 반경과 동일한 바운딩박스로 쿼리
     const delta = NEARBY_RADIUS_M / 111000;
     const lngDelta = NEARBY_RADIUS_M / (111000 * Math.cos((lat * Math.PI) / 180));
     let bars = await prisma.bar.findMany({
@@ -213,10 +213,10 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // 3km에 바가 없으면 7km로 확장 (지방 도시·GPS 오차 대응)
-    if (bars.length === 0) {
-      const fallbackDelta = 7 / 111;
-      const fallbackLngDelta = 7 / (111 * Math.cos((lat * Math.PI) / 180));
+    // 바가 5개 미만이면 10km로 확장 (지방 도시·바 밀도 낮은 지역 대응)
+    if (bars.length < 5) {
+      const fallbackDelta = 10 / 111;
+      const fallbackLngDelta = 10 / (111 * Math.cos((lat * Math.PI) / 180));
       bars = await prisma.bar.findMany({
         where: {
           latitude: { gte: lat - fallbackDelta, lte: lat + fallbackDelta },

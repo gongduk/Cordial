@@ -13,7 +13,6 @@ async def search_nearby_bars(lat: float, lng: float, radius: int = NEARBY_RADIUS
         "location": f"{lat},{lng}",
         "radius": radius,
         "type": "bar",
-        "keyword": "칵테일",
         "language": "ko",
         "key": GOOGLE_MAPS_API_KEY,
     }

@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     const latDelta = NEARBY_RADIUS_M / 111000;
     const cosLat = Math.cos((lat * Math.PI) / 180);
     const lngDelta = cosLat > 0.001 ? NEARBY_RADIUS_M / (111000 * cosLat) : NEARBY_RADIUS_M / 111000;
-    const bars = await prisma.bar.findMany({
+    let bars = await prisma.bar.findMany({
       where: {
         latitude: { gte: lat - latDelta, lte: lat + latDelta },
         longitude: { gte: lng - lngDelta, lte: lng + lngDelta },
@@ -40,6 +40,19 @@ export async function POST(req: NextRequest) {
       orderBy: { rating: "desc" },
       take: 30,
     });
+    // 5개 미만이면 10km로 확장
+    if (bars.length < 5) {
+      const fd = 10 / 111;
+      const fld = 10 / (111 * (cosLat > 0.001 ? cosLat : 1));
+      bars = await prisma.bar.findMany({
+        where: {
+          latitude: { gte: lat - fd, lte: lat + fd },
+          longitude: { gte: lng - fld, lte: lng + fld },
+        },
+        orderBy: { rating: "desc" },
+        take: 30,
+      });
+    }
 
     return NextResponse.json(bars);
   } catch (error) {

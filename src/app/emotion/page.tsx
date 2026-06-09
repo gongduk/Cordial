@@ -288,8 +288,10 @@ export default function EmotionPage() {
   const analyzeMutation = useMutation({
     mutationFn: (text: string) => api.post<Record<string, number>>("/ai/analyze-emotion", { text }).then(r => r.data),
     onSuccess: (emotionVector) => {
+      // 새 추천이므로 이전 캐시 제거 — 구 결과가 잠깐 보이는 깜빡임 방지
+      sessionStorage.removeItem("recommendReturnFlag");
+      sessionStorage.removeItem("recommendCache");
       sessionStorage.setItem("emotionVector", JSON.stringify(emotionVector));
-      // 비로그인 유저만 drinkingCapacity를 sessionStorage에 저장해서 recommend API로 전달
       if (!isLoggedIn) {
         sessionStorage.setItem("drinkingCapacity", drinkingCapacity ?? "MEDIUM");
       }
