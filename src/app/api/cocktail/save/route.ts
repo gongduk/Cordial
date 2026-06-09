@@ -29,11 +29,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "이름과 재료가 필요합니다." }, { status: 400 });
     }
 
+    const clamp01 = (v: number) => isFinite(v) ? Math.min(1, Math.max(0, v)) : 0;
+    const safeAbv = isFinite(body.abv) ? Math.min(100, Math.max(0, body.abv)) : 0;
+
     const ingredientRecords = await Promise.all(
       body.ingredients.map((ing) =>
         prisma.ingredient.upsert({
           where: { name: ing.name },
-          create: { name: ing.name, abv: ing.abv },
+          create: { name: ing.name, abv: isFinite(ing.abv) ? Math.min(100, Math.max(0, ing.abv)) : 0 },
           update: {},
         })
       )
@@ -47,12 +50,12 @@ export async function POST(req: NextRequest) {
         category: "커스텀",
         isCustom: true,
         createdBy: userId,
-        abv: body.abv,
-        sweetness: body.taste.sweetness,
-        sourness: body.taste.sourness,
-        bitterness: body.taste.bitterness,
-        strength: body.taste.strength,
-        freshness: body.taste.freshness,
+        abv: safeAbv,
+        sweetness: clamp01(body.taste.sweetness),
+        sourness: clamp01(body.taste.sourness),
+        bitterness: clamp01(body.taste.bitterness),
+        strength: clamp01(body.taste.strength),
+        freshness: clamp01(body.taste.freshness),
         popularity: 0,
         ingredients: {
           create: body.ingredients.map((ing, i) => ({
