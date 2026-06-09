@@ -50,6 +50,7 @@ async def process_place(place: dict) -> dict | None:
         google_reviews, blog_snippets, insta_captions,
     )
 
+    from datetime import datetime, timezone
     bar_data = {
         **base,
         "moodTags": analysis.get("moodTags", []),
@@ -57,6 +58,7 @@ async def process_place(place: dict) -> dict | None:
         "cocktailStyles": analysis.get("cocktailStyles", []),
         "signature": analysis.get("signature"),
         "description": analysis.get("description"),
+        "analyzedAt": datetime.now(timezone.utc).isoformat(),
     }
 
     return await upsert_bar(bar_data)

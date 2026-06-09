@@ -119,13 +119,16 @@ export default function BarsPage() {
 
   useEffect(() => { requestLocation(); }, [requestLocation]);
 
-  // 위치 확인 즉시 파이프라인 실행 — 완료 여부 추적
+  // 위치 확인 즉시 파이프라인 실행 — 완료되면 준비 상태로
   useEffect(() => {
     if (!location) return;
     setPipelineReady(false);
+    // 60초 안에 응답 없으면 강제 활성화 (파이프라인이 오래 걸릴 수 있음)
+    const fallback = setTimeout(() => setPipelineReady(true), 60_000);
     api.post("/bars/nearby", { lat: location.lat, lng: location.lng })
       .catch(() => {})
-      .finally(() => setPipelineReady(true));
+      .finally(() => { clearTimeout(fallback); setPipelineReady(true); });
+    return () => clearTimeout(fallback);
   }, [location]);
 
   const recommendMutation = useMutation({

@@ -85,7 +85,11 @@ export async function countFreshNearbyBarsInDB(lat: number, lng: number): Promis
     where: {
       latitude: { gte: lat - latDelta, lte: lat + latDelta },
       longitude: { gte: lng - lngDelta, lte: lng + lngDelta },
-      analyzedAt: { gte: staleDate },
+      // analyzedAt이 없는 구형 데이터는 createdAt으로 신선도 판단
+      OR: [
+        { analyzedAt: { gte: staleDate } },
+        { analyzedAt: null, createdAt: { gte: staleDate } },
+      ],
     },
   });
 }
