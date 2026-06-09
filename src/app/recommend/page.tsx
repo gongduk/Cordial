@@ -105,19 +105,26 @@ export default function RecommendPage() {
     }
     const drinkingCapacity = sessionStorage.getItem("drinkingCapacity") ?? "MEDIUM";
 
-    const t1 = setTimeout(() => setDoneCount(1), 600);
-    const t2 = setTimeout(() => setDoneCount(2), 1200);
-    const t3 = setTimeout(() => setDoneCount(3), 1800);
+    let cancelled = false;
+    const t1 = setTimeout(() => { if (!cancelled) setDoneCount(1); }, 600);
+    const t2 = setTimeout(() => { if (!cancelled) setDoneCount(2); }, 1200);
+    const t3 = setTimeout(() => { if (!cancelled) setDoneCount(3); }, 1800);
 
     api.post<RecommendedCocktail[]>("/ai/recommend", { emotionVector, drinkingCapacity })
       .then(res => {
+        if (cancelled) return;
         setList(res.data);
         sessionStorage.setItem("recommendCache", JSON.stringify(res.data));
       })
-      .catch(e => setError((e as Error).message || "추천 실패"))
-      .finally(() => setTimeout(() => setLoading(false), 1900));
+      .catch(e => { if (!cancelled) setError((e as Error).message || "추천 실패"); })
+      .finally(() => {
+        setTimeout(() => { if (!cancelled) setLoading(false); }, 1900);
+      });
 
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+    return () => {
+      cancelled = true;
+      clearTimeout(t1); clearTimeout(t2); clearTimeout(t3);
+    };
   }, [router]);
 
   // Keyboard navigation — refs prevent stale closure without re-adding listener every render
