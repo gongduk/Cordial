@@ -95,7 +95,14 @@ export default function PantryPage() {
         const saved = localStorage.getItem(STORAGE_KEY);
         let items: string[] = DEFAULT_PANTRY;
         if (saved) {
-          try { items = JSON.parse(saved) as string[]; } catch { localStorage.removeItem(STORAGE_KEY); }
+          try {
+            const parsed = JSON.parse(saved) as unknown;
+            if (Array.isArray(parsed) && parsed.every(x => typeof x === "string")) {
+              items = parsed;
+            } else {
+              localStorage.removeItem(STORAGE_KEY);
+            }
+          } catch { localStorage.removeItem(STORAGE_KEY); }
         }
         setOwned(items);
         fetchMatches(items);

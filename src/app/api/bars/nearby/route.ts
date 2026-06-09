@@ -22,11 +22,12 @@ export async function POST(req: NextRequest) {
 
     await ensureFreshBars(lat, lng);
 
-    const delta = NEARBY_RADIUS_M / 111000;
+    const latDelta = NEARBY_RADIUS_M / 111000;
+    const lngDelta = NEARBY_RADIUS_M / (111000 * Math.cos((lat * Math.PI) / 180));
     const bars = await prisma.bar.findMany({
       where: {
-        latitude: { gte: lat - delta, lte: lat + delta },
-        longitude: { gte: lng - delta, lte: lng + delta },
+        latitude: { gte: lat - latDelta, lte: lat + latDelta },
+        longitude: { gte: lng - lngDelta, lte: lng + lngDelta },
       },
       orderBy: { rating: "desc" },
       take: 30,

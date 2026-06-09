@@ -180,6 +180,7 @@ export default function CocktailDetailPage() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
     const sel = typeof window !== "undefined" ? sessionStorage.getItem("selectedCocktail") : null;
     const targetId = urlId;
 
@@ -187,6 +188,7 @@ export default function CocktailDetailPage() {
       try {
         const res = await api.get<ApiCocktailDetail>(`/cocktails/${id}`);
         const data = res.data;
+        if (cancelled) return null;
         if (data.ingredients) {
           setIngredients(data.ingredients.map(ci => ({
             name: ci.ingredient.name,
@@ -229,18 +231,19 @@ export default function CocktailDetailPage() {
         }
         // Use sessionStorage if it matches the URL id (or no URL id)
         if (!targetId || c.id === targetId) {
-          setCocktail(c);
+          if (!cancelled) setCocktail(c);
           if (c.id && c.id !== "creative") {
             await loadDetail(c.id);
-            void loadAiSteps(c.id);
+            if (!cancelled) void loadAiSteps(c.id);
           }
-          setLoading(false);
+          if (!cancelled) setLoading(false);
           return;
         }
       }
       // Fallback: fetch from API using URL id
       if (targetId && targetId !== "creative") {
         const data = await loadDetail(targetId);
+        if (cancelled) return;
         if (data) {
           setCocktail({
             id: data.id,
@@ -266,10 +269,11 @@ export default function CocktailDetailPage() {
       } else {
         router.back();
       }
-      setLoading(false);
+      if (!cancelled) setLoading(false);
     }
 
     init();
+    return () => { cancelled = true; };
   }, [router, urlId]);
 
   if (!cocktail || loading) {

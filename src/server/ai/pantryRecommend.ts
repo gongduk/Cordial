@@ -112,7 +112,9 @@ export async function pantryRecommend(ingredientNames: string[], userId?: string
       });
 
       const result = await model.generateContent(`보유 재료: ${ingredientNames.join(", ")}`);
-      const parsed = JSON.parse(result.response.text()) as unknown;
+      const raw = result.response.text().trim();
+      const clean = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
+      const parsed = JSON.parse(clean) as unknown;
 
       if (typeof parsed === "object" && parsed !== null && "name" in parsed) {
         const p = parsed as Record<string, unknown>;

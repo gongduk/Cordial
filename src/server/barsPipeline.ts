@@ -53,6 +53,7 @@ async function fetchAllNearbyBars(lat: number, lng: number): Promise<GooglePlace
 
 async function fetchPlaceReviews(placeId: string): Promise<string[]> {
   const key = process.env.GOOGLE_MAPS_API_KEY;
+  if (!key) return [];
   const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=reviews&language=ko&key=${key}`;
   const res = await fetch(url);
   const data = (await res.json()) as { result?: { reviews?: { text: string }[] } };
@@ -65,12 +66,13 @@ function isStale(analyzedAt: Date | null): boolean {
 }
 
 export async function countFreshNearbyBarsInDB(lat: number, lng: number): Promise<number> {
-  const delta = NEARBY_RADIUS_M / 111000;
+  const latDelta = NEARBY_RADIUS_M / 111000;
+  const lngDelta = NEARBY_RADIUS_M / (111000 * Math.cos((lat * Math.PI) / 180));
   const staleDate = new Date(Date.now() - CACHE_TTL_DAYS * 24 * 60 * 60 * 1000);
   return prisma.bar.count({
     where: {
-      latitude: { gte: lat - delta, lte: lat + delta },
-      longitude: { gte: lng - delta, lte: lng + delta },
+      latitude: { gte: lat - latDelta, lte: lat + latDelta },
+      longitude: { gte: lng - lngDelta, lte: lng + lngDelta },
       analyzedAt: { gte: staleDate },
     },
   });

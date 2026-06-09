@@ -192,16 +192,22 @@ export async function mixAnalyze(
       `재료: ${ingredientDesc}\n제조법: ${method}\n총 볼륨: ${ingredients.reduce((s, i) => s + i.amount, 0)}ml\n계산된 도수: ${calculatedAbv}%${notes ? `\n메모: ${notes}` : ""}`
     );
 
-    const parsed = JSON.parse(result.response.text()) as unknown;
+    const raw = result.response.text().trim();
+    const clean = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
+    const parsed = JSON.parse(clean) as unknown;
     if (typeof parsed !== "object" || parsed === null) return ruleBased(ingredients, calculatedAbv);
 
     const p = parsed as Record<string, unknown>;
+    function safeNum(val: unknown, fallback: number): number {
+      const n = Number(val);
+      return isFinite(n) ? Math.min(1, Math.max(0, n)) : fallback;
+    }
     const taste: CocktailVector = {
-      sweetness: Number(p.sweetness ?? 0.4),
-      sourness: Number(p.sourness ?? 0.3),
-      bitterness: Number(p.bitterness ?? 0.2),
-      strength: Number(p.strength ?? calculatedAbv / 50),
-      freshness: Number(p.freshness ?? 0.4),
+      sweetness: safeNum(p.sweetness, 0.4),
+      sourness: safeNum(p.sourness, 0.3),
+      bitterness: safeNum(p.bitterness, 0.2),
+      strength: safeNum(p.strength, calculatedAbv / 50),
+      freshness: safeNum(p.freshness, 0.4),
     };
 
     return {

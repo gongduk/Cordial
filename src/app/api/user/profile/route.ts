@@ -29,6 +29,7 @@ export async function GET(req: NextRequest) {
     },
   });
 
+  if (!user) return NextResponse.json({ error: "사용자를 찾을 수 없습니다." }, { status: 404 });
   return NextResponse.json(user);
 }
 
