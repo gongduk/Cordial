@@ -215,6 +215,7 @@ export default function CocktailDetailPage() {
           sessionStorage.removeItem("selectedCocktail");
           if (targetId && targetId !== "creative") {
             const data = await loadDetail(targetId);
+            if (cancelled) { setLoading(false); return; }
             if (data) {
               setCocktail({
                 id: data.id, name: data.name, description: data.description ?? null,
