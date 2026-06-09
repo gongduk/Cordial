@@ -38,11 +38,16 @@ async def upsert_bar(bar_data: dict) -> dict:
         return result[0] if isinstance(result, list) and result else {}
 
 
+_VALID_MOODS = {"조용한", "활기찬", "로맨틱", "힙한", "클래식"}
+
+
 async def get_bars(area: str | None = None, mood: str | None = None) -> list[dict]:
     """Supabase REST API로 바 목록 조회"""
     params = {"order": "createdAt.desc", "limit": "50"}
     if area:
         params["area"] = f"ilike.*{area}*"
+    if mood and mood in _VALID_MOODS:
+        params["moodTags"] = f"cs.{{{mood}}}"
 
     async with httpx.AsyncClient() as client:
         res = await client.get(

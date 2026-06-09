@@ -159,10 +159,12 @@ async def analyze_bar(
             cleaned = text.replace("```json", "").replace("```", "").strip()
             result = json.loads(cleaned)
             # 빈 필드 보완
-            if not result.get("cocktailStyles"):
-                result["cocktailStyles"] = infer_from_name(name, address)["cocktailStyles"]
-            if not result.get("purposeTags"):
-                result["purposeTags"] = infer_from_name(name, address)["purposeTags"]
+            if not result.get("cocktailStyles") or not result.get("purposeTags"):
+                inferred = infer_from_name(name, address)
+                if not result.get("cocktailStyles"):
+                    result["cocktailStyles"] = inferred["cocktailStyles"]
+                if not result.get("purposeTags"):
+                    result["purposeTags"] = inferred["purposeTags"]
             return result
     except Exception as e:
         print(f"[Gemini] 실패 — 규칙 추론 사용: {name} ({e})")

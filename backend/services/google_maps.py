@@ -73,7 +73,8 @@ def get_photo_url(photo_reference: str, max_width: int = 600) -> str:
 def extract_bar_base(place: dict) -> dict:
     """Google Places 결과에서 기본 바 정보 추출"""
     photos = place.get("photos", [])
-    image_url = get_photo_url(photos[0]["photo_reference"]) if photos else None
+    photo_ref = photos[0].get("photo_reference", "") if photos else ""
+    image_url = get_photo_url(photo_ref) if photo_ref else None
 
     address = place.get("vicinity") or place.get("formatted_address", "")
     area_parts = address.split(" ")

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { prisma } from "@/shared/lib/prisma";
 import { NEARBY_RADIUS_M, ensureFreshBars } from "@/server/barsPipeline";
-import type { BarSurvey, RecommendedBar } from "@/shared/types";
+import type { BarSurvey, RecommendedBar, BarMood, BarPurpose, CocktailStyle, BarBudget } from "@/shared/types";
 
 const BUDGET_TO_PRICE: Record<string, number[]> = {
   "3만원 이하": [1, 2],
@@ -98,7 +98,7 @@ function scoreBar(
   const exactMoodMatch = bar.moodTags.includes(survey.mood);
   const similarMoodScore = exactMoodMatch
     ? 1
-    : Math.max(...bar.moodTags.map(t => MOOD_SIMILARITY[survey.mood]?.[t] ?? 0));
+    : Math.max(0, ...bar.moodTags.map(t => MOOD_SIMILARITY[survey.mood]?.[t] ?? 0));
   const moodMatch = exactMoodMatch ? 1 : similarMoodScore * 0.5;
   if (exactMoodMatch) matchReasons.push(`${survey.mood} 분위기`);
   else if (similarMoodScore > 0.3) matchReasons.push(`${survey.mood}와 유사한 분위기`);
@@ -151,12 +151,24 @@ function scoreBar(
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json() as { lat: unknown; lng: unknown; survey: BarSurvey };
+    const body = await req.json() as { lat: unknown; lng: unknown; survey: unknown };
     const lat = Number(body.lat);
     const lng = Number(body.lng);
-    const survey = body.survey;
+    const survey = body.survey as BarSurvey;
 
-    if (!isFinite(lat) || !isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180 || !survey) {
+    const validMoods: BarMood[] = ["조용한", "활기찬", "로맨틱", "힙한", "클래식"];
+    const validStyles: CocktailStyle[] = ["달콤한", "신", "쓴", "강한", "가벼운"];
+    const validPurposes: BarPurpose[] = ["혼술", "데이트", "친구모임", "비즈니스"];
+    const validBudgets: BarBudget[] = ["3만원 이하", "3~5만원", "5만원 이상"];
+
+    if (
+      !isFinite(lat) || !isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180 ||
+      !survey || typeof survey !== "object" ||
+      !validMoods.includes(survey.mood) ||
+      !validStyles.includes(survey.cocktailStyle) ||
+      !validPurposes.includes(survey.purpose) ||
+      !validBudgets.includes(survey.budget)
+    ) {
       return NextResponse.json({ error: "위치와 설문 응답이 필요합니다." }, { status: 400 });
     }
 
