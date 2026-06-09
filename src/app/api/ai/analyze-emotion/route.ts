@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
     const userId = (token?.id ?? token?.sub) as string | undefined;
 
-    await prisma.emotionLog.create({
+    prisma.emotionLog.create({
       data: {
         userId: userId ?? null,
         joy: emotion.joy,
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
         excitement: emotion.excitement,
         rawText: text,
       },
-    });
+    }).catch(e => console.error("[analyze-emotion] emotionLog 저장 실패:", e));
 
     return NextResponse.json(emotion);
   } catch (error) {
