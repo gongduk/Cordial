@@ -22,6 +22,15 @@ interface RecipeInput {
   ingredients: { name: string; amount: string | null }[];
 }
 
+function josa(word: string, withBatchim: string, withoutBatchim: string): string {
+  if (!word) return withoutBatchim;
+  const code = word.charCodeAt(word.length - 1);
+  if (code >= 0xAC00 && code <= 0xD7A3) {
+    return (code - 0xAC00) % 28 === 0 ? withoutBatchim : withBatchim;
+  }
+  return withoutBatchim;
+}
+
 function buildFallbackSteps(input: RecipeInput): string[] {
   const { method, glassType, ingredients } = input;
   const ingList = ingredients
@@ -39,7 +48,7 @@ function buildFallbackSteps(input: RecipeInput): string[] {
   switch (m) {
     case "shaking":
       return [
-        `셰이커에 ${ingList}을(를) 계량해 넣어요.`,
+        `셰이커에 ${ingList}${josa(ingList, "을", "를")} 계량해 넣어요.`,
         "얼음을 가득 채우고 뚜껑을 닫아요.",
         "15~20초간 힘차게 셰이크해요.",
         "차갑게 칠링한 잔에 더블 스트레이너로 걸러 따라요.",
@@ -48,7 +57,7 @@ function buildFallbackSteps(input: RecipeInput): string[] {
     case "stirring":
       return [
         "믹싱 글라스에 큰 얼음을 채워요.",
-        `${ingList}을(를) 순서대로 넣어요.`,
+        `${ingList}${josa(ingList, "을", "를")} 순서대로 넣어요.`,
         "바 스푼으로 30초간 부드럽게 스터해요.",
         "칠링한 잔에 스트레이너로 걸러 따라요.",
         garnishStep,
@@ -70,7 +79,7 @@ function buildFallbackSteps(input: RecipeInput): string[] {
       ];
     case "blending":
       return [
-        `블렌더에 ${ingList}과(와) 얼음 한 컵을 넣어요.`,
+        `블렌더에 ${ingList}${josa(ingList, "과", "와")} 얼음 한 컵을 넣어요.`,
         "고속으로 20~30초 블렌드해요.",
         "차가운 잔에 천천히 따라요.",
         garnishStep,
