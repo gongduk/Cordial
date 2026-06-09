@@ -20,7 +20,8 @@ async function doRefresh(): Promise<string | null> {
     const token = res.data.accessToken;
     localStorage.setItem("cordial_access_token", token);
     return token;
-  } catch {
+  } catch (e) {
+    console.warn("[api] 토큰 갱신 실패:", (e as Error).message);
     localStorage.removeItem("cordial_access_token");
     return null;
   }

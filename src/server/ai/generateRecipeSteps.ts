@@ -113,7 +113,8 @@ export async function generateRecipeSteps(input: RecipeInput): Promise<string[]>
       return parsed as string[];
     }
     return buildFallbackSteps(input);
-  } catch {
+  } catch (e) {
+    console.error("[generateRecipeSteps] Gemini 실패, fallback 사용:", (e as Error).message);
     return buildFallbackSteps(input);
   }
 }

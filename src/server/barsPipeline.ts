@@ -34,7 +34,14 @@ async function fetchNearbyBarsPage(
     : `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=${NEARBY_RADIUS_M}&type=bar&language=ko&key=${key}`;
 
   const res = await fetch(url);
+  if (!res.ok) {
+    console.error(`[barsPipeline] Google Places API HTTP ${res.status}`);
+    return { results: [] };
+  }
   const data = (await res.json()) as GoogleNearbyResponse;
+  if (data.status && data.status !== "OK" && data.status !== "ZERO_RESULTS") {
+    console.error(`[barsPipeline] Google Places status: ${data.status}`);
+  }
   return { results: data.results ?? [], nextToken: data.next_page_token };
 }
 

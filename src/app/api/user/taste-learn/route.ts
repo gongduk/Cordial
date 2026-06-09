@@ -9,7 +9,13 @@ export async function POST(req: NextRequest) {
   const userId = (token?.id ?? token?.sub) as string | undefined;
   if (!userId) return NextResponse.json({ ok: false });
 
-  const { cocktailId } = await req.json() as { cocktailId: string };
+  let cocktailId: string | undefined;
+  try {
+    const body = await req.json() as { cocktailId?: string };
+    cocktailId = body.cocktailId;
+  } catch {
+    return NextResponse.json({ ok: false });
+  }
   if (!cocktailId) return NextResponse.json({ ok: false });
 
   const [user, cocktail] = await Promise.all([
