@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { prisma } from "@/shared/lib/prisma";
+import { NEARBY_RADIUS_M, ensureFreshBars } from "@/server/barsPipeline";
 import type { BarSurvey, RecommendedBar } from "@/shared/types";
 
 const BUDGET_TO_PRICE: Record<string, number[]> = {
@@ -183,15 +184,33 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 반경 10km 바운딩박스로 DB 쿼리 범위 제한
-    const latDelta = 10 / 111;
-    const lngDelta = 10 / (111 * Math.cos((lat * Math.PI) / 180));
-    const bars = await prisma.bar.findMany({
+    // 현재 위치 기준 파이프라인 실행 보장 (45초 소프트 타임아웃)
+    await Promise.race([
+      ensureFreshBars(lat, lng),
+      new Promise<void>((resolve) => setTimeout(resolve, 45_000)),
+    ]).catch(() => {});
+
+    // 파이프라인 수집 반경(3km)과 동일한 바운딩박스로 쿼리 — 다른 지역 캐시 오염 방지
+    const delta = NEARBY_RADIUS_M / 111000;
+    const lngDelta = NEARBY_RADIUS_M / (111000 * Math.cos((lat * Math.PI) / 180));
+    let bars = await prisma.bar.findMany({
       where: {
-        latitude: { gte: lat - latDelta, lte: lat + latDelta, not: null },
-        longitude: { gte: lng - lngDelta, lte: lng + lngDelta, not: null },
+        latitude: { gte: lat - delta, lte: lat + delta },
+        longitude: { gte: lng - lngDelta, lte: lng + lngDelta },
       },
     });
+
+    // 파이프라인 결과가 없으면 5km로 확장 (fallback)
+    if (bars.length === 0) {
+      const fallbackDelta = 5 / 111;
+      const fallbackLngDelta = 5 / (111 * Math.cos((lat * Math.PI) / 180));
+      bars = await prisma.bar.findMany({
+        where: {
+          latitude: { gte: lat - fallbackDelta, lte: lat + fallbackDelta },
+          longitude: { gte: lng - fallbackLngDelta, lte: lng + fallbackLngDelta },
+        },
+      });
+    }
 
     const scored = bars
       .map((bar) => {

@@ -101,9 +101,11 @@ export default function BarsPage() {
   const [infoOpen, setInfoOpen] = useState<string | null>(null);
   const [mapTarget, setMapTarget] = useState<{ lat: number; lng: number } | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [pipelineReady, setPipelineReady] = useState(false);
 
   const requestLocation = useCallback(() => {
     setLocState("pending");
+    setPipelineReady(false);
     if (!navigator.geolocation) { setLocState("denied"); return; }
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -117,11 +119,13 @@ export default function BarsPage() {
 
   useEffect(() => { requestLocation(); }, [requestLocation]);
 
-  // 위치 확인되는 순간 파이프라인을 백그라운드에서 선제 실행
+  // 위치 확인 즉시 파이프라인 실행 — 완료 여부 추적
   useEffect(() => {
-    if (location) {
-      api.post("/bars/nearby", { lat: location.lat, lng: location.lng }).catch(() => {});
-    }
+    if (!location) return;
+    setPipelineReady(false);
+    api.post("/bars/nearby", { lat: location.lat, lng: location.lng })
+      .catch(() => {})
+      .finally(() => setPipelineReady(true));
   }, [location]);
 
   const recommendMutation = useMutation({
@@ -167,6 +171,7 @@ export default function BarsPage() {
   const activeBar = results[activeIdx] ?? null;
   const mapCenter = location ?? { lat: 37.4979, lng: 127.0276 };
   const allFilled = survey.mood && survey.cocktailStyle && survey.purpose && survey.budget;
+  const canSubmit = allFilled && locState === "ok" && pipelineReady;
 
   // ── Survey ──
   function Chip({ value, selected, onSelect }: { value: string; selected: boolean; onSelect: () => void }) {
@@ -203,7 +208,13 @@ export default function BarsPage() {
             위치 확인 중...
           </div>
         )}
-        {locState === "ok" && (
+        {locState === "ok" && !pipelineReady && (
+          <div style={{ fontSize: 13, color: C.muted, display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ width: 8, height: 8, borderRadius: "50%", background: C.accent, display: "inline-block", animation: "pulse 1.2s infinite" }} />
+            주변 바 데이터 수집 중... (설문을 미리 작성해두세요)
+          </div>
+        )}
+        {locState === "ok" && pipelineReady && (
           <div style={{ fontSize: 13, color: C.accent, display: "flex", alignItems: "center", gap: 6 }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
             위치 확인됨 — 주변 바를 매칭할 준비가 됐어요.
@@ -228,18 +239,18 @@ export default function BarsPage() {
 
         <button
           onClick={handleSubmit}
-          disabled={!allFilled || locState !== "ok"}
+          disabled={!canSubmit}
           style={{
             padding: "14px 0", borderRadius: 12, border: "none",
-            background: allFilled && locState === "ok" ? C.accent : C.surface2,
-            color: allFilled && locState === "ok" ? "#fff" : C.faint,
+            background: canSubmit ? C.accent : C.surface2,
+            color: canSubmit ? "#fff" : C.faint,
             fontSize: 15, fontWeight: 600,
-            cursor: allFilled && locState === "ok" ? "pointer" : "not-allowed",
+            cursor: canSubmit ? "pointer" : "not-allowed",
             fontFamily: C.sans, width: "100%",
             transition: "all 0.2s",
           }}
         >
-          {locState === "pending" ? "위치 확인 중..." : locState === "denied" ? "위치 권한 필요" : "주변 바 추천받기"}
+          {locState === "pending" ? "위치 확인 중..." : locState === "denied" ? "위치 권한 필요" : !pipelineReady ? "바 데이터 수집 중..." : "주변 바 추천받기"}
         </button>
         {submitError && (
           <p style={{ fontSize: 13, color: "#D32F2F", textAlign: "center", margin: "4px 0 0", fontFamily: C.sans }}>{submitError}</p>
@@ -481,7 +492,13 @@ export default function BarsPage() {
             {locState === "pending" && (
               <p style={{ fontSize: 12, color: C.darkMuted, marginBottom: 20 }}>📍 위치 확인 중...</p>
             )}
-            {locState === "ok" && (
+            {locState === "ok" && !pipelineReady && (
+              <p style={{ fontSize: 12, color: C.darkMuted, marginBottom: 20, display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ width: 7, height: 7, borderRadius: "50%", background: C.accent, display: "inline-block", animation: "pulse 1.2s infinite" }} />
+                주변 바 수집 중... (설문 미리 작성 가능)
+              </p>
+            )}
+            {locState === "ok" && pipelineReady && (
               <p style={{ fontSize: 12, color: C.accent, marginBottom: 20, display: "flex", alignItems: "center", gap: 6 }}>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
                 위치 확인됨
@@ -516,17 +533,17 @@ export default function BarsPage() {
               ))}
               <button
                 onClick={handleSubmit}
-                disabled={!allFilled || locState !== "ok"}
+                disabled={!canSubmit}
                 style={{
                   padding: "14px", borderRadius: 12, border: "none", width: "100%",
-                  background: allFilled && locState === "ok" ? C.accent : C.darkSurface2,
-                  color: allFilled && locState === "ok" ? C.darkBg : C.darkFaint,
+                  background: canSubmit ? C.accent : C.darkSurface2,
+                  color: canSubmit ? C.darkBg : C.darkFaint,
                   fontSize: 15, fontWeight: 600,
-                  cursor: allFilled && locState === "ok" ? "pointer" : "not-allowed",
+                  cursor: canSubmit ? "pointer" : "not-allowed",
                   fontFamily: C.sans,
                 }}
               >
-                {locState === "pending" ? "위치 확인 중..." : locState === "denied" ? "위치 권한 필요" : "주변 바 추천받기"}
+                {locState === "pending" ? "위치 확인 중..." : locState === "denied" ? "위치 권한 필요" : !pipelineReady ? "바 데이터 수집 중..." : "주변 바 추천받기"}
               </button>
               {submitError && (
                 <p style={{ fontSize: 13, color: "#EF9A9A", textAlign: "center", margin: "4px 0 0", fontFamily: C.sans }}>{submitError}</p>
