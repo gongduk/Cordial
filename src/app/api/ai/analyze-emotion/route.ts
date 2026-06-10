@@ -3,10 +3,16 @@ import { getToken } from "next-auth/jwt";
 import { analyzeEmotion } from "@/server/ai/analyzeEmotion";
 import { prisma } from "@/shared/lib/prisma";
 import { checkInternalSecret } from "@/shared/lib/internalAuth";
+import { checkRateLimit } from "@/shared/lib/rateLimit";
 
 export async function POST(req: NextRequest) {
   const authError = checkInternalSecret(req);
   if (authError) return authError;
+
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+  const email = (token as { email?: string } | null)?.email;
+  const rateLimitError = await checkRateLimit(req, "analyze-emotion", email);
+  if (rateLimitError) return rateLimitError;
 
   try {
     const { text } = await req.json() as { text: string };
@@ -20,7 +26,6 @@ export async function POST(req: NextRequest) {
 
     const emotion = await analyzeEmotion(text);
 
-    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
     const userId = (token?.id ?? token?.sub) as string | undefined;
 
     prisma.emotionLog.create({

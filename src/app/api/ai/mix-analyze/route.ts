@@ -1,11 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getToken } from "next-auth/jwt";
 import { mixAnalyze } from "@/server/ai/mixAnalyze";
 import type { MixIngredient, MixMethod } from "@/shared/types";
 import { checkInternalSecret } from "@/shared/lib/internalAuth";
+import { checkRateLimit } from "@/shared/lib/rateLimit";
 
 export async function POST(req: NextRequest) {
   const authError = checkInternalSecret(req);
   if (authError) return authError;
+
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+  const email = (token as { email?: string } | null)?.email;
+  const rateLimitError = await checkRateLimit(req, "mix-analyze", email);
+  if (rateLimitError) return rateLimitError;
 
   try {
     const { ingredients, method, notes } = await req.json() as {
