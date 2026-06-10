@@ -4,6 +4,7 @@ import { recommendCocktails } from "@/server/ai/recommendCocktails";
 import { prisma } from "@/shared/lib/prisma";
 import type { EmotionVector } from "@/shared/types";
 import { checkInternalSecret } from "@/shared/lib/internalAuth";
+import { checkRateLimit } from "@/shared/lib/rateLimit";
 
 function isValidEmotionVector(v: unknown): v is EmotionVector {
   if (typeof v !== "object" || v === null) return false;
@@ -20,6 +21,11 @@ export async function POST(req: NextRequest) {
   const authError = checkInternalSecret(req);
   if (authError) return authError;
 
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+  const email = (token as { email?: string } | null)?.email;
+  const rateLimitError = await checkRateLimit(req, "recommend", email);
+  if (rateLimitError) return rateLimitError;
+
   try {
     const body = await req.json() as { emotionVector: unknown; drinkingCapacity?: string };
     const { emotionVector, drinkingCapacity: capacityFromBody } = body;
@@ -28,7 +34,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "유효하지 않은 emotionVector입니다." }, { status: 400 });
     }
 
-    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
     const userId = (token?.id ?? token?.sub) as string | undefined;
 
     // 로그인 유저: drinkingCapacity를 DB에서 가져옴 (온보딩에서 이미 설정됨)
