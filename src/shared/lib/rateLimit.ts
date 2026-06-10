@@ -20,10 +20,10 @@ function getRedis(): Redis {
 }
 
 const LIMITS = {
-  "analyze-emotion": { requests: 20, window: "1 d" },
-  recommend: { requests: 20, window: "1 d" },
-  "pantry-recommend": { requests: 10, window: "1 d" },
-  "mix-analyze": { requests: 10, window: "1 d" },
+  "analyze-emotion": { requests: 40, window: "1 d" },
+  recommend: { requests: 40, window: "1 d" },
+  "pantry-recommend": { requests: 20, window: "1 d" },
+  "mix-analyze": { requests: 20, window: "1 d" },
 } as const;
 
 type Endpoint = keyof typeof LIMITS;
