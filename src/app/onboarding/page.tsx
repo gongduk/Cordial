@@ -31,7 +31,12 @@ export default function OnboardingPage() {
   });
 
   useEffect(() => {
-    if (status === "unauthenticated") router.replace("/login");
+    if (status === "unauthenticated") { router.replace("/login"); return; }
+    if (status === "authenticated") {
+      api.get<{ onboardedAt: string | null }>("/user/profile")
+        .then(r => { if (r.data.onboardedAt) router.replace("/home"); })
+        .catch(() => {});
+    }
   }, [status, router]);
 
   function handleConfirm() {
