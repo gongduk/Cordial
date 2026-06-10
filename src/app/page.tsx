@@ -3,6 +3,7 @@ import { GlassSilhouette } from "@/shared/ui/GlassSilhouette";
 import { CordialLogo } from "@/shared/ui/CordialLogo";
 import { WebNav } from "@/shared/ui/WebNav";
 import { LandingMobileHeader } from "@/shared/ui/LandingMobileHeader";
+import { FooterLoginLink } from "@/shared/ui/FooterLoginLink";
 import { W, T } from "@/shared/lib/theme";
 
 
@@ -110,7 +111,7 @@ export default function LandingPage() {
         <footer style={{ padding: "40px 56px", display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: 1280, margin: "0 auto" }}>
           <CordialLogo size={13} color={W.textMuted} tracking={2} />
           <div style={{ display: "flex", gap: 24, alignItems: "center" }}>
-            <Link href="/login" style={{ fontSize: 12, color: W.textFaint, letterSpacing: -0.1, textDecoration: "none" }}>로그인</Link>
+            <FooterLoginLink />
             <div style={{ fontFamily: W.mono, fontSize: 10, color: W.textFaint, letterSpacing: 1.4 }}>© 2026 · DRINK RESPONSIBLY</div>
           </div>
         </footer>
