@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { pantryRecommend } from "@/server/ai/pantryRecommend";
+import { checkInternalSecret } from "@/shared/lib/internalAuth";
 
 export async function POST(req: NextRequest) {
+  const authError = checkInternalSecret(req);
+  if (authError) return authError;
+
   try {
     const { ingredients } = await req.json() as { ingredients: string[] };
 

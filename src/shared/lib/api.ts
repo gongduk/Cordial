@@ -1,6 +1,12 @@
 import axios from "axios";
 
-const api = axios.create({ baseURL: "/api", headers: { "Content-Type": "application/json" } });
+const api = axios.create({
+  baseURL: "/api",
+  headers: {
+    "Content-Type": "application/json",
+    "x-internal-secret": process.env.NEXT_PUBLIC_INTERNAL_API_SECRET ?? "",
+  },
+});
 
 // attach access token from localStorage
 api.interceptors.request.use((config) => {

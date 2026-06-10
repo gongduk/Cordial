@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { mixAnalyze } from "@/server/ai/mixAnalyze";
 import type { MixIngredient, MixMethod } from "@/shared/types";
+import { checkInternalSecret } from "@/shared/lib/internalAuth";
 
 export async function POST(req: NextRequest) {
+  const authError = checkInternalSecret(req);
+  if (authError) return authError;
+
   try {
     const { ingredients, method, notes } = await req.json() as {
       ingredients: MixIngredient[];

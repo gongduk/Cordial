@@ -2,8 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { analyzeEmotion } from "@/server/ai/analyzeEmotion";
 import { prisma } from "@/shared/lib/prisma";
+import { checkInternalSecret } from "@/shared/lib/internalAuth";
 
 export async function POST(req: NextRequest) {
+  const authError = checkInternalSecret(req);
+  if (authError) return authError;
+
   try {
     const { text } = await req.json() as { text: string };
 

@@ -3,6 +3,7 @@ import { getToken } from "next-auth/jwt";
 import { recommendCocktails } from "@/server/ai/recommendCocktails";
 import { prisma } from "@/shared/lib/prisma";
 import type { EmotionVector } from "@/shared/types";
+import { checkInternalSecret } from "@/shared/lib/internalAuth";
 
 function isValidEmotionVector(v: unknown): v is EmotionVector {
   if (typeof v !== "object" || v === null) return false;
@@ -16,6 +17,9 @@ function isValidEmotionVector(v: unknown): v is EmotionVector {
 }
 
 export async function POST(req: NextRequest) {
+  const authError = checkInternalSecret(req);
+  if (authError) return authError;
+
   try {
     const body = await req.json() as { emotionVector: unknown; drinkingCapacity?: string };
     const { emotionVector, drinkingCapacity: capacityFromBody } = body;
