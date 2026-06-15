@@ -10,7 +10,7 @@ import { CordialLogo } from "@/shared/ui/CordialLogo";
 import { GlassSilhouette } from "@/shared/ui/GlassSilhouette";
 import { W, T } from "@/shared/lib/theme";
 
-type OAuthProvider = "google" | "naver" | "kakao";
+type OAuthProvider = "google" | "naver";
 
 interface OAuthBtn {
   id: OAuthProvider;
@@ -45,15 +45,6 @@ function makeButtons(dark: boolean): OAuthBtn[] {
       icon: (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
           <path d="M16.273 12.845L7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727z"/>
-        </svg>
-      ),
-    },
-    {
-      id: "kakao", label: "카카오로 가입하기", loadingLabel: "연결 중...",
-      bg: "#FEE500", color: "#3C1E1E",
-      icon: (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="#3C1E1E">
-          <path d="M12 3C6.477 3 2 6.477 2 10.8c0 2.72 1.644 5.112 4.128 6.56L5.04 21l4.512-2.496A11.96 11.96 0 0012 18.6c5.523 0 10-3.477 10-7.8S17.523 3 12 3z"/>
         </svg>
       ),
     },
