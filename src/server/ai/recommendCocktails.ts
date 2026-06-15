@@ -65,7 +65,7 @@ function fallbackDesc(name: string): string {
 async function generateDescriptions(names: string[], emotion: EmotionVector): Promise<string[]> {
   try {
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.0-flash",
+      model: "gemini-2.5-flash",
       systemInstruction: DESCRIPTION_PROMPT,
       generationConfig: { responseMimeType: "application/json" },
     });

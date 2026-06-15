@@ -106,7 +106,7 @@ export async function pantryRecommend(ingredientNames: string[], userId?: string
   if (ingredientNames.length >= 2) {
     try {
       const model = genAI.getGenerativeModel({
-        model: "gemini-2.0-flash",
+        model: "gemini-2.5-flash",
         systemInstruction: CREATIVE_PROMPT,
         generationConfig: { responseMimeType: "application/json" },
       });

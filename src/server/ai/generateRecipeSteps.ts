@@ -97,7 +97,7 @@ function buildFallbackSteps(input: RecipeInput): string[] {
 export async function generateRecipeSteps(input: RecipeInput): Promise<string[]> {
   try {
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.0-flash",
+      model: "gemini-2.5-flash",
       systemInstruction: RECIPE_PROMPT,
       generationConfig: { responseMimeType: "application/json" },
     });

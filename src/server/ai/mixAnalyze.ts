@@ -202,7 +202,7 @@ export async function mixAnalyze(
       .join(", ");
 
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.0-flash",
+      model: "gemini-2.5-flash",
       systemInstruction: TASTE_AROMA_PROMPT,
       generationConfig: { responseMimeType: "application/json" },
     });
@@ -236,8 +236,8 @@ export async function mixAnalyze(
       description: String(p.description ?? ""),
       name: String(p.suggestedName ?? "나만의 칵테일"),
     };
-  } catch {
-    // Gemini 실패(쿼터 초과 등) 시 규칙 기반 분석으로 fallback
+  } catch (e) {
+    console.error("[mixAnalyze] Gemini 실패, ruleBased fallback:", (e as Error).message);
     return ruleBased(ingredients, calculatedAbv);
   }
 }
