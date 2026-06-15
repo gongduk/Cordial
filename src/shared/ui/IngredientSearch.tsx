@@ -74,10 +74,7 @@ export function IngredientSearch({ dark, onSelect, placeholder = "재료 검색.
   function handleAddCustom() {
     const trimmed = query.trim();
     if (!trimmed) return;
-    const abvStr = window.prompt(`"${trimmed}"의 도수(%)를 입력해주세요. 무알코올이면 0을 입력하세요.`, "0");
-    if (abvStr === null) return; // 취소
-    const abv = Math.min(100, Math.max(0, parseFloat(abvStr) || 0));
-    onSelect({ name: trimmed, abv, isCustom: true });
+    onSelect({ name: trimmed, abv: 0, isCustom: true });
     setQuery("");
     setOpen(false);
   }
