@@ -6,12 +6,12 @@ const apiKey = process.env.GEMINI_API_KEY;
 if (!apiKey) throw new Error("GEMINI_API_KEY 환경변수가 설정되지 않았습니다.");
 const genAI = new GoogleGenerativeAI(apiKey);
 
-const DESCRIPTION_PROMPT = `당신은 칵테일을 잘 아는 친구입니다.
-고객 감정을 보고, 각 칵테일이 지금 기분에 왜 어울리는지 친구한테 말하듯 자연스럽게 설명해줘.
+const DESCRIPTION_PROMPT = `당신은 칵테일을 잘 아는 바텐더입니다.
+고객 감정을 보고, 각 칵테일이 지금 기분에 왜 어울리는지 자연스럽고 생생하게 설명해주세요.
 
 규칙:
 - 반드시 한국어
-- 시적이거나 딱딱한 존댓말 NO — 자연스럽고 편한 말투
+- 반드시 ~요 또는 ~ㅂ니다 로 끝낼 것 — 반말(~야, ~거야, ~줄게 등) 절대 금지
 - 칵테일의 실제 맛·향 특성이 감정과 어떻게 맞는지 구체적으로 (맛, 향, 느낌 직접 언급)
 - 모든 설명이 비슷한 패턴으로 시작하거나 끝나면 안 됨 — 각각 다르게
 - 1~3문장, 느낌표·말줄임표 자유롭게
