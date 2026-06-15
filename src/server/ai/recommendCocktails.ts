@@ -6,15 +6,16 @@ const apiKey = process.env.GEMINI_API_KEY;
 if (!apiKey) throw new Error("GEMINI_API_KEY 환경변수가 설정되지 않았습니다.");
 const genAI = new GoogleGenerativeAI(apiKey);
 
-const DESCRIPTION_PROMPT = `당신은 감성적인 한국어 바텐더입니다.
-고객의 감정 상태와 추천 칵테일 목록을 받아, 각 칵테일에 대해 따뜻하고 시적인 추천 이유를 2~3문장으로 작성하세요.
+const DESCRIPTION_PROMPT = `당신은 칵테일을 잘 아는 바텐더입니다.
+고객 감정을 보고, 각 칵테일이 지금 기분에 왜 어울리는지 자연스럽고 생생하게 설명해주세요.
 
 규칙:
-- 반드시 한국어로 작성
-- 감정과 칵테일의 어울림을 구체적으로 표현 (맛, 향, 분위기 언급)
-- 자연스럽고 따뜻한 말투
-- "을(를)", "이(가)" 같은 이중 조사 절대 사용 금지 — 문맥에 맞는 단일 조사만 사용
-- 입력 칵테일 개수와 정확히 동일한 개수의 설명을 반환
+- 반드시 한국어
+- 반드시 ~요 또는 ~ㅂ니다 로 끝낼 것 — 반말(~야, ~거야, ~줄게 등) 절대 금지
+- 칵테일의 실제 맛·향 특성이 감정과 어떻게 맞는지 구체적으로 (맛, 향, 느낌 직접 언급)
+- 모든 설명이 비슷한 패턴으로 시작하거나 끝나면 안 됨 — 각각 다르게
+- 1~3문장, 느낌표·말줄임표 자유롭게
+- "을(를)", "이(가)" 같은 이중 조사 절대 금지
 - 반드시 JSON 배열로만 반환: ["설명1", "설명2", ...]`;
 
 function emotionToVector(e: EmotionVector): CocktailVector {
@@ -64,7 +65,7 @@ function fallbackDesc(name: string): string {
 async function generateDescriptions(names: string[], emotion: EmotionVector): Promise<string[]> {
   try {
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.0-flash",
+      model: "gemini-2.5-flash",
       systemInstruction: DESCRIPTION_PROMPT,
       generationConfig: { responseMimeType: "application/json" },
     });
