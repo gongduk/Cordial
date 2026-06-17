@@ -1,8 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
-const apiKey = process.env.GEMINI_API_KEY;
-if (!apiKey) throw new Error("GEMINI_API_KEY 환경변수가 설정되지 않았습니다.");
-const genAI = new GoogleGenerativeAI(apiKey);
+import { genAI, parseGeminiJson } from "@/shared/lib/geminiClient";
 
 const RECIPE_PROMPT = `당신은 IBA 공인 바텐더입니다. 칵테일 정보를 받아 정확하고 실용적인 제조 단계를 작성하세요.
 
@@ -114,9 +110,7 @@ export async function generateRecipeSteps(input: RecipeInput): Promise<string[]>
 위 칵테일의 제조 단계를 JSON 배열로 반환하세요.`;
 
     const result = await model.generateContent(prompt);
-    const text = result.response.text().trim();
-    const clean = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
-    const parsed = JSON.parse(clean) as unknown;
+    const parsed = parseGeminiJson<unknown>(result.response.text());
 
     if (Array.isArray(parsed) && parsed.length >= 3 && parsed.every(s => typeof s === "string")) {
       return parsed as string[];

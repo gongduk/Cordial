@@ -1,9 +1,5 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { genAI, parseGeminiJson } from "@/shared/lib/geminiClient";
 import type { BarMood, BarPurpose, CocktailStyle } from "@/shared/types";
-
-const apiKey = process.env.GEMINI_API_KEY;
-if (!apiKey) throw new Error("GEMINI_API_KEY 환경변수가 설정되지 않았습니다.");
-const genAI = new GoogleGenerativeAI(apiKey);
 
 interface BarAnalysisResult {
   moodTags: BarMood[];
@@ -111,10 +107,7 @@ export async function analyzeBar(
 
     const prompt = `${ANALYZE_PROMPT}\n\n바 이름: ${name}\n주소: ${address}\n\n${reviewText}`;
     const result = await model.generateContent(prompt);
-    const text = result.response.text().trim();
-
-    const cleaned = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-    const parsed = JSON.parse(cleaned) as Partial<BarAnalysisResult>;
+    const parsed = parseGeminiJson<Partial<BarAnalysisResult>>(result.response.text());
 
     const validMoods = (parsed.moodTags ?? []).filter((t): t is BarMood => ALL_MOODS.includes(t as BarMood));
     const validPurposes = (parsed.purposeTags ?? []).filter((t): t is BarPurpose => ALL_PURPOSES.includes(t as BarPurpose));

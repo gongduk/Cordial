@@ -1,11 +1,7 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { genAI, parseGeminiJson } from "@/shared/lib/geminiClient";
 import { prisma } from "@/shared/lib/prisma";
 import { expandSynonyms } from "@/shared/lib/ingredientSynonyms";
 import type { RecommendedCocktail } from "@/shared/types";
-
-const apiKey = process.env.GEMINI_API_KEY;
-if (!apiKey) throw new Error("GEMINI_API_KEY 환경변수가 설정되지 않았습니다.");
-const genAI = new GoogleGenerativeAI(apiKey);
 
 const CREATIVE_PROMPT = `당신은 창의적인 바텐더입니다. 주어진 재료로 만들 수 있는 독창적인 칵테일 레시피를 제안하세요.
 반드시 JSON 형식으로 반환하세요:
@@ -112,9 +108,7 @@ export async function pantryRecommend(ingredientNames: string[], userId?: string
       });
 
       const result = await model.generateContent(`보유 재료: ${ingredientNames.join(", ")}`);
-      const raw = result.response.text().trim();
-      const clean = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
-      const parsed = JSON.parse(clean) as unknown;
+      const parsed = parseGeminiJson<unknown>(result.response.text());
 
       if (typeof parsed === "object" && parsed !== null && "name" in parsed) {
         const p = parsed as Record<string, unknown>;

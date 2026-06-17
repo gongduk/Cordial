@@ -1,9 +1,5 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { genAI, parseGeminiJson } from "@/shared/lib/geminiClient";
 import type { MixIngredient, MixMethod, MixAnalysisResult, CocktailVector } from "@/shared/types";
-
-const apiKey = process.env.GEMINI_API_KEY;
-if (!apiKey) throw new Error("GEMINI_API_KEY 환경변수가 설정되지 않았습니다.");
-const genAI = new GoogleGenerativeAI(apiKey);
 
 const DILUTION_RATES: Record<MixMethod, number> = {
   shaking: 0.30,
@@ -211,9 +207,7 @@ export async function mixAnalyze(
       `재료: ${ingredientDesc}\n제조법: ${method}\n총 볼륨: ${ingredients.reduce((s, i) => s + i.amount, 0)}ml\n계산된 도수: ${calculatedAbv}%${notes ? `\n메모: ${notes}` : ""}`
     );
 
-    const raw = result.response.text().trim();
-    const clean = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
-    const parsed = JSON.parse(clean) as unknown;
+    const parsed = parseGeminiJson<unknown>(result.response.text());
     if (typeof parsed !== "object" || parsed === null) return ruleBased(ingredients, calculatedAbv);
 
     const p = parsed as Record<string, unknown>;

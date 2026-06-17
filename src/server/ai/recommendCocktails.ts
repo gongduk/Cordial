@@ -1,10 +1,6 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { genAI, parseGeminiJson } from "@/shared/lib/geminiClient";
 import { prisma } from "@/shared/lib/prisma";
 import type { EmotionVector, CocktailVector, RecommendedCocktail } from "@/shared/types";
-
-const apiKey = process.env.GEMINI_API_KEY;
-if (!apiKey) throw new Error("GEMINI_API_KEY 환경변수가 설정되지 않았습니다.");
-const genAI = new GoogleGenerativeAI(apiKey);
 
 const DESCRIPTION_PROMPT = `당신은 칵테일을 잘 아는 바텐더입니다.
 고객 감정을 보고, 각 칵테일이 지금 기분에 왜 어울리는지 자연스럽고 생생하게 설명해주세요.
@@ -78,11 +74,7 @@ async function generateDescriptions(names: string[], emotion: EmotionVector): Pr
 
     const prompt = `고객 감정: ${emotionSummary} (세부: ${JSON.stringify(emotion)})\n\n추천 칵테일 목록 (${names.length}개):\n${names.map((n, i) => `${i + 1}. ${n}`).join("\n")}\n\n위 ${names.length}개 칵테일 각각에 대해 2~3문장 추천 설명을 JSON 배열로 반환하세요.`;
     const result = await model.generateContent(prompt);
-    const text = result.response.text().trim();
-
-    // JSON 배열 추출 시도 (마크다운 코드블록 제거)
-    const clean = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
-    const parsed = JSON.parse(clean) as unknown;
+    const parsed = parseGeminiJson<unknown>(result.response.text());
 
     if (Array.isArray(parsed)) {
       // 길이가 다를 경우 부족한 부분은 fallback으로 채움

@@ -1,9 +1,5 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { genAI } from "@/shared/lib/geminiClient";
 import type { EmotionVector } from "@/shared/types";
-
-const apiKey = process.env.GEMINI_API_KEY;
-if (!apiKey) throw new Error("GEMINI_API_KEY 환경변수가 설정되지 않았습니다.");
-const genAI = new GoogleGenerativeAI(apiKey);
 
 const SYSTEM_PROMPT = `사용자의 텍스트를 분석하여 현재 감정 상태를 5가지 차원으로 수치화하세요.
 반드시 JSON만 반환하고 다른 텍스트는 포함하지 마세요.
