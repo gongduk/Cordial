@@ -55,7 +55,7 @@ export default function UserHomePage() {
   return (
     <>
       {/* ── WEB ── */}
-      <div className="cordial-web" style={{ background: W.bg, minHeight: "100vh", color: W.text, fontFamily: W.sans }}>
+      <div className="cordial-web" style={{ background: W.bg, minHeight: "100dvh", color: W.text, fontFamily: W.sans }}>
         <WebNav active="/home" />
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "56px 40px" }}>
           {/* Hero */}
@@ -138,9 +138,9 @@ export default function UserHomePage() {
       {/* ── MOBILE ── */}
       <div className="cordial-mob">
         <div style={{
-          width: "100%", minHeight: "100vh",
+          width: "100%", minHeight: "100dvh",
           background: T.darkBg, color: T.darkText, fontFamily: T.sans,
-          maxWidth: 430, margin: "0 auto", position: "relative", paddingBottom: 90,
+          maxWidth: 430, margin: "0 auto", position: "relative", paddingBottom: "max(90px, calc(env(safe-area-inset-bottom) + 80px))",
         }}>
           <div style={{ paddingTop: 62, paddingBottom: 16, paddingLeft: 20, paddingRight: 20, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <CordialLogo size={14} color={T.accent} tracking={2} />

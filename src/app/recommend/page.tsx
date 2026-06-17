@@ -177,7 +177,7 @@ export default function RecommendPage() {
   if (loading) {
     return (
       <>
-        <div className="cordial-web" style={{ background: W.bg, minHeight: "100vh", fontFamily: W.sans, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 40 }}>
+        <div className="cordial-web" style={{ background: W.bg, minHeight: "100dvh", fontFamily: W.sans, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 40 }}>
           <GlassSilhouette type="martini" size={140} stroke={W.accent} liquid={W.accent} fillLevel={0.55} strokeWidth={1.3} />
           <div style={{ textAlign: "center" }}>
             <div style={{ fontFamily: W.mono, fontSize: 11, letterSpacing: 1.8, color: W.accent, marginBottom: 14, textTransform: "uppercase" }}>READING YOU</div>
@@ -185,7 +185,7 @@ export default function RecommendPage() {
           </div>
         </div>
         <div className="cordial-mob">
-          <div style={{ width: "100%", minHeight: "100vh", background: T.darkBg, color: T.darkText, fontFamily: T.sans, maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 40, padding: "0 40px" }}>
+          <div style={{ width: "100%", minHeight: "100dvh", background: T.darkBg, color: T.darkText, fontFamily: T.sans, maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 40, padding: "0 40px" }}>
             <GlassSilhouette type="martini" size={140} stroke={T.accent} liquid={T.accent} fillLevel={0.55} strokeWidth={1.3} />
             <div style={{ textAlign: "center" }}>
               <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.8, color: T.accent, marginBottom: 16, textTransform: "uppercase" }}>READING YOU</div>
@@ -203,7 +203,7 @@ export default function RecommendPage() {
     const msg = error || "추천 결과가 없어요.";
     return (
       <>
-        <div className="cordial-web" style={{ background: W.bg, minHeight: "100vh", fontFamily: W.sans, display: "flex", flexDirection: "column" }}>
+        <div className="cordial-web" style={{ background: W.bg, minHeight: "100dvh", fontFamily: W.sans, display: "flex", flexDirection: "column" }}>
           <WebNav />
           <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 20, padding: "0 24px" }}>
             <p style={{ fontSize: 17, color: W.textMuted, textAlign: "center" }}>{msg}</p>
@@ -211,7 +211,7 @@ export default function RecommendPage() {
           </div>
         </div>
         <div className="cordial-mob">
-          <div style={{ width: "100%", minHeight: "100vh", background: T.darkBg, color: T.darkText, fontFamily: T.sans, maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 20, padding: "0 24px" }}>
+          <div style={{ width: "100%", minHeight: "100dvh", background: T.darkBg, color: T.darkText, fontFamily: T.sans, maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 20, padding: "0 24px" }}>
             <p style={{ fontSize: 17, color: T.darkTextMuted, textAlign: "center" }}>{msg}</p>
             <button onClick={() => router.push("/emotion")} style={{ padding: "14px 28px", borderRadius: 14, background: T.accent, color: T.darkBg, border: "none", fontSize: 15, fontWeight: 600, fontFamily: T.sans, cursor: "pointer" }}>다시 시도하기</button>
           </div>
@@ -273,7 +273,7 @@ export default function RecommendPage() {
   return (
     <>
       {/* ── WEB ── */}
-      <div className="cordial-web" style={{ background: W.bg, minHeight: "100vh", color: W.text, fontFamily: W.sans }}>
+      <div className="cordial-web" style={{ background: W.bg, minHeight: "100dvh", color: W.text, fontFamily: W.sans }}>
         <WebNav active="/emotion" />
         <div
           style={{ maxWidth: 1100, margin: "0 auto", padding: "56px 40px", display: "flex", gap: 64, alignItems: "center", minHeight: "calc(100vh - 60px)", cursor: "grab", userSelect: "none" }}
@@ -345,7 +345,7 @@ export default function RecommendPage() {
       {/* ── MOBILE ── */}
       <div className="cordial-mob">
         <div
-          style={{ width: "100%", minHeight: "100vh", background: T.darkBg, color: T.darkText, fontFamily: T.sans, maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column" }}
+          style={{ width: "100%", minHeight: "100dvh", background: T.darkBg, color: T.darkText, fontFamily: T.sans, maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column" }}
           onTouchStart={onTouchStart}
           onTouchEnd={onTouchEnd}
         >
@@ -387,7 +387,7 @@ export default function RecommendPage() {
             </div>
           </div>
 
-          <div style={{ padding: "16px 24px 36px", borderTop: `0.5px solid ${T.darkBorder}`, display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ padding: "16px 24px", paddingBottom: "max(36px, calc(env(safe-area-inset-bottom) + 16px))", borderTop: `0.5px solid ${T.darkBorder}`, display: "flex", alignItems: "center", gap: 10 }}>
             <ArrowBtn dir="left" onClick={() => advance(-1)} dark />
             <Dots dark />
             <ArrowBtn dir="right" onClick={() => advance(1)} dark />

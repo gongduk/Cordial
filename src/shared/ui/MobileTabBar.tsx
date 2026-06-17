@@ -21,7 +21,7 @@ export function MobileTabBar({ active }: { active?: string }) {
     <div style={{
       position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)",
       width: "100%", maxWidth: 430,
-      paddingBottom: 28, paddingTop: 8,
+      paddingBottom: "max(28px, calc(env(safe-area-inset-bottom) + 14px))", paddingTop: 8,
       background: "linear-gradient(180deg,rgba(21,17,13,0) 0%,rgba(21,17,13,0.92) 30%,rgba(21,17,13,1) 60%)",
       display: "flex", justifyContent: "space-around", alignItems: "flex-end",
       borderTop: "0.5px solid rgba(255,246,232,0.08)",

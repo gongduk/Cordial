@@ -18,7 +18,7 @@ export default function LandingPage() {
   return (
     <>
       {/* ── WEB ── */}
-      <div className="cordial-web" style={{ background: W.bg, color: W.text, fontFamily: W.sans, minHeight: "100vh" }}>
+      <div className="cordial-web" style={{ background: W.bg, color: W.text, fontFamily: W.sans, minHeight: "100dvh" }}>
         <WebNav active="/" />
 
         <section style={{
@@ -119,7 +119,7 @@ export default function LandingPage() {
 
       {/* ── MOBILE ── */}
       <div className="cordial-mob">
-        <div style={{ width: "100%", minHeight: "100vh", background: T.darkBg, color: T.darkText, fontFamily: T.sans, maxWidth: 430, margin: "0 auto" }}>
+        <div style={{ width: "100%", minHeight: "100dvh", background: T.darkBg, color: T.darkText, fontFamily: T.sans, maxWidth: 430, margin: "0 auto" }}>
           {/* Header */}
           <LandingMobileHeader />
 

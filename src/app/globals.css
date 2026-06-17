@@ -21,8 +21,11 @@
   --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 }
 
-body {
+html, body {
   font-family: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #FCFBF9;
+  /* iOS 오버스크롤·홈인디케이터 영역 흰색 노출 방지 */
+  overscroll-behavior-y: none;
 }
 
 /* Responsive layout utilities */
@@ -31,4 +34,19 @@ body {
 @media (max-width: 767px) {
   .cordial-web { display: none; }
   .cordial-mob { display: block; }
+  /* 모바일 화면에서 컨테이너 바깥(좌/우/하단)에 보이는 body 배경을 다크로 통일 */
+  html, body {
+    background: #15110D;
+  }
+}
+
+/* 모바일 풀 스크린 컨테이너: iOS Safari 주소창 영역까지 채우기 */
+.cordial-screen {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* 하단 고정 요소 안전 영역 보정 (iPhone 홈 인디케이터) */
+.cordial-safe-bottom {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 24px);
 }

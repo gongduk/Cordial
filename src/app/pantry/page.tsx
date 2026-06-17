@@ -137,11 +137,11 @@ export default function PantryPage() {
   if (loadingPantry) {
     return (
       <>
-        <div className="cordial-web" style={{ background: W.bg, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div className="cordial-web" style={{ background: W.bg, minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div style={{ color: W.textMuted, fontFamily: W.sans }}>로딩 중...</div>
         </div>
         <div className="cordial-mob">
-          <div style={{ background: T.darkBg, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ background: T.darkBg, minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <div style={{ color: T.darkTextMuted, fontFamily: T.sans }}>로딩 중...</div>
           </div>
         </div>
@@ -152,7 +152,7 @@ export default function PantryPage() {
   return (
     <>
       {/* ── WEB ── */}
-      <div className="cordial-web" style={{ background: W.bg, minHeight: "100vh", color: W.text, fontFamily: W.sans }}>
+      <div className="cordial-web" style={{ background: W.bg, minHeight: "100dvh", color: W.text, fontFamily: W.sans }}>
         <WebNav active="/pantry" />
         <div style={{ maxWidth: 1100, margin: "0 auto", padding: "56px 40px" }}>
           <div style={{ marginBottom: 40 }}>
@@ -254,7 +254,7 @@ export default function PantryPage() {
 
       {/* ── MOBILE ── */}
       <div className="cordial-mob">
-        <div style={{ width: "100%", minHeight: "100vh", background: T.darkBg, color: T.darkText, fontFamily: T.sans, maxWidth: 430, margin: "0 auto", paddingBottom: 90, overflowY: "auto" }}>
+        <div style={{ width: "100%", minHeight: "100dvh", background: T.darkBg, color: T.darkText, fontFamily: T.sans, maxWidth: 430, margin: "0 auto", paddingBottom: "max(90px, calc(env(safe-area-inset-bottom) + 80px))", overflowY: "auto" }}>
           <div style={{ paddingTop: 62, paddingBottom: 16, paddingLeft: 20, paddingRight: 20, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <Link href="/home" style={{ textDecoration: "none", display: "flex" }}>
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12 4 L6 10 L12 16" stroke={T.darkText} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg>

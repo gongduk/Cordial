@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
 import { Analytics } from "@vercel/analytics/next";
@@ -6,6 +6,13 @@ import { Analytics } from "@vercel/analytics/next";
 export const metadata: Metadata = {
   title: "CorDial — AI 칵테일 추천",
   description: "당신의 감정에 맞는 칵테일을 AI가 추천해 드립니다",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#15110D",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

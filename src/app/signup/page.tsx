@@ -93,11 +93,11 @@ export default function SignupPage() {
     <>
       {/* ── WEB ── */}
       <div className="cordial-web">
-      <div style={{ minHeight: "100vh", display: "flex", fontFamily: W.sans }}>
+      <div style={{ minHeight: "100dvh", display: "flex", fontFamily: W.sans }}>
 
         {/* Left — dark branding panel */}
         <div style={{
-          width: "42%", minHeight: "100vh", background: T.darkBg, flexShrink: 0,
+          width: "42%", minHeight: "100dvh", background: T.darkBg, flexShrink: 0,
           display: "flex", flexDirection: "column", justifyContent: "space-between",
           padding: "52px 56px", position: "relative", overflow: "hidden",
         }}>
@@ -191,7 +191,7 @@ export default function SignupPage() {
       {/* ── MOBILE ── */}
       <div className="cordial-mob">
         <div style={{
-          minHeight: "100vh", background: T.darkBg, color: T.darkText,
+          minHeight: "100dvh", background: T.darkBg, color: T.darkText,
           fontFamily: T.sans, display: "flex", alignItems: "center", justifyContent: "center",
           padding: "24px",
         }}>

@@ -84,7 +84,7 @@ export default function CocktailsPage() {
   return (
     <>
       {/* ── WEB ── */}
-      <div className="cordial-web" style={{ background: W.bg, minHeight: "100vh", color: W.text, fontFamily: W.sans }}>
+      <div className="cordial-web" style={{ background: W.bg, minHeight: "100dvh", color: W.text, fontFamily: W.sans }}>
         <WebNav active="/cocktails" />
         <div style={{ maxWidth: 1100, margin: "0 auto", padding: "56px 40px" }}>
           <div style={{ marginBottom: 40 }}>
@@ -175,7 +175,7 @@ export default function CocktailsPage() {
 
       {/* ── MOBILE ── */}
       <div className="cordial-mob">
-        <div style={{ width: "100%", minHeight: "100vh", background: T.darkBg, color: T.darkText, fontFamily: T.sans, maxWidth: 430, margin: "0 auto", paddingBottom: 90 }}>
+        <div style={{ width: "100%", minHeight: "100dvh", background: T.darkBg, color: T.darkText, fontFamily: T.sans, maxWidth: 430, margin: "0 auto", paddingBottom: "max(90px, calc(env(safe-area-inset-bottom) + 80px))" }}>
           {/* Header */}
           <div style={{ paddingTop: 62, paddingBottom: 16, paddingLeft: 20, paddingRight: 20, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <Link href="/home" style={{ textDecoration: "none", display: "flex" }}>

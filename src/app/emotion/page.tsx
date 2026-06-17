@@ -343,7 +343,7 @@ export default function EmotionPage() {
   if (loading) {
     return (
       <>
-        <div className="cordial-web" style={{ background: W.bg, minHeight: "100vh", color: W.text, fontFamily: W.sans, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 40 }}>
+        <div className="cordial-web" style={{ background: W.bg, minHeight: "100dvh", color: W.text, fontFamily: W.sans, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 40 }}>
           <GlassSilhouette type="rocks" size={160} stroke={W.accent} liquid={W.accent} fillLevel={0.55} strokeWidth={1.3} />
           <div style={{ textAlign: "center" }}>
             <div style={{ fontFamily: W.mono, fontSize: 11, letterSpacing: 2, color: W.accent, marginBottom: 16, textTransform: "uppercase" }}>ANALYZING</div>
@@ -352,7 +352,7 @@ export default function EmotionPage() {
           </div>
         </div>
         <div className="cordial-mob">
-          <div style={{ width: "100%", minHeight: "100vh", background: T.darkBg, color: T.darkText, fontFamily: T.sans, maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 40, padding: "0 40px" }}>
+          <div style={{ width: "100%", minHeight: "100dvh", background: T.darkBg, color: T.darkText, fontFamily: T.sans, maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 40, padding: "0 40px" }}>
             <GlassSilhouette type="rocks" size={140} stroke={T.accent} liquid={T.accent} fillLevel={0.55} strokeWidth={1.3} />
             <div style={{ textAlign: "center" }}>
               <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 2, color: T.accent, marginBottom: 16, textTransform: "uppercase" }}>ANALYZING</div>
@@ -368,7 +368,7 @@ export default function EmotionPage() {
   return (
     <>
       {/* ── WEB ── */}
-      <div className="cordial-web" style={{ background: W.bg, minHeight: "100vh", color: W.text, fontFamily: W.sans }}>
+      <div className="cordial-web" style={{ background: W.bg, minHeight: "100dvh", color: W.text, fontFamily: W.sans }}>
         <WebNav active="/emotion" />
         <div style={{ maxWidth: 640, margin: "0 auto", padding: "56px 40px" }}>
           <div style={{ display: "flex", gap: 8, marginBottom: 48 }}>
@@ -398,7 +398,7 @@ export default function EmotionPage() {
 
       {/* ── MOBILE ── */}
       <div className="cordial-mob">
-        <div style={{ width: "100%", minHeight: "100vh", background: T.darkBg, color: T.darkText, fontFamily: T.sans, maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column" }}>
+        <div style={{ width: "100%", minHeight: "100dvh", background: T.darkBg, color: T.darkText, fontFamily: T.sans, maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column" }}>
           <div style={{ paddingTop: 62, paddingBottom: 16, paddingLeft: 20, paddingRight: 20, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
             <button onClick={prev} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -425,7 +425,7 @@ export default function EmotionPage() {
             <StepContent theme="dark" {...stepProps} />
           </div>
 
-          <div style={{ padding: "20px 24px 40px" }}>
+          <div style={{ padding: "20px 24px", paddingBottom: "max(40px, calc(env(safe-area-inset-bottom) + 20px))" }}>
             <button onClick={next} disabled={loading} style={{
               width: "100%", height: 54, borderRadius: 14,
               background: T.accent, color: "#15110D",

@@ -280,7 +280,7 @@ export default function CocktailDetailPage() {
   if (!cocktail || loading) {
     return (
       <>
-        <div className="cordial-web" style={{ background: W.bg, minHeight: "100vh", fontFamily: W.sans }}>
+        <div className="cordial-web" style={{ background: W.bg, minHeight: "100dvh", fontFamily: W.sans }}>
           <WebNav />
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "calc(100vh - 60px)", gap: 40 }}>
             <GlassSilhouette type="rocks" size={140} stroke={W.accent} liquid={W.accent} fillLevel={0.55} strokeWidth={1.3} />
@@ -291,7 +291,7 @@ export default function CocktailDetailPage() {
           </div>
         </div>
         <div className="cordial-mob">
-          <div style={{ width: "100%", minHeight: "100vh", background: T.darkBg, color: T.darkText, fontFamily: T.sans, maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 40, padding: "0 40px" }}>
+          <div style={{ width: "100%", minHeight: "100dvh", background: T.darkBg, color: T.darkText, fontFamily: T.sans, maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 40, padding: "0 40px" }}>
             <GlassSilhouette type="rocks" size={140} stroke={T.accent} liquid={T.accent} fillLevel={0.55} strokeWidth={1.3} />
             <div style={{ textAlign: "center" }}>
               <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.8, color: T.accent, marginBottom: 16, textTransform: "uppercase" }}>LOADING</div>
@@ -317,7 +317,7 @@ export default function CocktailDetailPage() {
   return (
     <>
       {/* ── WEB ── */}
-      <div className="cordial-web" style={{ background: W.bg, minHeight: "100vh", color: W.text, fontFamily: W.sans }}>
+      <div className="cordial-web" style={{ background: W.bg, minHeight: "100dvh", color: W.text, fontFamily: W.sans }}>
         <WebNav />
         <div style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 40px 60px" }}>
           <button onClick={() => router.back()} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, color: W.textMuted, fontFamily: W.sans, marginBottom: 40, padding: 0, display: "flex", alignItems: "center", gap: 6 }}>
@@ -402,7 +402,7 @@ export default function CocktailDetailPage() {
 
       {/* ── MOBILE ── */}
       <div className="cordial-mob">
-        <div style={{ width: "100%", minHeight: "100vh", background: T.darkBg, color: T.darkText, fontFamily: T.sans, maxWidth: 430, margin: "0 auto", paddingBottom: 28, overflowY: "auto" }}>
+        <div style={{ width: "100%", minHeight: "100dvh", background: T.darkBg, color: T.darkText, fontFamily: T.sans, maxWidth: 430, margin: "0 auto", paddingBottom: "max(28px, calc(env(safe-area-inset-bottom) + 28px))", overflowY: "auto" }}>
           <div style={{ paddingTop: 62, paddingBottom: 16, paddingLeft: 20, paddingRight: 20, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <button onClick={() => router.back()} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12 4 L6 10 L12 16" stroke={T.darkText} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg>

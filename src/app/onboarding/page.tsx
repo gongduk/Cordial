@@ -51,7 +51,7 @@ export default function OnboardingPage() {
   return (
     <>
       {/* ── WEB ── */}
-      <div className="cordial-web" style={{ background: W.bg, minHeight: "100vh", color: W.text, fontFamily: W.sans, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div className="cordial-web" style={{ background: W.bg, minHeight: "100dvh", color: W.text, fontFamily: W.sans, display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ maxWidth: 480, width: "100%", padding: "0 40px" }}>
           <div style={{ marginBottom: 48, textAlign: "center" }}>
             <CordialLogo size={14} color={W.accent} tracking={2} />
@@ -110,7 +110,7 @@ export default function OnboardingPage() {
       {/* ── MOBILE ── */}
       <div className="cordial-mob">
         <div style={{
-          width: "100%", minHeight: "100vh",
+          width: "100%", minHeight: "100dvh",
           background: T.darkBg, color: T.darkText, fontFamily: T.sans,
           maxWidth: 430, margin: "0 auto", display: "flex", flexDirection: "column",
           padding: "0 24px",

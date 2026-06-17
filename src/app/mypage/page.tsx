@@ -94,7 +94,7 @@ export default function MyPage() {
   return (
     <>
       {/* ── WEB ── */}
-      <div className="cordial-web" style={{ background: W.bg, minHeight: "100vh", fontFamily: W.sans, color: W.text }}>
+      <div className="cordial-web" style={{ background: W.bg, minHeight: "100dvh", fontFamily: W.sans, color: W.text }}>
         <WebNav active="/mypage" />
         {isLoading ? (
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "calc(100vh - 60px)" }}>
@@ -197,7 +197,7 @@ export default function MyPage() {
 
       {/* ── MOBILE ── */}
       <div className="cordial-mob">
-        <div style={{ width: "100%", minHeight: "100vh", background: T.darkBg, color: T.darkText, fontFamily: T.sans, maxWidth: 430, margin: "0 auto", paddingBottom: 90 }}>
+        <div style={{ width: "100%", minHeight: "100dvh", background: T.darkBg, color: T.darkText, fontFamily: T.sans, maxWidth: 430, margin: "0 auto", paddingBottom: "max(90px, calc(env(safe-area-inset-bottom) + 80px))" }}>
           {/* Header */}
           <div style={{ paddingTop: 62, paddingBottom: 16, paddingLeft: 20, paddingRight: 20, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <Link href="/home" style={{ textDecoration: "none", display: "flex" }}>

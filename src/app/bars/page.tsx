@@ -477,7 +477,7 @@ export default function BarsPage() {
   // ── MOBILE ───────────────────────────────────────────────────────────────────
   function MobileContent() {
     return (
-      <div style={{ width: "100%", minHeight: "100vh", background: C.darkBg, color: C.darkText, fontFamily: C.sans, maxWidth: 430, margin: "0 auto", paddingBottom: 90 }}>
+      <div style={{ width: "100%", minHeight: "100dvh", background: C.darkBg, color: C.darkText, fontFamily: C.sans, maxWidth: 430, margin: "0 auto", paddingBottom: "max(90px, calc(env(safe-area-inset-bottom) + 80px))" }}>
         <div style={{ paddingTop: 60, paddingLeft: 20, paddingRight: 20, paddingBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <Link href="/home" style={{ textDecoration: "none" }}>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12 4L6 10L12 16" stroke={C.darkText} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -635,7 +635,7 @@ export default function BarsPage() {
   return (
     <>
       <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }`}</style>
-      <div className="cordial-web" style={{ background: C.bg, minHeight: "100vh", color: C.text, fontFamily: C.sans }}>
+      <div className="cordial-web" style={{ background: C.bg, minHeight: "100dvh", color: C.text, fontFamily: C.sans }}>
         <WebNav active="/bars" />
         {WebContent()}
       </div>
