@@ -28,17 +28,21 @@ export async function POST(req: NextRequest) {
 
     const userId = (token?.id ?? token?.sub) as string | undefined;
 
-    prisma.emotionLog.create({
-      data: {
-        userId: userId ?? null,
-        joy: emotion.joy,
-        sadness: emotion.sadness,
-        stress: emotion.stress,
-        fatigue: emotion.fatigue,
-        excitement: emotion.excitement,
-        rawText: text,
-      },
-    }).catch(e => console.error("[analyze-emotion] emotionLog 저장 실패:", e));
+    try {
+      await prisma.emotionLog.create({
+        data: {
+          userId: userId ?? null,
+          joy: emotion.joy,
+          sadness: emotion.sadness,
+          stress: emotion.stress,
+          fatigue: emotion.fatigue,
+          excitement: emotion.excitement,
+          rawText: text,
+        },
+      });
+    } catch (e) {
+      console.error("[analyze-emotion] emotionLog 저장 실패:", e);
+    }
 
     return NextResponse.json(emotion);
   } catch (error) {
